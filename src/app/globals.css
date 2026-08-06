@@ -1,0 +1,166 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --pixeva-bg: #0a0a0f;
+    --pixeva-card: #12121a;
+    --pixeva-surface: #161622;
+    --pixeva-cyan: #00d4ff;
+    --pixeva-purple: #8b5cf6;
+    --pixeva-blue: #3b82f6;
+    --pixeva-emerald: #10b981;
+    --pixeva-amber: #f59e0b;
+    --pixeva-muted: #a0a0b0;
+    --pixeva-border: rgba(255, 255, 255, 0.12);
+  }
+
+  body {
+    background-color: #0a0a0f !important;
+    color: #ffffff !important;
+    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+/* ===================================================
+   GUARANTEED PIXEVA COLOR & GRADIENT UTILITIES
+   =================================================== */
+
+.bg-pixeva-dark {
+  background-color: #0a0a0f !important;
+}
+
+.bg-pixeva-card {
+  background-color: #12121a !important;
+}
+
+.bg-pixeva-surface {
+  background-color: #161622 !important;
+}
+
+.text-pixeva-cyan {
+  color: #00d4ff !important;
+}
+
+.text-pixeva-purple {
+  color: #8b5cf6 !important;
+}
+
+.text-pixeva-blue {
+  color: #3b82f6 !important;
+}
+
+.text-pixeva-emerald {
+  color: #10b981 !important;
+}
+
+.text-pixeva-muted {
+  color: #a0a0b0 !important;
+}
+
+/* Gradients */
+.text-pixeva-gradient {
+  background: linear-gradient(135deg, #00d4ff 0%, #60a5fa 45%, #8b5cf6 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.bg-pixeva-gradient {
+  background: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%) !important;
+}
+
+.btn-pixeva-primary {
+  background: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: 0.75rem !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 0 25px rgba(0, 212, 255, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.btn-pixeva-primary:hover {
+  opacity: 0.95 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.6) !important;
+}
+
+/* Glassmorphism Cards */
+.pixeva-card {
+  background: rgba(18, 18, 26, 0.85) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.pixeva-card-hover {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.pixeva-card-hover:hover {
+  background: rgba(22, 22, 34, 0.95) !important;
+  border-color: rgba(0, 212, 255, 0.4) !important;
+  box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.8), 0 0 30px -5px rgba(0, 212, 255, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Glow Effects */
+.glow-cyan {
+  box-shadow: 0 0 25px rgba(0, 212, 255, 0.45) !important;
+}
+
+.glow-purple {
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.45) !important;
+}
+
+.glow-blue {
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.45) !important;
+}
+
+/* Badges */
+.badge-cyan {
+  background: rgba(0, 212, 255, 0.15) !important;
+  color: #00d4ff !important;
+  border: 1px solid rgba(0, 212, 255, 0.35) !important;
+}
+
+.badge-purple {
+  background: rgba(139, 92, 246, 0.15) !important;
+  color: #c084fc !important;
+  border: 1px solid rgba(139, 92, 246, 0.35) !important;
+}
+
+.badge-emerald {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+}
+
+.badge-amber {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e1e2d;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2d2d42;
+}
