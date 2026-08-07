@@ -51,7 +51,7 @@ export default function DashboardPage() {
               <span>Official Pixeva Studio Platform</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-              Welcome to <span className="text-pixeva-gradient">Pixeva Studio</span>
+              Welcome to <span className="text-[#00d4ff]">Pixeva Studio</span>
             </h1>
             <p className="text-xs md:text-sm text-[#a0a0b0] leading-relaxed">
               The all-in-one AI face-recognition photography, studio management, sales pipeline, and client invoicing platform.
@@ -73,9 +73,9 @@ export default function DashboardPage() {
       {/* Metric Cards */}
       <StatCards
         totalPipeline={totalPipeline}
-        activeLeadsCount={leads.length}
+        totalLeads={leads.length}
         closedWonAmount={closedWonAmount}
-        lambdaTasksCount={142}
+        lambdaInvocations={142}
       />
 
       {/* Main Sections */}
