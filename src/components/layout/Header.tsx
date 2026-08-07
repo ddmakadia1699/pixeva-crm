@@ -1,9 +1,7 @@
 'use client';
 
 import React from 'react';
-import { isSupabaseConfigured } from '@/lib/supabase/client';
-import { isAWSConfigured } from '@/lib/aws/lambda';
-import { Search, Bell, Server, Database, Cpu, Plus } from 'lucide-react';
+import { Search, Bell, Plus, Zap } from 'lucide-react';
 
 interface HeaderProps {
   onOpenAddLeadModal?: () => void;
@@ -18,34 +16,17 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a0a0b0]" />
           <input
             type="text"
-            placeholder="Search leads, deals, galleries, or AWS tasks..."
+            placeholder="Search leads, deals, galleries, or studio tasks..."
             className="w-full bg-[#12121a] border border-white/15 rounded-xl pl-10 pr-4 py-1.5 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff] focus:ring-1 focus:ring-[#00d4ff]"
           />
         </div>
       </div>
 
-      {/* Cloud Service Connection Status Badges */}
+      {/* Clean Production Status Badge */}
       <div className="flex items-center space-x-3">
-        {/* Vercel Status */}
         <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1 rounded-full badge-cyan text-[11px] font-bold">
-          <Server className="w-3.5 h-3.5 text-[#00d4ff]" />
-          <span>Vercel: Edge Live</span>
-        </div>
-
-        {/* Supabase Status */}
-        <div className={`hidden md:flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
-          isSupabaseConfigured ? 'badge-purple' : 'badge-amber'
-        }`}>
-          <Database className="w-3.5 h-3.5" />
-          <span>Supabase: {isSupabaseConfigured ? 'Postgres Active' : 'Demo Mode'}</span>
-        </div>
-
-        {/* AWS Lambda Status */}
-        <div className={`hidden lg:flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] font-bold ${
-          isAWSConfigured ? 'badge-cyan' : 'badge-amber'
-        }`}>
-          <Cpu className="w-3.5 h-3.5" />
-          <span>AWS Lambda: {isAWSConfigured ? 'Serverless Ready' : 'Simulated'}</span>
+          <Zap className="w-3.5 h-3.5 text-[#00d4ff]" />
+          <span>Pixeva Studio: Live</span>
         </div>
 
         {/* Action Button */}

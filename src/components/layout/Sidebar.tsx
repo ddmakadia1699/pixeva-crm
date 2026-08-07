@@ -46,7 +46,7 @@ export default function Sidebar() {
               <h1 className="font-extrabold text-xl tracking-tight text-white">Pixeva</h1>
               <span className="badge-cyan text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded">STUDIO</span>
             </div>
-            <p className="text-[11px] text-[#a0a0b0]">Vercel • Supabase • AWS</p>
+            <p className="text-[11px] text-[#a0a0b0]">AI Photography & Studio</p>
           </div>
         </div>
 
@@ -92,13 +92,13 @@ export default function Sidebar() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-1.5">
               <Zap className="w-3.5 h-3.5 text-[#00d4ff] animate-pulse" />
-              <span className="font-bold text-white text-[11px]">Tri-Cloud Engine</span>
+              <span className="font-bold text-white text-[11px]">Pixeva Studio Engine</span>
             </div>
             <span className="w-2 h-2 rounded-full bg-[#00d4ff] glow-cyan" />
           </div>
           <div className="flex justify-between items-center text-[#a0a0b0] text-[10px]">
-            <span>App Platform</span>
-            <span className="text-[#00d4ff] font-mono font-bold">Pixeva Studio</span>
+            <span>Platform Status</span>
+            <span className="text-[#00d4ff] font-mono font-bold">Active & Online</span>
           </div>
         </div>
 

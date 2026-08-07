@@ -48,13 +48,13 @@ export default function DashboardPage() {
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full badge-cyan text-xs font-bold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Official Pixeva Tri-Cloud CRM Engine</span>
+              <span>Official Pixeva Studio Platform</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-              Welcome to <span className="text-pixeva-gradient">Pixeva Dashboard</span>
+              Welcome to <span className="text-pixeva-gradient">Pixeva Studio</span>
             </h1>
             <p className="text-xs md:text-sm text-[#a0a0b0] leading-relaxed">
-              Full-stack AI & CRM platform hosted on <strong className="text-[#00d4ff]">Vercel Edge</strong>, connected to <strong className="text-[#8b5cf6]">Supabase PostgreSQL</strong>, and accelerated by <strong className="text-[#3b82f6]">AWS Lambda</strong> serverless background workers.
+              The all-in-one AI face-recognition photography, studio management, sales pipeline, and client invoicing platform.
             </p>
           </div>
 
@@ -70,22 +70,27 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Metric Stat Cards */}
+      {/* Metric Cards */}
       <StatCards
         totalPipeline={totalPipeline}
-        totalLeads={leads.length}
+        activeLeadsCount={leads.length}
         closedWonAmount={closedWonAmount}
-        lambdaInvocations={142}
+        lambdaTasksCount={142}
       />
 
-      {/* Main Grid: Leads Table */}
+      {/* Main Sections */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-white tracking-tight">Active Lead Manager</h2>
-            <p className="text-xs text-[#a0a0b0]">Filter, update lead stages, or run on-demand AWS Lambda background tasks.</p>
+            <p className="text-xs text-[#a0a0b0]">
+              Filter, update lead stages, or run automated background studio tasks.
+            </p>
           </div>
-          <Link href="/leads" className="text-xs font-bold text-[#00d4ff] hover:underline flex items-center space-x-1">
+          <Link
+            href="/leads"
+            className="text-xs font-bold text-[#00d4ff] hover:underline flex items-center space-x-1"
+          >
             <span>Manage All Contacts</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
@@ -98,14 +103,19 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Sales Pipeline Kanban Preview */}
+      {/* Kanban Pipeline Preview */}
       <div className="space-y-4 pt-2">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-white tracking-tight">Deals & Sales Pipeline</h2>
-            <p className="text-xs text-[#a0a0b0]">Advance deals across stages with automated subtotal metrics.</p>
+            <p className="text-xs text-[#a0a0b0]">
+              Advance deals across stages with automated subtotal metrics.
+            </p>
           </div>
-          <Link href="/deals" className="text-xs font-bold text-[#00d4ff] hover:underline flex items-center space-x-1">
+          <Link
+            href="/deals"
+            className="text-xs font-bold text-[#00d4ff] hover:underline flex items-center space-x-1"
+          >
             <span>Full Kanban View</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
