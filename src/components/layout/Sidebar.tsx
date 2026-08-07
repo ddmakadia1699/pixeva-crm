@@ -26,7 +26,7 @@ const NAV_ITEMS = [
   { label: 'Invoices & Billing', href: '/invoices', icon: Receipt },
   { label: 'Contracts & E-Sign', href: '/contracts', icon: FileSignature },
   { label: 'AI Galleries & QR Cards', href: '/galleries', icon: QrCode, badge: 'AI Selfie' },
-  { label: 'AWS Lambda Jobs', href: '/lambda-tasks', icon: Cpu, badge: 'Serverless' },
+  { label: 'Studio Automations', href: '/lambda-tasks', icon: Cpu, badge: 'Automated' },
   { label: 'System & API Keys', href: '/settings', icon: Settings2 },
 ];
 

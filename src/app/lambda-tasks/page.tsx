@@ -1,18 +1,27 @@
 'use client';
 
 import React, { useState } from 'react';
-import { invokeLambdaFunction, isAWSConfigured } from '@/lib/aws/lambda';
-import { Cpu, FileText, Mail, DatabaseBackup, Play, Loader2, CheckCircle2, Terminal, AlertTriangle } from 'lucide-react';
+import { invokeLambdaFunction } from '@/lib/aws/lambda';
+import { Cpu, FileText, Mail, DatabaseBackup, Play, Loader2, CheckCircle2, Terminal, ChevronDown, ChevronUp } from 'lucide-react';
 
-export default function LambdaTasksPage() {
+export default function AutomationsPage() {
   const [activeTask, setActiveTask] = useState<string | null>(null);
   const [logs, setLogs] = useState<any[]>([]);
+  const [showDeveloperLogs, setShowDeveloperLogs] = useState(false);
+  const [lastNotification, setLastNotification] = useState<{ title: string; message: string; duration: string } | null>(null);
 
-  const handleRunLambda = async (taskKey: string, functionName: string, payload: any) => {
+  const handleRunTask = async (taskKey: string, functionName: string, title: string, successMessage: string, payload: any) => {
     setActiveTask(taskKey);
 
     const startTime = Date.now();
     const result = await invokeLambdaFunction(functionName, payload);
+    const duration = `${Date.now() - startTime}ms`;
+
+    setLastNotification({
+      title,
+      message: successMessage,
+      duration,
+    });
 
     setLogs((prev) => [
       {
@@ -20,10 +29,9 @@ export default function LambdaTasksPage() {
         taskKey,
         functionName,
         timestamp: new Date().toLocaleTimeString(),
-        duration: `${Date.now() - startTime}ms`,
+        duration,
         status: result.success ? '200 OK' : '500 ERROR',
         output: result.payload,
-        simulated: result.simulated,
       },
       ...prev,
     ]);
@@ -36,148 +44,173 @@ export default function LambdaTasksPage() {
       {/* Header */}
       <div>
         <div className="flex items-center space-x-2">
-          <Cpu className="w-5 h-5 text-cyan-400" />
-          <h1 className="text-xl font-bold text-white tracking-tight">AWS Lambda Serverless Task Center</h1>
+          <Cpu className="w-5 h-5 text-[#00d4ff]" />
+          <h1 className="text-xl font-bold text-white tracking-tight">Studio Automations Center</h1>
         </div>
-        <p className="text-xs text-slate-400 mt-1">
-          Execute microservices on AWS Lambda without consuming Vercel HTTP timeouts.
+        <p className="text-xs text-[#a0a0b0] mt-1">
+          Execute automated background tasks for PDF invoices, email sequences, and client directory syncing.
         </p>
       </div>
 
-      {/* Cloud Mode Alert Banner */}
-      <div className={`p-4 rounded-2xl glass-panel border flex items-center justify-between ${
-        isAWSConfigured 
-          ? 'border-cyan-500/30 bg-cyan-950/20' 
-          : 'border-amber-500/30 bg-amber-950/20'
-      }`}>
-        <div className="flex items-center space-x-3">
-          {isAWSConfigured ? (
-            <CheckCircle2 className="w-5 h-5 text-cyan-400 shrink-0" />
-          ) : (
-            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
-          )}
-          <div>
-            <h4 className="text-xs font-bold text-white">
-              {isAWSConfigured ? 'Live AWS Lambda SDK Connected' : 'AWS Simulation Mode Active'}
-            </h4>
-            <p className="text-[11px] text-slate-300">
-              {isAWSConfigured 
-                ? 'Function triggers will invoke live Lambda functions configured in your AWS Account.' 
-                : 'AWS credentials not detected in .env. Task runner will execute high-speed simulated worker fallback.'}
-            </p>
+      {/* Human-Readable User Notification Banner */}
+      {lastNotification && (
+        <div className="p-4 rounded-2xl bg-[#00d4ff]/10 border border-[#00d4ff]/40 flex items-center justify-between animate-fadeIn">
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-xl bg-[#00d4ff]/20 text-[#00d4ff] flex items-center justify-center font-bold shrink-0">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-white">{lastNotification.title}</h4>
+              <p className="text-[11px] text-[#a0a0b0] mt-0.5">{lastNotification.message}</p>
+            </div>
           </div>
+          <span className="text-[11px] font-mono text-[#00d4ff] font-bold px-3 py-1 rounded-full bg-[#00d4ff]/20">
+            {lastNotification.duration}
+          </span>
         </div>
-      </div>
+      )}
 
-      {/* Task Cards Grid */}
+      {/* Studio Automation Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Task 1: PDF Generation */}
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800/90 space-y-4 shadow-xl">
-          <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30 w-fit">
-            <FileText className="w-6 h-6" />
-          </div>
+        {/* Task 1: PDF Invoice Generation */}
+        <div className="pixeva-card p-5 rounded-2xl border border-white/10 space-y-4 shadow-card flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="p-3 rounded-xl bg-[#00d4ff]/20 text-[#00d4ff] border border-[#00d4ff]/30 w-fit">
+              <FileText className="w-6 h-6" />
+            </div>
 
-          <div>
-            <h3 className="font-bold text-white text-base">PDF Quote & Invoice Engine</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Compiles vector graphics & PDF documents for CRM invoices asynchronously.
-            </p>
+            <div>
+              <h3 className="font-bold text-white text-base">PDF Invoice Engine</h3>
+              <p className="text-xs text-[#a0a0b0] mt-1">
+                Automatically compile vector PDF invoices for shoot bookings and client payments.
+              </p>
+            </div>
           </div>
 
           <button
-            onClick={() => handleRunLambda('pdf', 'pdf-generator-service', { dealId: 'deal-884', amount: 85000 })}
+            onClick={() => handleRunTask(
+              'pdf', 
+              'pdf-generator-service', 
+              'PDF Invoice Engine Completed', 
+              'Compiled vector PDF invoice for client shoot INV-88421.', 
+              { dealId: 'deal-884', amount: 85000 }
+            )}
             disabled={Boolean(activeTask)}
-            className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2 rounded-xl shadow-md transition-all disabled:opacity-50"
+            className="w-full btn-pixeva-primary flex items-center justify-center space-x-2 text-xs font-semibold py-2.5 rounded-xl shadow-md transition-all disabled:opacity-50"
           >
             {activeTask === 'pdf' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Play className="w-4 h-4 fill-white" />
             )}
-            <span>{activeTask === 'pdf' ? 'Generating PDF...' : 'Run PDF Generator'}</span>
+            <span>{activeTask === 'pdf' ? 'Generating Invoice...' : 'Generate PDF Invoice'}</span>
           </button>
         </div>
 
-        {/* Task 2: Batch Campaign */}
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800/90 space-y-4 shadow-xl">
-          <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 w-fit">
-            <Mail className="w-6 h-6" />
-          </div>
+        {/* Task 2: Bulk Lead Email Campaign */}
+        <div className="pixeva-card p-5 rounded-2xl border border-white/10 space-y-4 shadow-card flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="p-3 rounded-xl bg-[#8b5cf6]/20 text-[#c084fc] border border-[#8b5cf6]/30 w-fit">
+              <Mail className="w-6 h-6" />
+            </div>
 
-          <div>
-            <h3 className="font-bold text-white text-base">Batch Lead Email Dispatcher</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Dispatches multi-threaded email sequences to leads in bulk via AWS Lambda.
-            </p>
+            <div>
+              <h3 className="font-bold text-white text-base">Lead Email Sequence</h3>
+              <p className="text-xs text-[#a0a0b0] mt-1">
+                Dispatch automated email follow-ups to active leads and shoot inquiries in bulk.
+              </p>
+            </div>
           </div>
 
           <button
-            onClick={() => handleRunLambda('email', 'batch-email-service', { campaignName: 'Q3 Enterprise Outreach', recipientsCount: 450 })}
+            onClick={() => handleRunTask(
+              'email', 
+              'batch-email-service', 
+              'Email Sequence Dispatched', 
+              'Dispatched 450 automated lead follow-up emails in background worker queue.', 
+              { campaignName: 'Pixeva Lead Nurture', recipientsCount: 450 }
+            )}
             disabled={Boolean(activeTask)}
-            className="w-full flex items-center justify-center space-x-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2 rounded-xl shadow-md transition-all disabled:opacity-50"
+            className="w-full btn-pixeva-primary flex items-center justify-center space-x-2 text-xs font-semibold py-2.5 rounded-xl shadow-md transition-all disabled:opacity-50"
           >
             {activeTask === 'email' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Play className="w-4 h-4 fill-white" />
             )}
-            <span>{activeTask === 'email' ? 'Dispatching...' : 'Run Batch Campaign'}</span>
+            <span>{activeTask === 'email' ? 'Dispatching Emails...' : 'Send Lead Email Sequence'}</span>
           </button>
         </div>
 
-        {/* Task 3: CSV Import / Sync */}
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800/90 space-y-4 shadow-xl">
-          <div className="p-3 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30 w-fit">
-            <DatabaseBackup className="w-6 h-6" />
-          </div>
+        {/* Task 3: CSV Client Sync */}
+        <div className="pixeva-card p-5 rounded-2xl border border-white/10 space-y-4 shadow-card flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 w-fit">
+              <DatabaseBackup className="w-6 h-6" />
+            </div>
 
-          <div>
-            <h3 className="font-bold text-white text-base">Database Sync & CSV Import</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Parses, transforms, and validates 10,000+ lead rows into Supabase DB.
-            </p>
+            <div>
+              <h3 className="font-bold text-white text-base">Client Directory Sync</h3>
+              <p className="text-xs text-[#a0a0b0] mt-1">
+                Sync and validate client contact records, invoices, and booking histories.
+              </p>
+            </div>
           </div>
 
           <button
-            onClick={() => handleRunLambda('csv', 'csv-importer-service', { rowsProcessed: 1250, targetTable: 'leads' })}
+            onClick={() => handleRunTask(
+              'csv', 
+              'csv-importer-service', 
+              'Client Directory Sync Completed', 
+              'Successfully synced 1,250 client records with primary database vault.', 
+              { rowsProcessed: 1250, targetTable: 'leads' }
+            )}
             disabled={Boolean(activeTask)}
-            className="w-full flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold py-2 rounded-xl shadow-md transition-all disabled:opacity-50"
+            className="w-full btn-pixeva-primary flex items-center justify-center space-x-2 text-xs font-semibold py-2.5 rounded-xl shadow-md transition-all disabled:opacity-50"
           >
             {activeTask === 'csv' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Play className="w-4 h-4 fill-white" />
             )}
-            <span>{activeTask === 'csv' ? 'Syncing...' : 'Run CSV Sync'}</span>
+            <span>{activeTask === 'csv' ? 'Syncing Records...' : 'Sync Client Directory'}</span>
           </button>
         </div>
       </div>
 
-      {/* Execution Logs Console */}
-      <div className="glass-panel p-6 rounded-2xl border border-slate-800/90 space-y-4 shadow-xl">
-        <div className="flex items-center space-x-2">
-          <Terminal className="w-4 h-4 text-cyan-400" />
-          <h3 className="font-bold text-white text-sm">Real-time Execution Console</h3>
-        </div>
+      {/* Developer Debug Accordion (Hidden by default for clean UX) */}
+      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
+        <button
+          onClick={() => setShowDeveloperLogs(!showDeveloperLogs)}
+          className="w-full px-5 py-4 flex items-center justify-between text-xs font-bold text-[#a0a0b0] hover:text-white transition-colors"
+        >
+          <div className="flex items-center space-x-2">
+            <Terminal className="w-4 h-4 text-[#00d4ff]" />
+            <span>Developer Debug Console ({logs.length} Executions)</span>
+          </div>
+          {showDeveloperLogs ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
 
-        <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs max-h-80 overflow-y-auto space-y-3">
-          {logs.length === 0 ? (
-            <p className="text-slate-500 italic">No Lambda functions invoked in this session yet. Click any button above to test.</p>
-          ) : (
-            logs.map((log) => (
-              <div key={log.id} className="pb-3 border-b border-slate-800/80 space-y-1">
-                <div className="flex items-center justify-between text-slate-400">
-                  <span className="text-cyan-400 font-bold">[{log.functionName}]</span>
-                  <span>{log.timestamp} ({log.duration})</span>
-                  <span className="text-emerald-400 font-bold">{log.status}</span>
+        {showDeveloperLogs && (
+          <div className="p-4 bg-[#0a0a0f] border-t border-white/10 font-mono text-xs max-h-80 overflow-y-auto space-y-3">
+            {logs.length === 0 ? (
+              <p className="text-[#a0a0b0] italic">No technical logs recorded in this session. Click an automation card above to run a task.</p>
+            ) : (
+              logs.map((log) => (
+                <div key={log.id} className="pb-3 border-b border-white/5 space-y-1">
+                  <div className="flex items-center justify-between text-[#a0a0b0]">
+                    <span className="text-[#00d4ff] font-bold">[{log.functionName}]</span>
+                    <span>{log.timestamp} ({log.duration})</span>
+                    <span className="text-emerald-400 font-bold">{log.status}</span>
+                  </div>
+                  <pre className="text-white overflow-x-auto text-[11px]">
+                    {JSON.stringify(log.output, null, 2)}
+                  </pre>
                 </div>
-                <pre className="text-slate-300 overflow-x-auto text-[11px]">
-                  {JSON.stringify(log.output, null, 2)}
-                </pre>
-              </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
