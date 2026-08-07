@@ -13,8 +13,11 @@ export default function IntegrationsStatus() {
     setTestingLambda(true);
     setTestResult(null);
 
-    const res = await invokeLambdaFunction('pixeva-system-ping', {
+    const res = await invokeLambdaFunction('pdf-generator-service', {
       source: 'Pixeva System Diagnostics',
+      dealId: 'INV-DIAG-001',
+      clientName: 'Live Diagnostics Test',
+      amount: 50000,
       pingAt: new Date().toISOString(),
     });
 
@@ -175,7 +178,7 @@ export default function IntegrationsStatus() {
             </div>
             <div>
               <h3 className="font-bold text-white text-sm">Live AWS Lambda Diagnostics</h3>
-              <p className="text-xs text-[#a0a0b0]">Send an on-demand invocation test payload to your AWS Lambda worker module.</p>
+              <p className="text-xs text-[#a0a0b0]">Send an on-demand invocation test payload to your live `pdf-generator-service` AWS Lambda function.</p>
             </div>
           </div>
 
@@ -198,7 +201,7 @@ export default function IntegrationsStatus() {
             <div className="flex items-center justify-between text-[#a0a0b0] border-b border-white/10 pb-2">
               <span>Status Code: <strong className="text-[#00d4ff]">{testResult.statusCode}</strong></span>
               <span>Execution Time: <strong className="text-[#8b5cf6]">{testResult.executionTimeMs}ms</strong></span>
-              <span>Mode: <strong className="text-amber-400">{testResult.simulated ? 'Simulated Fallback' : 'Live AWS'}</strong></span>
+              <span>Mode: <strong className="text-emerald-400">{testResult.simulated ? 'Simulated Fallback' : 'Live AWS Account'}</strong></span>
             </div>
             <pre className="text-white overflow-x-auto pt-1">
               {JSON.stringify(testResult.payload, null, 2)}
