@@ -10,12 +10,12 @@ interface KanbanBoardProps {
   onMoveStage: (dealId: string, targetStage: DealStage) => void;
 }
 
-const STAGES: { key: DealStage; label: string; description: string; color: string; badge: string }[] = [
-  { key: 'prospecting', label: '1. New Inquiries', description: 'Fresh client leads', color: 'border-white/10 bg-[#12121a]/60', badge: 'bg-white/10 text-[#a0a0b0]' },
-  { key: 'qualification', label: '2. In Contact', description: 'Discussing requirements', color: 'border-[#00d4ff]/30 bg-[#00d4ff]/5', badge: 'bg-[#00d4ff]/20 text-[#00d4ff]' },
-  { key: 'proposal', label: '3. Proposal Sent', description: 'Price quote sent', color: 'border-[#8b5cf6]/30 bg-[#8b5cf6]/5', badge: 'bg-[#8b5cf6]/20 text-[#8b5cf6]' },
-  { key: 'negotiation', label: '4. Final Review', description: 'Finalizing contract', color: 'border-amber-500/30 bg-amber-500/5', badge: 'bg-amber-500/20 text-amber-300' },
-  { key: 'closed_won', label: '5. Booked & Paid 🎉', description: 'Confirmed shoot', color: 'border-emerald-500/40 bg-emerald-500/10', badge: 'bg-emerald-500/30 text-emerald-300' },
+const STAGES: { key: DealStage; label: string; description: string; badge: string }[] = [
+  { key: 'prospecting', label: '1. New Inquiries', description: 'Fresh client leads', badge: 'bg-white/10 text-[#a0a0b0]' },
+  { key: 'qualification', label: '2. In Contact', description: 'Discussing requirements', badge: 'bg-[#00d4ff]/20 text-[#00d4ff]' },
+  { key: 'proposal', label: '3. Proposal Sent', description: 'Price quote sent', badge: 'bg-[#8b5cf6]/20 text-[#8b5cf6]' },
+  { key: 'negotiation', label: '4. Final Review', description: 'Finalizing contract', badge: 'bg-amber-500/20 text-amber-300' },
+  { key: 'closed_won', label: '5. Booked & Paid 🎉', description: 'Confirmed shoot', badge: 'bg-emerald-500/30 text-emerald-300' },
 ];
 
 export default function KanbanBoard({ deals, onMoveStage }: KanbanBoardProps) {
@@ -28,10 +28,10 @@ export default function KanbanBoard({ deals, onMoveStage }: KanbanBoardProps) {
         return (
           <div
             key={stage.key}
-            className={`pixeva-card p-4 rounded-2xl border ${stage.color} flex flex-col justify-between min-w-[240px] min-h-[460px] shadow-card`}
+            className="p-4 rounded-2xl bg-[#0a0a0f] border border-white/10 flex flex-col justify-between min-w-[240px] min-h-[440px]"
           >
             <div>
-              {/* Stage Header */}
+              {/* Column Header */}
               <div className="flex items-center justify-between mb-1">
                 <h4 className="font-extrabold text-sm text-white tracking-tight">{stage.label}</h4>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${stage.badge}`}>
@@ -40,15 +40,15 @@ export default function KanbanBoard({ deals, onMoveStage }: KanbanBoardProps) {
               </div>
               <p className="text-[11px] text-[#a0a0b0] mb-3">{stage.description}</p>
 
-              {/* Stage Subtotal */}
+              {/* Column Total */}
               <div className="pb-3 mb-4 border-b border-white/10 flex items-center justify-between text-xs">
-                <span className="text-[#a0a0b0] text-[11px]">Stage Total:</span>
+                <span className="text-[#a0a0b0] text-[11px]">Total Value:</span>
                 <span className="font-mono font-extrabold text-[#00d4ff] text-xs" suppressHydrationWarning>
                   {formatCurrency(stageTotal)}
                 </span>
               </div>
 
-              {/* Deal Cards */}
+              {/* Single Clean Deal Cards */}
               <div className="space-y-3">
                 {stageDeals.length === 0 ? (
                   <div className="p-4 rounded-xl border border-dashed border-white/10 text-center text-[#a0a0b0] text-[11px]">
@@ -58,18 +58,18 @@ export default function KanbanBoard({ deals, onMoveStage }: KanbanBoardProps) {
                   stageDeals.map((deal) => (
                     <div
                       key={deal.id}
-                      className="pixeva-card pixeva-card-hover p-4 rounded-xl border border-white/10 bg-[#161622]/90 space-y-3 shadow-md relative group"
+                      className="p-4 rounded-xl bg-[#12121a] border border-white/10 hover:border-[#00d4ff]/50 transition-all space-y-3"
                     >
                       <div>
-                        <h5 className="font-bold text-white text-xs leading-snug group-hover:text-[#00d4ff] transition-colors">
+                        <h5 className="font-bold text-white text-xs leading-snug">
                           {deal.title}
                         </h5>
                         <p className="text-[11px] text-[#a0a0b0] mt-0.5">{deal.company_name}</p>
                       </div>
 
                       <div className="flex items-center justify-between pt-1">
-                        <span className="text-[10px] text-[#a0a0b0] uppercase font-bold tracking-wider">Price</span>
-                        <span className="font-mono font-black text-white text-sm" suppressHydrationWarning>
+                        <span className="text-[10px] text-[#a0a0b0] uppercase font-bold tracking-wider">Amount</span>
+                        <span className="font-mono font-black text-[#00d4ff] text-sm" suppressHydrationWarning>
                           {formatCurrency(deal.amount)}
                         </span>
                       </div>
