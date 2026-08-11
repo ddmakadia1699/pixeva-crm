@@ -22,7 +22,13 @@ import {
   ChevronDown,
   RefreshCw,
   Sparkles,
-  Layers
+  Layers,
+  MoreVertical,
+  Globe,
+  Archive,
+  Copy,
+  Check,
+  Image as ImageIcon
 } from 'lucide-react';
 
 const INITIAL_PROJECTS: Project[] = [
@@ -84,6 +90,15 @@ export default function ProjectsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  // 3-Dots Menu & Portal Settings State
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [portalProject, setPortalProject] = useState<Project | null>(null);
+  const [portalPin, setPortalPin] = useState<string>('0000');
+  const [isEditingPin, setIsEditingPin] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const previewInputRef = useRef<HTMLInputElement>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -157,6 +172,21 @@ export default function ProjectsPage() {
   const handleDeleteSingle = (id: string) => {
     setProjects(projects.filter((p) => p.id !== id));
     setSelectedIds(selectedIds.filter((i) => i !== id));
+  };
+
+  // Portal Link & Archive Handlers
+  const handleCopyPortalLink = (link: string) => {
+    navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handleToggleArchive = (project: Project) => {
+    const nextStatus: ProjectStatus = project.status === 'Active' ? 'Archived' : 'Active';
+    setProjects(
+      projects.map((p) => (p.id === project.id ? { ...p, status: nextStatus } : p))
+    );
+    setOpenMenuId(null);
   };
 
   // Add Submit
@@ -541,22 +571,59 @@ export default function ProjectsPage() {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-5 py-4 text-right space-x-2">
-                        <button
-                          onClick={() => handleOpenEdit(p)}
-                          className="px-3 py-1.5 rounded-lg bg-[#12121a] hover:bg-[#00d4ff]/20 text-white hover:text-[#00d4ff] border border-white/10 hover:border-[#00d4ff]/40 text-xs font-semibold transition-all inline-flex items-center space-x-1"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                          <span>Edit</span>
-                        </button>
+                      <td className="px-5 py-4 text-right relative">
+                        <div className="flex items-center justify-end space-x-1.5">
+                          <button
+                            onClick={() => handleOpenEdit(p)}
+                            className="px-3 py-1.5 rounded-lg bg-[#12121a] hover:bg-[#00d4ff]/20 text-white hover:text-[#00d4ff] border border-white/10 hover:border-[#00d4ff]/40 text-xs font-semibold transition-all inline-flex items-center space-x-1"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Edit</span>
+                          </button>
 
-                        <button
-                          onClick={() => handleDeleteSingle(p.id)}
-                          title="Delete Project"
-                          className="p-1.5 rounded-lg bg-[#12121a] hover:bg-rose-500/20 text-rose-400 border border-white/10 hover:border-rose-500/40 text-xs transition-all inline-flex items-center"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                          {/* 3-Dots Menu */}
+                          <div className="relative">
+                            <button
+                              onClick={() => setOpenMenuId(openMenuId === p.id ? null : p.id)}
+                              className="p-1.5 rounded-lg bg-[#12121a] hover:bg-white/10 text-white border border-white/10 text-xs transition-all inline-flex items-center"
+                              title="More actions"
+                            >
+                              <MoreVertical className="w-4 h-4 text-[#a0a0b0]" />
+                            </button>
+
+                            {openMenuId === p.id && (
+                              <div className="absolute right-0 mt-1 w-52 bg-[#12121a] border border-white/15 rounded-xl shadow-2xl py-1 z-30 animate-fadeIn text-left">
+                                <button
+                                  onClick={() => {
+                                    setPortalProject(p);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-xs font-medium text-white hover:bg-white/10 flex items-center space-x-2 transition-colors"
+                                >
+                                  <Globe className="w-3.5 h-3.5 text-[#00d4ff]" />
+                                  <span>Client Portal Settings</span>
+                                </button>
+                                <button
+                                  onClick={() => handleToggleArchive(p)}
+                                  className="w-full px-3.5 py-2 text-xs font-medium text-[#a0a0b0] hover:text-white hover:bg-white/10 flex items-center space-x-2 transition-colors"
+                                >
+                                  <Archive className="w-3.5 h-3.5 text-[#8b5cf6]" />
+                                  <span>{p.status === 'Active' ? 'Archive Project' : 'Unarchive Project'}</span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleDeleteSingle(p.id);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10 flex items-center space-x-2 transition-colors"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Delete Project</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -881,6 +948,135 @@ export default function ProjectsPage() {
                   {isParsingCsv && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Import Projects</span>
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Client Portal Settings Modal */}
+      {portalProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-lg pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-6 shadow-2xl relative">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <h3 className="font-extrabold text-white text-lg">Client Portal Settings</h3>
+              <button
+                type="button"
+                onClick={() => setPortalProject(null)}
+                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6 text-xs">
+              {/* Client Portal Link Section */}
+              <div className="space-y-1.5">
+                <label className="font-semibold text-white block text-xs">Client Portal Link</label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`https://www.revepod.com/client/${portalProject.id}`}
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white font-mono text-xs focus:outline-none focus:border-[#00d4ff] select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleCopyPortalLink(`https://www.revepod.com/client/${portalProject.id}`)}
+                    className="px-4 py-2.5 rounded-xl bg-[#00d4ff] hover:bg-[#00b8e6] text-black font-bold text-xs flex items-center space-x-1.5 shrink-0 transition-all shadow-md shadow-[#00d4ff]/20"
+                  >
+                    {copiedLink ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Portal PIN Section */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-white block text-xs">Portal PIN</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingPin(!isEditingPin)}
+                    className="text-xs text-[#00d4ff] hover:underline font-semibold"
+                  >
+                    {isEditingPin ? 'Done' : 'Edit'}
+                  </button>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  {portalPin.split('').map((digit, idx) => (
+                    <input
+                      key={idx}
+                      type="text"
+                      maxLength={1}
+                      disabled={!isEditingPin}
+                      value={digit}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const pinArr = portalPin.split('');
+                        pinArr[idx] = val || '0';
+                        setPortalPin(pinArr.join(''));
+                      }}
+                      className="w-12 h-12 text-center text-lg font-bold bg-[#0a0a0f] border border-white/10 rounded-xl text-white focus:outline-none focus:border-[#00d4ff] disabled:opacity-80"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Link Preview Image Section */}
+              <div className="space-y-2">
+                <label className="font-semibold text-white block text-xs">Link Preview Image</label>
+                <p className="text-[11px] text-[#a0a0b0] leading-relaxed">
+                  Shown as the thumbnail when this link is shared (WhatsApp, iMessage, etc). Falls back to your studio logo if you don't upload one.
+                </p>
+
+                <div
+                  onClick={() => previewInputRef.current?.click()}
+                  className="border-2 border-dashed border-white/15 hover:border-[#00d4ff] rounded-2xl p-6 text-center cursor-pointer transition-colors bg-[#0a0a0f] space-y-2"
+                >
+                  <input
+                    ref={previewInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        const file = e.target.files[0];
+                        setPreviewImage(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
+
+                  {previewImage ? (
+                    <div className="space-y-2">
+                      <img src={previewImage} alt="Link Preview" className="max-h-28 mx-auto rounded-xl object-cover border border-white/10" />
+                      <p className="text-[11px] text-[#00d4ff] font-semibold">Click to change thumbnail image</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mx-auto text-[#00d4ff]">
+                        <ImageIcon className="w-5 h-5" />
+                      </div>
+                      <button
+                        type="button"
+                        className="px-4 py-2 rounded-xl bg-[#12121a] text-white border border-white/10 text-xs font-semibold hover:bg-white/10 transition-colors"
+                      >
+                        Upload an image
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
