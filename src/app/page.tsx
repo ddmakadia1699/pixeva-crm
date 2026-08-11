@@ -241,7 +241,7 @@ export default function DashboardPage() {
               <span className="w-2 h-2 rounded-full bg-[#a855f7]"></span>
               Team
             </h2>
-            <Link href="#" className="text-xs font-semibold text-[#a0a0b0] hover:text-white transition-colors">
+            <Link href="/team" className="text-xs font-semibold text-[#a0a0b0] hover:text-white transition-colors">
               View all
             </Link>
           </div>
