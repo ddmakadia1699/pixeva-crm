@@ -627,12 +627,15 @@ export default function EnquiriesListTab({
                 </div>
                 <div>
                   <label className="font-medium text-white block mb-1">Received On</label>
-                  <input
-                    type="date"
-                    value={formData.received_on}
-                    onChange={(e) => setFormData({ ...formData, received_on: e.target.value })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
-                  />
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={formData.received_on}
+                      onChange={(e) => setFormData({ ...formData, received_on: e.target.value })}
+                      className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff] [color-scheme:dark]"
+                    />
+                    <Calendar className="w-4 h-4 text-[#00d4ff] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
                 </div>
               </div>
 
