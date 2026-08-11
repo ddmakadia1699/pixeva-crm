@@ -39,9 +39,20 @@ export default function EnquiriesPage() {
     setEnquiries(enquiries.map((e) => (e.id === id ? { ...e, status } : e)));
   };
 
-  // Delete
+  // Delete Single
   const handleDeleteEnquiry = (id: string) => {
     setEnquiries(enquiries.filter((e) => e.id !== id));
+  };
+
+  // Delete Batch
+  const handleDeleteBatchEnquiries = (ids: string[]) => {
+    const idSet = new Set(ids);
+    setEnquiries(enquiries.filter((e) => !idSet.has(e.id)));
+  };
+
+  // Clear All
+  const handleClearAllEnquiries = () => {
+    setEnquiries([]);
   };
 
   return (
@@ -61,6 +72,8 @@ export default function EnquiriesPage() {
           onImportEnquiries={handleImportEnquiries}
           onUpdateStatus={handleUpdateStatus}
           onDeleteEnquiry={handleDeleteEnquiry}
+          onDeleteBatchEnquiries={handleDeleteBatchEnquiries}
+          onClearAllEnquiries={handleClearAllEnquiries}
         />
       )}
 

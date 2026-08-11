@@ -31,6 +31,8 @@ interface EnquiriesListTabProps {
   onImportEnquiries: (imported: Omit<Enquiry, 'id' | 'created_at'>[]) => void;
   onUpdateStatus: (id: string, status: EnquiryStatus) => void;
   onDeleteEnquiry: (id: string) => void;
+  onDeleteBatchEnquiries?: (ids: string[]) => void;
+  onClearAllEnquiries?: () => void;
 }
 
 export default function EnquiriesListTab({
@@ -39,10 +41,13 @@ export default function EnquiriesListTab({
   onImportEnquiries,
   onUpdateStatus,
   onDeleteEnquiry,
+  onDeleteBatchEnquiries,
+  onClearAllEnquiries,
 }: EnquiriesListTabProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedSource, setSelectedSource] = useState<string>('all');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -89,11 +94,50 @@ export default function EnquiriesListTab({
     return matchesSearch && matchesStatus && matchesSource;
   });
 
+  // Checkbox Selection & Batch Delete
+  const handleToggleSelectAll = () => {
+    if (selectedIds.length === filteredEnquiries.length && filteredEnquiries.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredEnquiries.map((e) => e.id));
+    }
+  };
+
+  const handleToggleSelect = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(selectedIds.filter((item) => item !== id));
+    } else {
+      setSelectedIds([...selectedIds, id]);
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+    if (onDeleteBatchEnquiries) {
+      onDeleteBatchEnquiries(selectedIds);
+    } else {
+      selectedIds.forEach((id) => onDeleteEnquiry(id));
+    }
+    setSelectedIds([]);
+  };
+
+  const handleClearAll = () => {
+    if (window.confirm('Are you sure you want to delete all enquiries from the list?')) {
+      if (onClearAllEnquiries) {
+        onClearAllEnquiries();
+      } else {
+        enquiries.forEach((e) => onDeleteEnquiry(e.id));
+      }
+      setSelectedIds([]);
+    }
+  };
+
   // Reset Filters
   const handleResetFilters = () => {
     setSearchTerm('');
     setSelectedStatus('all');
     setSelectedSource('all');
+    setSelectedIds([]);
   };
 
   // Add Submit
@@ -361,6 +405,27 @@ export default function EnquiriesListTab({
 
         {/* Right Side: Action Buttons */}
         <div className="flex items-center space-x-2 shrink-0">
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleDeleteSelected}
+              className="flex items-center space-x-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 transition-all animate-fadeIn"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Selected ({selectedIds.length})</span>
+            </button>
+          )}
+
+          {enquiries.length > 0 && (
+            <button
+              onClick={handleClearAll}
+              className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 transition-all"
+              title="Delete all enquiries from list"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete All</span>
+            </button>
+          )}
+
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="btn-pixeva-primary flex items-center space-x-1.5 text-xs font-bold px-3.5 py-2 rounded-xl shadow-md transition-all"
@@ -390,9 +455,16 @@ export default function EnquiriesListTab({
 
       {/* Showing Counter & Table Header Bar */}
       <div className="flex items-center justify-between px-1 text-xs text-[#a0a0b0]">
-        <div className="font-semibold">
-          Showing <span className="text-white font-bold">{filteredEnquiries.length}</span> of{' '}
-          <span className="text-white font-bold">{enquiries.length}</span>
+        <div className="font-semibold flex items-center space-x-2">
+          <span>
+            Showing <span className="text-white font-bold">{filteredEnquiries.length}</span> of{' '}
+            <span className="text-white font-bold">{enquiries.length}</span>
+          </span>
+          {selectedIds.length > 0 && (
+            <span className="text-[#00d4ff] font-bold">
+              ({selectedIds.length} selected)
+            </span>
+          )}
         </div>
         <div className="text-[11px]">Actions Available</div>
       </div>
@@ -403,6 +475,15 @@ export default function EnquiriesListTab({
           <table className="w-full text-left text-xs text-[#a0a0b0]">
             <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-semibold border-b border-white/10 text-[10px]">
               <tr>
+                <th className="w-10 px-4 py-3.5">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.length > 0 && selectedIds.length === filteredEnquiries.length}
+                    onChange={handleToggleSelectAll}
+                    className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
+                    title="Select all"
+                  />
+                </th>
                 <th className="px-5 py-3.5">Name & Contact</th>
                 <th className="px-5 py-3.5">Event & Date</th>
                 <th className="px-5 py-3.5">Source</th>
@@ -414,7 +495,7 @@ export default function EnquiriesListTab({
             <tbody className="divide-y divide-white/5">
               {filteredEnquiries.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12">
+                  <td colSpan={7} className="text-center py-12">
                     <div className="max-w-xs mx-auto space-y-3">
                       <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto text-[#a0a0b0]">
                         <Search className="w-6 h-6" />
@@ -437,9 +518,19 @@ export default function EnquiriesListTab({
                 filteredEnquiries.map((enq) => {
                   const isPdfRunning = activeLambdaTask === `pdf-${enq.id}`;
                   const isEmailRunning = activeLambdaTask === `email-${enq.id}`;
+                  const isSelected = selectedIds.includes(enq.id);
 
                   return (
-                    <tr key={enq.id} className="hover:bg-white/5 transition-colors group">
+                    <tr key={enq.id} className={`hover:bg-white/5 transition-colors group ${isSelected ? 'bg-[#00d4ff]/5' : ''}`}>
+                      {/* Checkbox */}
+                      <td className="w-10 px-4 py-4">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelect(enq.id)}
+                          className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
+                        />
+                      </td>
                       {/* Name & Contact */}
                       <td className="px-5 py-4">
                         <div className="flex items-center space-x-3">
