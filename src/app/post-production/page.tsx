@@ -128,7 +128,9 @@ export default function PostProductionPage() {
 
   // Modal Inputs
   const [memberInput, setMemberInput] = useState('Dhruvi Patel');
-  const [galleryInput, setGalleryInput] = useState('');
+  const [galleryUrl, setGalleryUrl] = useState('');
+  const [galleryPassword, setGalleryPassword] = useState('');
+  const [galleryDate, setGalleryDate] = useState('');
 
   // CSV Drag State
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -216,18 +218,33 @@ export default function PostProductionPage() {
     setAssigningItem(null);
   };
 
-  // Add Gallery Submit
+  // Add Gallery Triggers
+  const handleOpenGalleryModal = (item: Deliverable) => {
+    setGalleryItem(item);
+    setGalleryUrl(item.gallery || '');
+    setGalleryPassword('');
+    setGalleryDate(new Date().toISOString().slice(0, 10));
+  };
+
   const handleGallerySubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!galleryItem || !galleryInput) return;
+    if (!galleryItem || !galleryUrl) return;
 
     setDeliverables(
       deliverables.map((d) =>
-        d.id === galleryItem.id ? { ...d, gallery: galleryInput, client_access: 'Active Link' } : d
+        d.id === galleryItem.id
+          ? {
+              ...d,
+              gallery: galleryUrl,
+              client_access: galleryPassword ? 'Protected Link' : 'Active Link',
+            }
+          : d
       )
     );
     setGalleryItem(null);
-    setGalleryInput('');
+    setGalleryUrl('');
+    setGalleryPassword('');
+    setGalleryDate('');
   };
 
   // Export CSV
@@ -608,7 +625,7 @@ export default function PostProductionPage() {
                           </a>
                         ) : (
                           <button
-                            onClick={() => setGalleryItem(item)}
+                            onClick={() => handleOpenGalleryModal(item)}
                             className="text-xs text-[#00d4ff] hover:underline font-semibold flex items-center space-x-1"
                           >
                             <Plus className="w-3 h-3" />
@@ -704,44 +721,69 @@ export default function PostProductionPage() {
       {/* Add Gallery Modal */}
       {galleryItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
+          <div className="w-full max-w-sm pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl relative">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-extrabold text-white text-base">Add Gallery Link</h3>
+              <h3 className="font-extrabold text-white text-base">Add Gallery</h3>
               <button
                 type="button"
                 onClick={() => setGalleryItem(null)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5"
+                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleGallerySubmit} className="space-y-4 text-xs">
+            <form onSubmit={handleGallerySubmit} className="space-y-3.5 text-xs">
+              {/* Field 1: Gallery Link */}
               <div>
-                <label className="font-semibold text-white block mb-1">Gallery URL</label>
                 <input
-                  type="url"
+                  type="text"
                   required
-                  value={galleryInput}
-                  onChange={(e) => setGalleryInput(e.target.value)}
-                  placeholder="https://pixeva-crm.vercel.app/galleries/demo"
+                  value={galleryUrl}
+                  onChange={(e) => setGalleryUrl(e.target.value)}
+                  placeholder="Gallery link…"
                   className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
                 />
               </div>
 
+              {/* Field 2: Password (optional) */}
+              <div>
+                <input
+                  type="password"
+                  value={galleryPassword}
+                  onChange={(e) => setGalleryPassword(e.target.value)}
+                  placeholder="Password (optional)"
+                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                />
+              </div>
+
+              {/* Field 3: Date Picker */}
+              <div>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={galleryDate}
+                    onChange={(e) => setGalleryDate(e.target.value)}
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff] [color-scheme:dark]"
+                  />
+                  <Calendar className="w-4 h-4 text-[#00d4ff] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
               <div className="pt-3 flex justify-end space-x-3 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => setGalleryItem(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#a0a0b0] hover:bg-white/5"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#a0a0b0] hover:text-white hover:bg-white/5 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-pixeva-primary px-5 py-2 rounded-xl text-xs font-bold"
+                  className="btn-pixeva-primary px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-[#00d4ff]/20"
                 >
-                  Save Gallery
+                  Save
                 </button>
               </div>
             </form>
