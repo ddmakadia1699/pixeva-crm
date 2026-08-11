@@ -62,6 +62,21 @@ export interface Enquiry {
 
 export type DealStage = 'prospecting' | 'qualification' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 
+export type ProjectStatus = 'Active' | 'Archived' | 'Completed' | 'On Hold';
+export type ContractStatus = 'Accepted' | 'Pending' | 'Draft' | 'Declined';
+
+export interface Project {
+  id: string;
+  name: string;
+  type: string;
+  client: string;
+  first_event: string;
+  status: ProjectStatus;
+  completeness: string;
+  contract: ContractStatus;
+  created_at: string;
+}
+
 export interface Deal {
   id: string;
   title: string;

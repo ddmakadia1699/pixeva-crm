@@ -73,7 +73,7 @@ export default function DashboardPage() {
               <span className="w-2 h-2 rounded-full bg-[#8b5cf6]"></span>
               Projects
             </h2>
-            <Link href="/deals" className="text-xs font-semibold text-[#a0a0b0] hover:text-white transition-colors">
+            <Link href="/projects" className="text-xs font-semibold text-[#a0a0b0] hover:text-white transition-colors">
               View all
             </Link>
           </div>
