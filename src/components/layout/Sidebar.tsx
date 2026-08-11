@@ -19,13 +19,15 @@ import {
   Inbox,
   Briefcase,
   Layers,
-  MessageSquare
+  MessageSquare,
+  DollarSign
 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Enquiries', href: '/enquiries', icon: Inbox, badge: 'RevePod OS' },
   { label: 'Projects', href: '/projects', icon: Briefcase },
+  { label: 'Finances', href: '/finances', icon: DollarSign },
   { label: 'Post Production', href: '/post-production', icon: Layers },
   { label: 'Client Requests', href: '/client-requests', icon: MessageSquare },
   { label: 'Team', href: '/team', icon: Users },

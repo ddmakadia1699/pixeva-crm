@@ -110,7 +110,7 @@ export default function DashboardPage() {
               <span className="w-2 h-2 rounded-full bg-[#10b981]"></span>
               Finances
             </h2>
-            <Link href="/invoices" className="text-xs font-semibold text-[#a0a0b0] hover:text-white transition-colors">
+            <Link href="/finances" className="text-xs font-semibold text-[#a0a0b0] hover:text-white transition-colors">
               View all
             </Link>
           </div>
