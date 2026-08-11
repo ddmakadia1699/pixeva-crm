@@ -74,6 +74,7 @@ export interface Project {
   status: ProjectStatus;
   completeness: string;
   contract: ContractStatus;
+  remark?: string;
   created_at: string;
 }
 

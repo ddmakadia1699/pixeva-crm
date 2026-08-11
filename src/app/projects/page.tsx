@@ -100,6 +100,11 @@ export default function ProjectsPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const previewInputRef = useRef<HTMLInputElement>(null);
 
+  // Archive Modal State
+  const [archivingProject, setArchivingProject] = useState<Project | null>(null);
+  const [archiveRemark, setArchiveRemark] = useState<string>('Completed');
+  const [customRemark, setCustomRemark] = useState<string>('');
+
   // Form State
   const [formData, setFormData] = useState({
     name: '',
@@ -181,12 +186,35 @@ export default function ProjectsPage() {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const handleToggleArchive = (project: Project) => {
-    const nextStatus: ProjectStatus = project.status === 'Active' ? 'Archived' : 'Active';
-    setProjects(
-      projects.map((p) => (p.id === project.id ? { ...p, status: nextStatus } : p))
-    );
+  const handleOpenArchiveModal = (project: Project) => {
+    if (project.status === 'Active') {
+      setArchivingProject(project);
+      setArchiveRemark('Completed');
+      setCustomRemark('');
+    } else {
+      // Unarchive directly if already archived
+      setProjects(
+        projects.map((p) => (p.id === project.id ? { ...p, status: 'Active', remark: undefined } : p))
+      );
+    }
     setOpenMenuId(null);
+  };
+
+  const handleConfirmArchive = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!archivingProject) return;
+
+    const finalRemark = archiveRemark === 'Custom' ? customRemark : archiveRemark;
+
+    setProjects(
+      projects.map((p) =>
+        p.id === archivingProject.id
+          ? { ...p, status: 'Archived', remark: finalRemark || 'Completed' }
+          : p
+      )
+    );
+
+    setArchivingProject(null);
   };
 
   // Add Submit
@@ -537,15 +565,22 @@ export default function ProjectsPage() {
 
                       {/* Status */}
                       <td className="px-5 py-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                            p.status === 'Active'
-                              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                              : 'bg-white/10 text-white/60 border-white/20'
-                          }`}
-                        >
-                          {p.status}
-                        </span>
+                        <div className="space-y-1">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-xs font-bold border inline-block ${
+                              p.status === 'Active'
+                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                                : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                            }`}
+                          >
+                            {p.status}
+                          </span>
+                          {p.remark && (
+                            <div className="text-[10px] text-[#a0a0b0] font-medium">
+                              Remark: <span className="text-white font-semibold">{p.remark}</span>
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       {/* Completeness */}
@@ -604,7 +639,7 @@ export default function ProjectsPage() {
                                   <span>Client Portal Settings</span>
                                 </button>
                                 <button
-                                  onClick={() => handleToggleArchive(p)}
+                                  onClick={() => handleOpenArchiveModal(p)}
                                   className="w-full px-3.5 py-2 text-xs font-medium text-[#a0a0b0] hover:text-white hover:bg-white/10 flex items-center space-x-2 transition-colors"
                                 >
                                   <Archive className="w-3.5 h-3.5 text-[#8b5cf6]" />
@@ -949,6 +984,86 @@ export default function ProjectsPage() {
                   <span>Import Projects</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Archive Project Modal */}
+      {archivingProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-5 shadow-2xl relative">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="font-extrabold text-white text-lg">Archive Project</h3>
+              <button
+                type="button"
+                onClick={() => setArchivingProject(null)}
+                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <p className="text-[#a0a0b0] text-xs leading-relaxed">
+                Archived projects are hidden from the active list and their post-production tasks. You can unarchive anytime.
+              </p>
+
+              <form onSubmit={handleConfirmArchive} className="space-y-4">
+                <div>
+                  <label className="font-semibold text-white block mb-2 text-xs">Remark</label>
+
+                  {/* Quick Chips */}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {['Completed', 'Cancelled', 'Postponed'].map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => {
+                          setArchiveRemark(option);
+                          setCustomRemark('');
+                        }}
+                        className={`px-3.5 py-1.5 rounded-xl font-semibold text-xs transition-all border ${
+                          archiveRemark === option && !customRemark
+                            ? 'bg-[#00d4ff]/20 text-[#00d4ff] border-[#00d4ff]/50 shadow-md shadow-[#00d4ff]/10'
+                            : 'bg-[#0a0a0f] text-[#a0a0b0] border-white/10 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Custom remark text input */}
+                  <input
+                    type="text"
+                    value={customRemark}
+                    onChange={(e) => {
+                      setCustomRemark(e.target.value);
+                      setArchiveRemark('Custom');
+                    }}
+                    placeholder="Or type a custom remark…"
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff] text-xs"
+                  />
+                </div>
+
+                <div className="pt-3 flex justify-end space-x-3 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setArchivingProject(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-[#a0a0b0] hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl text-xs font-bold bg-rose-500 hover:bg-rose-600 text-white shadow-lg shadow-rose-500/20 transition-all"
+                  >
+                    Archive Project
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
