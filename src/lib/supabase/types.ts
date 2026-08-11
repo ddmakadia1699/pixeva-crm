@@ -1,5 +1,8 @@
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'unqualified';
 
+export type EnquiryStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'booked' | 'unqualified';
+export type EnquirySource = 'Landing Page' | 'Website' | 'Instagram' | 'Referral' | 'Google Ads' | 'Inbound API';
+
 export interface Lead {
   id: string;
   first_name: string;
@@ -10,6 +13,21 @@ export interface Lead {
   status: LeadStatus;
   estimated_value: number;
   source: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface Enquiry {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  event_name: string;
+  event_type: 'wedding' | 'corporate' | 'portrait' | 'party' | 'travel';
+  event_date?: string;
+  estimated_budget: number;
+  source: EnquirySource;
+  status: EnquiryStatus;
   notes?: string;
   created_at: string;
 }
@@ -34,3 +52,4 @@ export interface Activity {
   description: string;
   created_at: string;
 }
+

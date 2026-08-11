@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Lead, Deal } from './types';
+import { Lead, Deal, Enquiry } from './types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -10,8 +10,82 @@ export const supabase = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
+export const MOCK_ENQUIRIES: Enquiry[] = [
+  {
+    id: 'enq-101',
+    name: 'Eleanor Vance',
+    email: 'eleanor@vance-events.com',
+    phone: '+1 (555) 432-8901',
+    event_name: 'Vance Corporate Annual Gala',
+    event_type: 'corporate',
+    event_date: '2026-11-15',
+    estimated_budget: 15000,
+    source: 'Landing Page',
+    status: 'new',
+    notes: 'Looking for full team coverage + instant QR selfie tent card system.',
+    created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+  },
+  {
+    id: 'enq-102',
+    name: 'Julian & Sophia',
+    email: 'sophia@designs.co',
+    phone: '+1 (555) 901-2345',
+    event_name: 'Julian & Sophia Luxury Destination Wedding',
+    event_type: 'wedding',
+    event_date: '2026-12-04',
+    estimated_budget: 28000,
+    source: 'Instagram',
+    status: 'contacted',
+    notes: '3-day wedding package inquiry with drone coverage & pre-wedding shoot.',
+    created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+  },
+  {
+    id: 'enq-103',
+    name: 'Dr. Alistair Thorne',
+    email: 'athorne@biotech.org',
+    phone: '+1 (555) 312-6789',
+    event_name: 'BioTech Global Summit 2026',
+    event_type: 'corporate',
+    event_date: '2026-10-20',
+    estimated_budget: 18500,
+    source: 'Website',
+    status: 'qualified',
+    notes: 'Keynote & breakout room photo + video team needed.',
+    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+  },
+  {
+    id: 'enq-104',
+    name: 'Maya Lin',
+    email: 'maya.lin@fashionweek.io',
+    phone: '+1 (555) 789-0123',
+    event_name: 'Autumn Haute Couture Runway',
+    event_type: 'portrait',
+    event_date: '2026-09-30',
+    estimated_budget: 9500,
+    source: 'Referral',
+    status: 'proposal',
+    notes: 'Fashion runway highlights & backstage portrait studio setup.',
+    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+  },
+  {
+    id: 'enq-105',
+    name: 'Marcus Brody',
+    email: 'mbrody@archeo.edu',
+    phone: '+1 (555) 654-3210',
+    event_name: 'Heritage Museum Gala & Auction',
+    event_type: 'party',
+    event_date: '2026-12-18',
+    estimated_budget: 12000,
+    source: 'Google Ads',
+    status: 'booked',
+    notes: 'Deposit paid, contract pending final signature.',
+    created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
+  },
+];
+
 // Initial Mock Data for visual demonstration before Supabase keys are connected
 export const MOCK_LEADS: Lead[] = [
+
   {
     id: 'lead-1',
     first_name: 'Sarah',
