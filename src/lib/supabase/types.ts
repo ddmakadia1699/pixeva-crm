@@ -1,8 +1,5 @@
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'unqualified';
 
-export type EnquiryStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'booked' | 'unqualified';
-export type EnquirySource = 'Landing Page' | 'Website' | 'Instagram' | 'Referral' | 'Google Ads' | 'Inbound API';
-
 export interface Lead {
   id: string;
   first_name: string;
@@ -17,18 +14,49 @@ export interface Lead {
   created_at: string;
 }
 
+export type EnquiryStatus = 
+  | 'new' 
+  | 'contacted' 
+  | 'qualified' 
+  | 'proposal' 
+  | 'booked' 
+  | 'unqualified'
+  | 'New'
+  | 'Follow Up'
+  | 'Meeting Fixed'
+  | 'Proposal Sent'
+  | 'Closed/Lost';
+
+export type EnquirySource = 
+  | 'Landing Page' 
+  | 'Website' 
+  | 'Instagram' 
+  | 'Referral' 
+  | 'Google Ads' 
+  | 'Inbound API'
+  | 'Google'
+  | 'WhatsApp'
+  | 'Facebook'
+  | 'Other';
+
 export interface Enquiry {
   id: string;
   name: string;
+  contact?: string;
   email: string;
   phone?: string;
-  event_name: string;
-  event_type: 'wedding' | 'corporate' | 'portrait' | 'party' | 'travel';
+  event_name?: string;
+  event_type?: 'wedding' | 'corporate' | 'portrait' | 'party' | 'travel' | string;
   event_date?: string;
-  estimated_budget: number;
+  received_on?: string;
+  venue?: string;
+  budget?: string;
+  guests?: string;
+  estimated_budget?: number;
   source: EnquirySource;
   status: EnquiryStatus;
   notes?: string;
+  event_details?: string;
   created_at: string;
 }
 

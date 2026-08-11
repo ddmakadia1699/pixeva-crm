@@ -55,15 +55,15 @@ export default function EnquiriesListTab({
   // Form State
   const [formData, setFormData] = useState({
     name: '',
+    contact: '',
     email: '',
-    phone: '',
-    event_name: '',
-    event_type: 'wedding' as Enquiry['event_type'],
-    event_date: '',
-    estimated_budget: 15000,
-    source: 'Landing Page' as EnquirySource,
-    status: 'new' as EnquiryStatus,
-    notes: '',
+    received_on: new Date().toISOString().slice(0, 10),
+    venue: '',
+    budget: '',
+    guests: '',
+    source: 'Instagram' as EnquirySource,
+    status: 'New' as EnquiryStatus,
+    event_details: '',
   });
 
   // CSV Drag State
@@ -77,8 +77,10 @@ export default function EnquiriesListTab({
     const query = searchTerm.toLowerCase();
     const matchesSearch =
       enq.name.toLowerCase().includes(query) ||
+      (enq.contact && enq.contact.toLowerCase().includes(query)) ||
       enq.email.toLowerCase().includes(query) ||
-      enq.event_name.toLowerCase().includes(query) ||
+      (enq.event_name && enq.event_name.toLowerCase().includes(query)) ||
+      (enq.venue && enq.venue.toLowerCase().includes(query)) ||
       (enq.phone && enq.phone.toLowerCase().includes(query));
 
     const matchesStatus = selectedStatus === 'all' || enq.status === selectedStatus;
@@ -97,24 +99,45 @@ export default function EnquiriesListTab({
   // Add Submit
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.event_name) return;
+    if (!formData.name || !formData.contact) return;
+
+    const rawBudget = formData.budget.replace(/[^0-9]/g, '');
+    const numericBudget = rawBudget ? Number(rawBudget) : 200000;
+
+    const emailVal = formData.email || (formData.contact.includes('@') ? formData.contact : `${formData.name.toLowerCase().replace(/\s+/g, '.')}@client.com`);
+    const phoneVal = formData.contact.includes('@') ? '' : formData.contact;
+    const eventNameVal = formData.venue ? `${formData.name}'s Event @ ${formData.venue}` : `${formData.name}'s Event`;
 
     onAddEnquiry({
-      ...formData,
-      estimated_budget: Number(formData.estimated_budget),
+      name: formData.name,
+      contact: formData.contact,
+      email: emailVal,
+      phone: phoneVal,
+      event_name: eventNameVal,
+      event_type: 'wedding',
+      event_date: formData.received_on,
+      received_on: formData.received_on,
+      venue: formData.venue,
+      budget: formData.budget || '2,00,000',
+      guests: formData.guests,
+      estimated_budget: numericBudget,
+      source: formData.source,
+      status: formData.status,
+      notes: formData.event_details,
+      event_details: formData.event_details,
     });
 
     setFormData({
       name: '',
+      contact: '',
       email: '',
-      phone: '',
-      event_name: '',
-      event_type: 'wedding',
-      event_date: '',
-      estimated_budget: 15000,
-      source: 'Landing Page',
-      status: 'new',
-      notes: '',
+      received_on: new Date().toISOString().slice(0, 10),
+      venue: '',
+      budget: '',
+      guests: '',
+      source: 'Instagram',
+      status: 'New',
+      event_details: '',
     });
 
     setIsAddModalOpen(false);
@@ -475,7 +498,7 @@ export default function EnquiriesListTab({
                       {/* Est. Budget */}
                       <td className="px-5 py-4">
                         <span className="font-mono font-bold text-[#00d4ff] text-xs">
-                          {formatCurrency(enq.estimated_budget)}
+                          {formatCurrency(enq.estimated_budget || 0)}
                         </span>
                       </td>
 
@@ -547,144 +570,170 @@ export default function EnquiriesListTab({
       {/* Add Enquiry Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-lg pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-5 shadow-2xl">
+          <div className="w-full max-w-lg pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center space-x-2">
-                <Sparkles className="w-5 h-5 text-[#00d4ff]" />
-                <h3 className="font-extrabold text-white text-base">Add New Studio Enquiry</h3>
-              </div>
+              <h3 className="font-extrabold text-white text-lg">Add Enquiry</h3>
               <button
+                type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5"
+                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleAddSubmit} className="space-y-4 text-xs">
+              {/* Row 1: Name * & Contact * */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-[#a0a0b0] block mb-1">Full Name *</label>
+                  <label className="font-medium text-white block mb-1">
+                    Name <span className="text-rose-400">*</span>
+                  </label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Dhruvi Patel"
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                    placeholder="Client name"
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-[#a0a0b0] block mb-1">Email Address *</label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="dhruvi@studio.com"
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-[#a0a0b0] block mb-1">Phone Number</label>
+                  <label className="font-medium text-white block mb-1">
+                    Contact <span className="text-rose-400">*</span>
+                  </label>
                   <input
                     type="text"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+1 (555) 019-2834"
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                    required
+                    value={formData.contact}
+                    onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                    placeholder="Phone or email"
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Email & Received On */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-medium text-white block mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="Email address"
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-[#a0a0b0] block mb-1">Event Type</label>
-                  <select
-                    value={formData.event_type}
-                    onChange={(e) => setFormData({ ...formData, event_type: e.target.value as any })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
-                  >
-                    <option value="wedding">Wedding Shoot</option>
-                    <option value="corporate">Corporate Gala</option>
-                    <option value="portrait">Portrait / Fashion</option>
-                    <option value="party">Private Event / Party</option>
-                    <option value="travel">Destination Shoot</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="font-semibold text-[#a0a0b0] block mb-1">Event Title / Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.event_name}
-                  onChange={(e) => setFormData({ ...formData, event_name: e.target.value })}
-                  placeholder="Dhruvi & Rohan Destination Wedding"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="font-semibold text-[#a0a0b0] block mb-1">Event Date</label>
+                  <label className="font-medium text-white block mb-1">Received On</label>
                   <input
                     type="date"
-                    value={formData.event_date}
-                    onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                    value={formData.received_on}
+                    onChange={(e) => setFormData({ ...formData, received_on: e.target.value })}
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
                   />
                 </div>
+              </div>
+
+              {/* Row 3: Venue & Budget */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-[#a0a0b0] block mb-1">Budget ($)</label>
+                  <label className="font-medium text-white block mb-1">Venue</label>
                   <input
-                    type="number"
-                    value={formData.estimated_budget}
-                    onChange={(e) => setFormData({ ...formData, estimated_budget: Number(e.target.value) })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                    type="text"
+                    value={formData.venue}
+                    onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
+                    placeholder="Venue"
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-[#a0a0b0] block mb-1">Source</label>
+                  <label className="font-medium text-white block mb-1">Budget</label>
+                  <input
+                    type="text"
+                    value={formData.budget}
+                    onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                    placeholder="e.g. 2,00,000"
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                  />
+                </div>
+              </div>
+
+              {/* Row 4: Guests & Source */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-medium text-white block mb-1">Guests</label>
+                  <input
+                    type="text"
+                    value={formData.guests}
+                    onChange={(e) => setFormData({ ...formData, guests: e.target.value })}
+                    placeholder="Guest count"
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                  />
+                </div>
+                <div>
+                  <label className="font-medium text-white block mb-1">Source</label>
                   <select
                     value={formData.source}
                     onChange={(e) => setFormData({ ...formData, source: e.target.value as any })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
                   >
-                    <option value="Landing Page">Landing Page</option>
-                    <option value="Website">Website</option>
-                    <option value="Instagram">Instagram</option>
-                    <option value="Referral">Referral</option>
-                    <option value="Google Ads">Google Ads</option>
+                    <option value="Instagram" className="bg-[#12121a]">Instagram</option>
+                    <option value="Website" className="bg-[#12121a]">Website</option>
+                    <option value="Landing Page" className="bg-[#12121a]">Landing Page</option>
+                    <option value="Referral" className="bg-[#12121a]">Referral</option>
+                    <option value="Google" className="bg-[#12121a]">Google</option>
+                    <option value="WhatsApp" className="bg-[#12121a]">WhatsApp</option>
+                    <option value="Facebook" className="bg-[#12121a]">Facebook</option>
+                    <option value="Other" className="bg-[#12121a]">Other</option>
                   </select>
                 </div>
               </div>
 
+              {/* Row 5: Status */}
               <div>
-                <label className="font-semibold text-[#a0a0b0] block mb-1">Enquiry Notes / Requirements</label>
+                <label className="font-medium text-white block mb-1">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                >
+                  <option value="New" className="bg-[#12121a]">New</option>
+                  <option value="Follow Up" className="bg-[#12121a]">Follow Up</option>
+                  <option value="Meeting Fixed" className="bg-[#12121a]">Meeting Fixed</option>
+                  <option value="Proposal Sent" className="bg-[#12121a]">Proposal Sent</option>
+                  <option value="Booked" className="bg-[#12121a]">Booked</option>
+                  <option value="Closed/Lost" className="bg-[#12121a]">Closed/Lost</option>
+                </select>
+              </div>
+
+              {/* Row 6: Event Details */}
+              <div>
+                <label className="font-medium text-white block mb-1">Event Details</label>
                 <textarea
-                  rows={2}
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Special requests, coverage hours, equipment needed..."
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                  rows={3}
+                  value={formData.event_details}
+                  onChange={(e) => setFormData({ ...formData, event_details: e.target.value })}
+                  placeholder="Event type, date, notes…"
+                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
                 />
               </div>
 
-              <div className="pt-3 flex justify-end space-x-2 border-t border-white/10">
+              {/* Action Buttons */}
+              <div className="pt-3 flex justify-end space-x-3 border-t border-white/10">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl font-semibold text-[#a0a0b0] hover:bg-white/5"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#a0a0b0] hover:text-white hover:bg-white/5 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-pixeva-primary px-5 py-2 rounded-xl font-bold"
+                  className="btn-pixeva-primary px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-[#00d4ff]/20"
                 >
-                  Create Enquiry
+                  Add Enquiry
                 </button>
               </div>
             </form>

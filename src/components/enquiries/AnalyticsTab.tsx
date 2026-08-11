@@ -21,7 +21,7 @@ interface AnalyticsTabProps {
 
 export default function AnalyticsTab({ enquiries }: AnalyticsTabProps) {
   const totalEnquiries = enquiries.length || 5;
-  const totalBudget = enquiries.reduce((acc, curr) => acc + curr.estimated_budget, 0);
+  const totalBudget = enquiries.reduce((acc, curr) => acc + (curr.estimated_budget || 0), 0);
   const bookedCount = enquiries.filter((e) => e.status === 'booked' || e.status === 'qualified').length;
   const conversionRate = Math.round((bookedCount / totalEnquiries) * 100);
 
