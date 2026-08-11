@@ -45,6 +45,7 @@ export interface Transaction {
   category: string;
   amount: number;
   date: string;
+  payment_mode?: string;
   note?: string;
 }
 
@@ -70,6 +71,7 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
     category: 'Advance Booking Fee',
     amount: 10000,
     date: '2026-08-10',
+    payment_mode: 'UPI',
     note: 'Initial deposit received via UPI',
   },
   {
@@ -79,6 +81,7 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
     category: 'Equipment Rental',
     amount: 1000,
     date: '2026-08-11',
+    payment_mode: 'Bank Transfer',
     note: 'Memory card & battery rental deposit',
   },
   {
@@ -88,6 +91,7 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
     category: 'Lead Photographer Advance',
     amount: 10000,
     date: '2026-08-11',
+    payment_mode: 'Bank Transfer',
     note: 'Advance payout committed for shoot day',
   },
 ];
@@ -98,6 +102,13 @@ export default function FinancesPage() {
   const [activeTab, setActiveTab] = useState<'Project Finances' | 'Company Expenses' | 'All Transactions'>('Project Finances');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>('fin-proj-1');
+
+  // All Transactions Tab Filters
+  const [txSearchTerm, setTxSearchTerm] = useState('');
+  const [txDateRange, setTxDateRange] = useState('This Month');
+  const [txTypeFilter, setTxTypeFilter] = useState('All Types');
+  const [txCategoryFilter, setTxCategoryFilter] = useState('All Categories');
+  const [txPaymentModeFilter, setTxPaymentModeFilter] = useState('All Payment Modes');
 
   // Modals
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
@@ -542,47 +553,225 @@ export default function FinancesPage() {
       )}
 
       {activeTab === 'All Transactions' && (
-        <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-[#a0a0b0]">
-              <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-semibold border-b border-white/10 text-[10px]">
-                <tr>
-                  <th className="px-5 py-3.5">Type</th>
-                  <th className="px-5 py-3.5">Project</th>
-                  <th className="px-5 py-3.5">Category</th>
-                  <th className="px-5 py-3.5">Amount</th>
-                  <th className="px-5 py-3.5">Date</th>
-                  <th className="px-5 py-3.5">Note</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {filteredTransactions.map((t) => (
-                  <tr key={t.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-5 py-4">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                          t.type === 'Payment Received'
-                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                            : t.type === 'Team Payout'
-                            ? 'bg-[#8b5cf6]/20 text-[#8b5cf6] border-[#8b5cf6]/40'
-                            : 'bg-rose-500/20 text-rose-400 border-rose-500/40'
-                        }`}
-                      >
-                        {t.type}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 font-bold text-white">{t.project_name}</td>
-                    <td className="px-5 py-4">{t.category}</td>
-                    <td className={`px-5 py-4 font-mono font-bold ${t.type === 'Payment Received' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {t.type === 'Payment Received' ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
-                    </td>
-                    <td className="px-5 py-4 font-mono text-white/70">{t.date}</td>
-                    <td className="px-5 py-4 text-[#a0a0b0]">{t.note || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="space-y-4 animate-fadeIn">
+          {/* All Transactions Filter Toolbar */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-[#12121a]/90 p-4 rounded-2xl border border-white/10">
+            {/* Search transactions input */}
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-[#a0a0b0] absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={txSearchTerm}
+                onChange={(e) => setTxSearchTerm(e.target.value)}
+                placeholder="Search transactions…"
+                className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+              />
+            </div>
+
+            {/* Dropdowns */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Date Range */}
+              <div className="relative">
+                <select
+                  value={txDateRange}
+                  onChange={(e) => setTxDateRange(e.target.value)}
+                  className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+                >
+                  <option value="This Month">This Month</option>
+                  <option value="Last 30 Days">Last 30 Days</option>
+                  <option value="This Quarter">This Quarter</option>
+                  <option value="This Year">This Year</option>
+                  <option value="All Time">All Time</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* All Types */}
+              <div className="relative">
+                <select
+                  value={txTypeFilter}
+                  onChange={(e) => setTxTypeFilter(e.target.value)}
+                  className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+                >
+                  <option value="All Types">All Types</option>
+                  <option value="Income">Income</option>
+                  <option value="Payouts">Payouts</option>
+                  <option value="Expenses">Expenses</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* All Categories */}
+              <div className="relative">
+                <select
+                  value={txCategoryFilter}
+                  onChange={(e) => setTxCategoryFilter(e.target.value)}
+                  className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+                >
+                  <option value="All Categories">All Categories</option>
+                  <option value="Advance Booking Fee">Advance Booking Fee</option>
+                  <option value="Milestone Payment">Milestone Payment</option>
+                  <option value="Equipment Rental">Equipment Rental</option>
+                  <option value="Team Payout">Team Payout</option>
+                  <option value="Studio Rent">Studio Rent</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* All Payment Modes */}
+              <div className="relative">
+                <select
+                  value={txPaymentModeFilter}
+                  onChange={(e) => setTxPaymentModeFilter(e.target.value)}
+                  className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+                >
+                  <option value="All Payment Modes">All Payment Modes</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Credit Card">Credit Card</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Export CSV */}
+              <button
+                onClick={handleExportCsv}
+                disabled={transactions.length === 0}
+                className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-[#0a0a0f] hover:bg-white/10 text-white border border-white/10 transition-all disabled:opacity-40"
+              >
+                <Download className="w-3.5 h-3.5 text-[#8b5cf6]" />
+                <span>Export CSV</span>
+              </button>
+            </div>
           </div>
+
+          {/* Sub-Summary Period Cards */}
+          {(() => {
+            const filteredTxList = transactions.filter((t) => {
+              const query = txSearchTerm.toLowerCase();
+              const matchesSearch =
+                !txSearchTerm ||
+                t.project_name.toLowerCase().includes(query) ||
+                t.category.toLowerCase().includes(query) ||
+                (t.note && t.note.toLowerCase().includes(query));
+
+              const matchesType =
+                txTypeFilter === 'All Types' ||
+                (txTypeFilter === 'Income' && t.type === 'Payment Received') ||
+                (txTypeFilter === 'Payouts' && t.type === 'Team Payout') ||
+                (txTypeFilter === 'Expenses' && t.type === 'Expense');
+
+              const matchesCategory =
+                txCategoryFilter === 'All Categories' ||
+                t.category.toLowerCase().includes(txCategoryFilter.toLowerCase());
+
+              const matchesPaymentMode =
+                txPaymentModeFilter === 'All Payment Modes' ||
+                (t.payment_mode && t.payment_mode.toLowerCase() === txPaymentModeFilter.toLowerCase());
+
+              // Date range filtering
+              let matchesDate = true;
+              if (txDateRange === 'This Month') {
+                const nowMonth = new Date().toISOString().slice(0, 7);
+                matchesDate = t.date.startsWith(nowMonth);
+              }
+
+              return matchesSearch && matchesType && matchesCategory && matchesPaymentMode && matchesDate;
+            });
+
+            const incomeSum = filteredTxList
+              .filter((t) => t.type === 'Payment Received')
+              .reduce((acc, t) => acc + t.amount, 0);
+
+            const payoutsAndExpensesSum = filteredTxList
+              .filter((t) => t.type === 'Team Payout' || t.type === 'Expense')
+              .reduce((acc, t) => acc + t.amount, 0);
+
+            const periodNet = incomeSum - payoutsAndExpensesSum;
+
+            return (
+              <div className="space-y-4">
+                {/* Period Summary Cards */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
+                    <p className="text-xl font-extrabold text-emerald-400 mb-0.5">₹{incomeSum.toLocaleString('en-IN')}</p>
+                    <p className="text-xs text-[#a0a0b0] font-semibold">Income</p>
+                  </div>
+
+                  <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
+                    <p className="text-xl font-extrabold text-rose-400 mb-0.5">₹{payoutsAndExpensesSum.toLocaleString('en-IN')}</p>
+                    <p className="text-xs text-[#a0a0b0] font-semibold">Payouts + Expenses</p>
+                  </div>
+
+                  <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
+                    <p className={`text-xl font-extrabold mb-0.5 ${periodNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      ₹{periodNet.toLocaleString('en-IN')}
+                    </p>
+                    <p className="text-xs text-[#a0a0b0] font-semibold">Net</p>
+                  </div>
+                </div>
+
+                {/* Empty State or Table */}
+                {filteredTxList.length === 0 ? (
+                  <div className="pixeva-card rounded-2xl border border-white/10 p-12 text-center space-y-3 shadow-card">
+                    <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-[#a0a0b0]">
+                      <Receipt className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-base font-bold text-white tracking-tight">No transactions in this period</h3>
+                    <p className="text-xs text-[#a0a0b0]">
+                      Try widening the date range or clearing filters.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs text-[#a0a0b0]">
+                        <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-semibold border-b border-white/10 text-[10px]">
+                          <tr>
+                            <th className="px-5 py-3.5">Type</th>
+                            <th className="px-5 py-3.5">Project</th>
+                            <th className="px-5 py-3.5">Category</th>
+                            <th className="px-5 py-3.5">Payment Mode</th>
+                            <th className="px-5 py-3.5">Amount</th>
+                            <th className="px-5 py-3.5">Date</th>
+                            <th className="px-5 py-3.5">Note</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {filteredTxList.map((t) => (
+                            <tr key={t.id} className="hover:bg-white/5 transition-colors">
+                              <td className="px-5 py-4">
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                                    t.type === 'Payment Received'
+                                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                                      : t.type === 'Team Payout'
+                                      ? 'bg-[#8b5cf6]/20 text-[#8b5cf6] border-[#8b5cf6]/40'
+                                      : 'bg-rose-500/20 text-rose-400 border-rose-500/40'
+                                  }`}
+                                >
+                                  {t.type}
+                                </span>
+                              </td>
+                              <td className="px-5 py-4 font-bold text-white">{t.project_name}</td>
+                              <td className="px-5 py-4">{t.category}</td>
+                              <td className="px-5 py-4 font-mono text-white">{t.payment_mode || '—'}</td>
+                              <td className={`px-5 py-4 font-mono font-bold ${t.type === 'Payment Received' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {t.type === 'Payment Received' ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
+                              </td>
+                              <td className="px-5 py-4 font-mono text-white/70">{t.date}</td>
+                              <td className="px-5 py-4 text-[#a0a0b0]">{t.note || '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
