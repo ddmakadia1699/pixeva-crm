@@ -19,7 +19,10 @@ import {
   DollarSign,
   Edit,
   ShieldAlert,
-  ChevronDown
+  ChevronDown,
+  GripVertical,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 
 export type MemberType = 'In House' | 'Freelancer';
@@ -119,6 +122,20 @@ export default function TeamPage() {
         m.id === id ? { ...m, is_phone_visible: !m.is_phone_visible } : m
       )
     );
+  };
+
+  // Move Freelancer Priority
+  const handleMoveFreelancerPriority = (fromIndex: number, toIndex: number) => {
+    const freelancers = members.filter((m) => m.type === 'Freelancer');
+    if (toIndex < 0 || toIndex >= freelancers.length) return;
+
+    const itemToMove = freelancers[fromIndex];
+    const updatedFreelancers = [...freelancers];
+    updatedFreelancers.splice(fromIndex, 1);
+    updatedFreelancers.splice(toIndex, 0, itemToMove);
+
+    const nonFreelancers = members.filter((m) => m.type !== 'Freelancer');
+    setMembers([...nonFreelancers, ...updatedFreelancers]);
   };
 
   // Add Submit
@@ -284,8 +301,8 @@ export default function TeamPage() {
         </div>
       </div>
 
-      {/* Info Callout Banner */}
-      {isBannerVisible && (
+      {/* Info Callout Banners */}
+      {activeTab === 'Roster' && isBannerVisible && (
         <div className="bg-[#12121a] border border-[#00d4ff]/30 rounded-2xl p-4 flex items-start justify-between gap-3 animate-fadeIn">
           <div className="flex items-start space-x-3 text-xs text-[#a0a0b0] leading-relaxed">
             <Info className="w-5 h-5 text-[#00d4ff] shrink-0 mt-0.5" />
@@ -302,157 +319,255 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* Main Roster List or Empty State */}
-      {filteredMembers.length === 0 ? (
-        <div className="pixeva-card rounded-2xl border border-white/10 p-12 text-center space-y-4 shadow-card">
-          <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-4xl">
-            👥
-          </div>
-          <div className="space-y-1 max-w-sm mx-auto">
-            <h3 className="text-lg font-bold text-white tracking-tight">No team members yet</h3>
-            <p className="text-xs text-[#a0a0b0]">
-              Add your first team member to get started.
-            </p>
-          </div>
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="btn-pixeva-primary px-5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center space-x-2 shadow-lg shadow-[#00d4ff]/20"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Add Member</span>
-          </button>
+      {activeTab === 'Freelancer Priority' && (
+        <div className="bg-[#12121a] border border-[#8b5cf6]/30 rounded-2xl p-4 flex items-start space-x-3 text-xs text-[#a0a0b0] leading-relaxed animate-fadeIn">
+          <Info className="w-5 h-5 text-[#8b5cf6] shrink-0 mt-0.5" />
+          <p>
+            Drag to set the order freelancers get called when a project needs a booking — <strong className="text-white">#1 is asked first</strong>. If they’re unavailable, the next priority is asked next.
+          </p>
         </div>
-      ) : (
-        <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-[#a0a0b0]">
-              <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-semibold border-b border-white/10 text-[10px]">
-                <tr>
-                  <th className="w-10 px-4 py-3.5">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.length > 0 && selectedIds.length === filteredMembers.length}
-                      onChange={handleToggleSelectAll}
-                      className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
-                    />
-                  </th>
-                  <th className="px-5 py-3.5">Member Name</th>
-                  <th className="px-5 py-3.5">Role</th>
-                  <th className="px-5 py-3.5">Type</th>
-                  <th className="px-5 py-3.5">Contact Number</th>
-                  <th className="px-5 py-3.5">Day Rate</th>
-                  <th className="px-5 py-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {filteredMembers.map((m) => {
-                  const isSelected = selectedIds.includes(m.id);
+      )}
 
-                  return (
-                    <tr
-                      key={m.id}
-                      className={`hover:bg-white/5 transition-colors group ${
-                        isSelected ? 'bg-[#00d4ff]/5' : ''
-                      }`}
-                    >
-                      {/* Checkbox */}
-                      <td className="w-10 px-4 py-4">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleSelect(m.id)}
-                          className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
-                        />
-                      </td>
+      {/* Main Content Views */}
+      {activeTab === 'Roster' ? (
+        filteredMembers.length === 0 ? (
+          <div className="pixeva-card rounded-2xl border border-white/10 p-12 text-center space-y-4 shadow-card">
+            <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-4xl">
+              👥
+            </div>
+            <div className="space-y-1 max-w-sm mx-auto">
+              <h3 className="text-lg font-bold text-white tracking-tight">No team members yet</h3>
+              <p className="text-xs text-[#a0a0b0]">
+                Add your first team member to get started.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="btn-pixeva-primary px-5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center space-x-2 shadow-lg shadow-[#00d4ff]/20"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Add Member</span>
+            </button>
+          </div>
+        ) : (
+          <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs text-[#a0a0b0]">
+                <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-semibold border-b border-white/10 text-[10px]">
+                  <tr>
+                    <th className="w-10 px-4 py-3.5">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.length > 0 && selectedIds.length === filteredMembers.length}
+                        onChange={handleToggleSelectAll}
+                        className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
+                      />
+                    </th>
+                    <th className="px-5 py-3.5">Member Name</th>
+                    <th className="px-5 py-3.5">Role</th>
+                    <th className="px-5 py-3.5">Type</th>
+                    <th className="px-5 py-3.5">Contact Number</th>
+                    <th className="px-5 py-3.5">Day Rate</th>
+                    <th className="px-5 py-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {filteredMembers.map((m) => {
+                    const isSelected = selectedIds.includes(m.id);
 
-                      {/* Name & Email */}
-                      <td className="px-5 py-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00d4ff]/20 to-[#8b5cf6]/20 border border-white/10 flex items-center justify-center font-bold text-white text-xs">
-                            {m.name.charAt(0)}
+                    return (
+                      <tr
+                        key={m.id}
+                        className={`hover:bg-white/5 transition-colors group ${
+                          isSelected ? 'bg-[#00d4ff]/5' : ''
+                        }`}
+                      >
+                        {/* Checkbox */}
+                        <td className="w-10 px-4 py-4">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleSelect(m.id)}
+                            className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
+                          />
+                        </td>
+
+                        {/* Name & Email */}
+                        <td className="px-5 py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00d4ff]/20 to-[#8b5cf6]/20 border border-white/10 flex items-center justify-center font-bold text-white text-xs">
+                              {m.name.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="font-bold text-white text-sm">{m.name}</div>
+                              {m.email && (
+                                <div className="text-[11px] text-[#a0a0b0] mt-0.5">{m.email}</div>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <div className="font-bold text-white text-sm">{m.name}</div>
-                            {m.email && (
-                              <div className="text-[11px] text-[#a0a0b0] mt-0.5">{m.email}</div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Role */}
-                      <td className="px-5 py-4">
-                        <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs font-semibold text-white">
-                          {m.role}
-                        </span>
-                      </td>
+                        {/* Role */}
+                        <td className="px-5 py-4">
+                          <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs font-semibold text-white">
+                            {m.role}
+                          </span>
+                        </td>
 
-                      {/* Member Type */}
-                      <td className="px-5 py-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                            m.type === 'In House'
-                              ? 'bg-[#00d4ff]/20 text-[#00d4ff] border-[#00d4ff]/40'
-                              : 'bg-[#8b5cf6]/20 text-[#8b5cf6] border-[#8b5cf6]/40'
-                          }`}
-                        >
-                          {m.type}
-                        </span>
-                      </td>
-
-                      {/* Contact Number & Visibility Toggle */}
-                      <td className="px-5 py-4">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-mono text-white text-xs">{m.phone || '—'}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleTogglePhoneVisibility(m.id)}
-                            title={m.is_phone_visible ? 'Visible on Client Portal' : 'Hidden on Client Portal'}
-                            className={`p-1 rounded-lg transition-colors ${
-                              m.is_phone_visible
-                                ? 'text-[#00d4ff] hover:bg-[#00d4ff]/10'
-                                : 'text-rose-400 hover:bg-rose-500/10'
+                        {/* Member Type */}
+                        <td className="px-5 py-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                              m.type === 'In House'
+                                ? 'bg-[#00d4ff]/20 text-[#00d4ff] border-[#00d4ff]/40'
+                                : 'bg-[#8b5cf6]/20 text-[#8b5cf6] border-[#8b5cf6]/40'
                             }`}
                           >
-                            {m.is_phone_visible ? (
-                              <Eye className="w-4 h-4" />
-                            ) : (
-                              <EyeOff className="w-4 h-4" />
-                            )}
+                            {m.type}
+                          </span>
+                        </td>
+
+                        {/* Contact Number & Visibility Toggle */}
+                        <td className="px-5 py-4">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-mono text-white text-xs">{m.phone || '—'}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleTogglePhoneVisibility(m.id)}
+                              title={m.is_phone_visible ? 'Visible on Client Portal' : 'Hidden on Client Portal'}
+                              className={`p-1 rounded-lg transition-colors ${
+                                m.is_phone_visible
+                                  ? 'text-[#00d4ff] hover:bg-[#00d4ff]/10'
+                                  : 'text-rose-400 hover:bg-rose-500/10'
+                              }`}
+                            >
+                              {m.is_phone_visible ? (
+                                <Eye className="w-4 h-4" />
+                              ) : (
+                                <EyeOff className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+
+                        {/* Day Rate */}
+                        <td className="px-5 py-4 font-mono text-white text-xs">
+                          {m.day_rate ? `₹${m.day_rate}/day` : '—'}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-5 py-4 text-right space-x-2">
+                          <button
+                            onClick={() => setEditingMember(m)}
+                            className="px-3 py-1.5 rounded-lg bg-[#12121a] hover:bg-white/10 text-white border border-white/10 text-xs font-semibold transition-all inline-flex items-center space-x-1"
+                          >
+                            <Edit className="w-3.5 h-3.5 text-[#00d4ff]" />
+                            <span>Edit</span>
                           </button>
-                        </div>
-                      </td>
 
-                      {/* Day Rate */}
-                      <td className="px-5 py-4 font-mono text-white text-xs">
-                        {m.day_rate ? `₹${m.day_rate}/day` : '—'}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-5 py-4 text-right space-x-2">
-                        <button
-                          onClick={() => setEditingMember(m)}
-                          className="px-3 py-1.5 rounded-lg bg-[#12121a] hover:bg-white/10 text-white border border-white/10 text-xs font-semibold transition-all inline-flex items-center space-x-1"
-                        >
-                          <Edit className="w-3.5 h-3.5 text-[#00d4ff]" />
-                          <span>Edit</span>
-                        </button>
-
-                        <button
-                          onClick={() => handleDeleteSingle(m.id)}
-                          title="Delete Member"
-                          className="p-1.5 rounded-lg bg-[#12121a] hover:bg-rose-500/20 text-rose-400 border border-white/10 hover:border-rose-500/40 text-xs transition-all inline-flex items-center"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          <button
+                            onClick={() => handleDeleteSingle(m.id)}
+                            title="Delete Member"
+                            className="p-1.5 rounded-lg bg-[#12121a] hover:bg-rose-500/20 text-rose-400 border border-white/10 hover:border-rose-500/40 text-xs transition-all inline-flex items-center"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )
+      ) : (
+        /* Freelancer Priority Tab View */
+        (() => {
+          const freelancers = members.filter((m) => m.type === 'Freelancer');
+
+          if (freelancers.length === 0) {
+            return (
+              <div className="pixeva-card rounded-2xl border border-white/10 p-12 text-center space-y-4 shadow-card">
+                <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-4xl">
+                  👥
+                </div>
+                <div className="space-y-1 max-w-md mx-auto">
+                  <h3 className="text-lg font-bold text-white tracking-tight">No freelancers yet</h3>
+                  <p className="text-xs text-[#a0a0b0] leading-relaxed">
+                    Add a team member and mark them as a freelancer in the Roster tab to rank them here.
+                  </p>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="space-y-3">
+              {freelancers.map((f, idx) => (
+                <div
+                  key={f.id}
+                  className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/90 flex items-center justify-between gap-4 hover:border-[#8b5cf6]/40 transition-colors"
+                >
+                  <div className="flex items-center space-x-4">
+                    {/* Rank Badge */}
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#8b5cf6]/30 to-[#00d4ff]/20 border border-[#8b5cf6]/40 flex items-center justify-center font-extrabold text-white text-sm shrink-0">
+                      #{idx + 1}
+                    </div>
+
+                    {/* Drag Icon */}
+                    <GripVertical className="w-5 h-5 text-[#a0a0b0] cursor-grab shrink-0" />
+
+                    {/* Info */}
+                    <div>
+                      <h4 className="font-bold text-white text-sm">{f.name}</h4>
+                      <div className="flex items-center space-x-3 text-xs text-[#a0a0b0] mt-0.5">
+                        <span className="text-white font-medium">{f.role}</span>
+                        <span>•</span>
+                        <span className="font-mono">{f.phone || 'No phone'}</span>
+                        {f.day_rate && (
+                          <>
+                            <span>•</span>
+                            <span className="text-[#00d4ff] font-semibold">₹{f.day_rate}/day</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reorder & Action Controls */}
+                  <div className="flex items-center space-x-1.5">
+                    <button
+                      disabled={idx === 0}
+                      onClick={() => handleMoveFreelancerPriority(idx, idx - 1)}
+                      className="p-2 rounded-xl bg-[#0a0a0f] hover:bg-white/10 text-white border border-white/10 disabled:opacity-30 transition-all"
+                      title="Move Priority Up"
+                    >
+                      <ArrowUp className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      disabled={idx === freelancers.length - 1}
+                      onClick={() => handleMoveFreelancerPriority(idx, idx + 1)}
+                      className="p-2 rounded-xl bg-[#0a0a0f] hover:bg-white/10 text-white border border-white/10 disabled:opacity-30 transition-all"
+                      title="Move Priority Down"
+                    >
+                      <ArrowDown className="w-4 h-4" />
+                    </button>
+
+                    <button
+                      onClick={() => setEditingMember(f)}
+                      className="px-3 py-2 rounded-xl bg-[#0a0a0f] hover:bg-white/10 text-white border border-white/10 text-xs font-semibold transition-all inline-flex items-center space-x-1"
+                    >
+                      <Edit className="w-3.5 h-3.5 text-[#00d4ff]" />
+                      <span>Edit</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()
       )}
 
       {/* Add Member Modal */}
