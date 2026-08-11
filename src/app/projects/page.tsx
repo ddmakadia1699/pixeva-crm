@@ -115,8 +115,17 @@ export default function ProjectsPage() {
       return matchesTab && matchesSearch;
     })
     .sort((a, b) => {
-      if (sortBy === 'name') return a.name.localeCompare(b.name);
-      if (sortBy === 'event_date') return a.first_event.localeCompare(b.first_event);
+      const parseDate = (dateStr: string) => {
+        const time = Date.parse(dateStr);
+        return isNaN(time) ? 0 : time;
+      };
+
+      if (sortBy === 'event_date_desc') {
+        return parseDate(b.first_event) - parseDate(a.first_event);
+      }
+      if (sortBy === 'event_date_asc') {
+        return parseDate(a.first_event) - parseDate(b.first_event);
+      }
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
@@ -386,9 +395,9 @@ export default function ProjectsPage() {
               onChange={(e) => setSortBy(e.target.value)}
               className="bg-[#12121a] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-8 appearance-none"
             >
-              <option value="date_added">By Date Added</option>
-              <option value="name">By Name</option>
-              <option value="event_date">By First Event Date</option>
+              <option value="event_date_desc" className="bg-[#12121a]">Event Date (Latest first)</option>
+              <option value="event_date_asc" className="bg-[#12121a]">Event Date (Earliest first)</option>
+              <option value="date_added" className="bg-[#12121a]">By Date Added</option>
             </select>
             <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
