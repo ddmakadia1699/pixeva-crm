@@ -741,9 +741,9 @@ export default function FinancesPage() {
                         <tbody className="divide-y divide-white/5">
                           {filteredTxList.map((t) => (
                             <tr key={t.id} className="hover:bg-white/5 transition-colors">
-                              <td className="px-5 py-4">
+                              <td className="px-5 py-4 whitespace-nowrap">
                                 <span
-                                  className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                                  className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${
                                     t.type === 'Payment Received'
                                       ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
                                       : t.type === 'Team Payout'
@@ -751,17 +751,24 @@ export default function FinancesPage() {
                                       : 'bg-rose-500/20 text-rose-400 border-rose-500/40'
                                   }`}
                                 >
-                                  {t.type}
+                                  {t.type === 'Payment Received' ? (
+                                    <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                  ) : t.type === 'Team Payout' ? (
+                                    <ArrowUpRight className="w-3.5 h-3.5 text-[#8b5cf6] shrink-0" />
+                                  ) : (
+                                    <ArrowUpRight className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                                  )}
+                                  <span>{t.type}</span>
                                 </span>
                               </td>
-                              <td className="px-5 py-4 font-bold text-white">{t.project_name}</td>
-                              <td className="px-5 py-4">{t.category}</td>
-                              <td className="px-5 py-4 font-mono text-white">{t.payment_mode || '—'}</td>
-                              <td className={`px-5 py-4 font-mono font-bold ${t.type === 'Payment Received' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              <td className="px-5 py-4 font-bold text-white whitespace-nowrap">{t.project_name}</td>
+                              <td className="px-5 py-4 whitespace-nowrap">{t.category}</td>
+                              <td className="px-5 py-4 font-mono text-white whitespace-nowrap">{t.payment_mode || '—'}</td>
+                              <td className={`px-5 py-4 font-mono font-bold whitespace-nowrap ${t.type === 'Payment Received' ? 'text-emerald-400' : 'text-rose-400'}`}>
                                 {t.type === 'Payment Received' ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
                               </td>
-                              <td className="px-5 py-4 font-mono text-white/70">{t.date}</td>
-                              <td className="px-5 py-4 text-[#a0a0b0]">{t.note || '—'}</td>
+                              <td className="px-5 py-4 font-mono text-white/70 whitespace-nowrap">{t.date}</td>
+                              <td className="px-5 py-4 text-[#a0a0b0] whitespace-nowrap">{t.note || '—'}</td>
                             </tr>
                           ))}
                         </tbody>
