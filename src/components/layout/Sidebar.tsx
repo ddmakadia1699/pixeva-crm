@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { label: 'Overview', href: '/', icon: LayoutDashboard },
+  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Enquiries', href: '/enquiries', icon: Inbox, badge: 'RevePod OS' },
   { label: 'Leads & Contacts', href: '/leads', icon: Users, badge: '4 New' },
   { label: 'Sales Pipelines', href: '/deals', icon: KanbanSquare },
