@@ -18,7 +18,8 @@ import {
   QrCode,
   Inbox,
   Briefcase,
-  Layers
+  Layers,
+  MessageSquare
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { label: 'Enquiries', href: '/enquiries', icon: Inbox, badge: 'RevePod OS' },
   { label: 'Projects', href: '/projects', icon: Briefcase },
   { label: 'Post Production', href: '/post-production', icon: Layers },
+  { label: 'Client Requests', href: '/client-requests', icon: MessageSquare },
   { label: 'Leads & Contacts', href: '/leads', icon: Users, badge: '4 New' },
   { label: 'Shoot Bookings', href: '/bookings', icon: CalendarDays, badge: 'Calendar' },
   { label: 'Invoices & Billing', href: '/invoices', icon: Receipt },
