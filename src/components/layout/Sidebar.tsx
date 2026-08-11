@@ -17,13 +17,15 @@ import {
   FileSignature,
   QrCode,
   Inbox,
-  Briefcase
+  Briefcase,
+  Layers
 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Enquiries', href: '/enquiries', icon: Inbox, badge: 'RevePod OS' },
   { label: 'Projects', href: '/projects', icon: Briefcase },
+  { label: 'Post Production', href: '/post-production', icon: Layers },
   { label: 'Leads & Contacts', href: '/leads', icon: Users, badge: '4 New' },
   { label: 'Shoot Bookings', href: '/bookings', icon: CalendarDays, badge: 'Calendar' },
   { label: 'Invoices & Billing', href: '/invoices', icon: Receipt },
