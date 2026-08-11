@@ -25,7 +25,6 @@ const NAV_ITEMS = [
   { label: 'Enquiries', href: '/enquiries', icon: Inbox, badge: 'RevePod OS' },
   { label: 'Projects', href: '/projects', icon: Briefcase },
   { label: 'Leads & Contacts', href: '/leads', icon: Users, badge: '4 New' },
-  { label: 'Sales Pipelines', href: '/deals', icon: KanbanSquare },
   { label: 'Shoot Bookings', href: '/bookings', icon: CalendarDays, badge: 'Calendar' },
   { label: 'Invoices & Billing', href: '/invoices', icon: Receipt },
   { label: 'Contracts & E-Sign', href: '/contracts', icon: FileSignature },
