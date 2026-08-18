@@ -26,7 +26,14 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeProvider';
 
-const NAV_ITEMS = [
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+  badge?: string;
+}
+
+const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Enquiries', href: '/enquiries', icon: Inbox },
   { label: 'Projects', href: '/projects', icon: Briefcase },
@@ -34,10 +41,6 @@ const NAV_ITEMS = [
   { label: 'Post Production', href: '/post-production', icon: Layers },
   { label: 'Client Requests', href: '/client-requests', icon: MessageSquare },
   { label: 'Team', href: '/team', icon: Users },
-  { label: 'Contracts & E-Sign', href: '/contracts', icon: FileSignature },
-  { label: 'AI Galleries & QR Cards', href: '/galleries', icon: QrCode, badge: 'AI Selfie' },
-  { label: 'Studio Automations', href: '/lambda-tasks', icon: Cpu, badge: 'Automated' },
-  { label: 'System & API Keys', href: '/settings', icon: Settings2 },
 ];
 
 export default function Sidebar() {
