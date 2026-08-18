@@ -97,3 +97,17 @@ export interface Activity {
   created_at: string;
 }
 
+export type RoleType = 'Candid' | 'Traditional' | 'Cinema' | 'Video' | 'Drone' | 'Audio' | 'Other';
+
+export interface ShotDataEntry {
+  id: string;
+  event_name: string;
+  event_date: string;
+  crew_member: string;
+  role_type: RoleType;
+  storage_location: string;
+  remark?: string;
+  is_recorded: boolean;
+  created_at?: string;
+}
+

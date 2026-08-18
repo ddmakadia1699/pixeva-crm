@@ -22,7 +22,8 @@ import {
   MessageSquare,
   DollarSign,
   Sun,
-  Moon
+  Moon,
+  HardDrive
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeProvider';
 
@@ -40,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Finances', href: '/finances', icon: DollarSign },
   { label: 'Post Production', href: '/post-production', icon: Layers },
   { label: 'Client Requests', href: '/client-requests', icon: MessageSquare },
+  { label: 'Data', href: '/data', icon: HardDrive },
   { label: 'Team', href: '/team', icon: Users },
 ];
 
