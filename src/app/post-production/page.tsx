@@ -488,7 +488,26 @@ export default function PostProductionPage() {
       </div>
 
       {/* Deliverables Data Table */}
-            <tbody className="divide-y divide-white/5">
+      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full">
+        <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
+          <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+            <tr>
+              <th className="w-10 px-2 py-3 text-center">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.length > 0 && selectedIds.length === filteredDeliverables.length}
+                  onChange={handleToggleSelectAll}
+                  className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
+                />
+              </th>
+              <th className="w-[26%] px-3 py-3">Project & Type</th>
+              <th className="w-[26%] px-3 py-3">Specs</th>
+              <th className="w-[18%] px-3 py-3">Assigned To</th>
+              <th className="w-[15%] px-3 py-3">Status</th>
+              <th className="w-[15%] px-3 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
               {filteredDeliverables.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="text-center py-12">
@@ -633,7 +652,6 @@ export default function PostProductionPage() {
             </tbody>
           </table>
         </div>
-      </div>
 
       {/* Assign Member Modal */}
       {assigningItem && (

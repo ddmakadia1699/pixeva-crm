@@ -307,7 +307,6 @@ export default function LeadTable({ leads, onAddLead, onUpdateStatus }: LeadTabl
             </tbody>
           </table>
         </div>
-      </div>
 
       {/* Add Lead Modal */}
       {isModalOpen && (
