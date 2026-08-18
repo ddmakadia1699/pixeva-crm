@@ -111,3 +111,16 @@ export interface ShotDataEntry {
   created_at?: string;
 }
 
+export interface ScheduledEvent {
+  id: string;
+  project_name: string;
+  event_title: string;
+  date_time: string;
+  date_formatted: string;
+  time_formatted: string;
+  status: 'Pending' | 'Assigned' | 'In Progress' | 'Completed';
+  assigned_crew: string[];
+  is_unassigned: boolean;
+  notes?: string;
+}
+

@@ -38,6 +38,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
   { label: 'Enquiries', href: '/enquiries', icon: Inbox },
   { label: 'Projects', href: '/projects', icon: Briefcase },
+  { label: 'Crew Scheduling', href: '/crew-scheduling', icon: CalendarDays },
   { label: 'Finances', href: '/finances', icon: DollarSign },
   { label: 'Post Production', href: '/post-production', icon: Layers },
   { label: 'Client Requests', href: '/client-requests', icon: MessageSquare },
