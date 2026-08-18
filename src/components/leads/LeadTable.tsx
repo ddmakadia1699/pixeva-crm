@@ -185,86 +185,85 @@ export default function LeadTable({ leads, onAddLead, onUpdateStatus }: LeadTabl
       </div>
 
       {/* Leads Table Container */}
-      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[950px] text-left text-xs text-[#a0a0b0] table-fixed">
-            <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full">
+        <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
+          <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+            <tr>
+              <th className="w-[30%] px-3 py-3">Lead / Contact</th>
+              <th className="w-[22%] px-3 py-3">Company</th>
+              <th className="w-[14%] px-3 py-3">Source</th>
+              <th className="w-[14%] px-3 py-3">Est. Value</th>
+              <th className="w-[12%] px-3 py-3">Status</th>
+              <th className="w-[8%] px-3 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {filteredLeads.length === 0 ? (
               <tr>
-                <th className="w-[280px] px-5 py-3.5">Lead / Contact</th>
-                <th className="w-[200px] px-5 py-3.5">Company</th>
-                <th className="w-[140px] px-5 py-3.5">Source</th>
-                <th className="w-[140px] px-5 py-3.5">Est. Value</th>
-                <th className="w-[150px] px-5 py-3.5">Status</th>
-                <th className="w-[180px] px-5 py-3.5 text-right">AWS Serverless Actions</th>
+                <td colSpan={6} className="text-center py-8 text-[#a0a0b0]">
+                  No leads found matching criteria.
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {filteredLeads.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-[#a0a0b0]">
-                    No leads found matching criteria.
-                  </td>
-                </tr>
-              ) : (
-                filteredLeads.map((lead) => {
-                  const isPdfRunning = activeLambdaTask === `pdf-${lead.id}`;
-                  const isEmailRunning = activeLambdaTask === `email-${lead.id}`;
+            ) : (
+              filteredLeads.map((lead) => {
+                const isPdfRunning = activeLambdaTask === `pdf-${lead.id}`;
+                const isEmailRunning = activeLambdaTask === `email-${lead.id}`;
 
-                  return (
-                    <tr key={lead.id} className="hover:bg-white/5 transition-colors group">
-                      {/* Name & Contact */}
-                      <td className="px-5 py-4 w-[280px]">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00d4ff] to-[#8b5cf6] flex items-center justify-center font-extrabold text-white text-xs shadow-md shrink-0">
-                            {lead.first_name[0]}{lead.last_name[0]}
+                return (
+                  <tr key={lead.id} className="hover:bg-white/5 transition-colors group">
+                    {/* Name & Contact */}
+                    <td className="px-3 py-3 w-[30%]">
+                      <div className="flex items-center space-x-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#00d4ff] to-[#8b5cf6] flex items-center justify-center font-extrabold text-white text-[11px] shadow-md shrink-0">
+                          {lead.first_name[0]}{lead.last_name[0]}
+                        </div>
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="font-extrabold text-white text-xs truncate">
+                            {lead.first_name} {lead.last_name}
                           </div>
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <div className="font-extrabold text-white text-sm truncate">
-                              {lead.first_name} {lead.last_name}
+                          <div className="text-[10px] font-mono space-y-0.5">
+                            <div className="text-[#00d4ff] font-semibold truncate">
+                              {lead.email}
                             </div>
-                            <div className="text-[11px] font-mono space-y-0.5">
-                              <div className="text-[#00d4ff] font-semibold truncate">
-                                {lead.email}
+                            {lead.phone && (
+                              <div className="text-slate-800 dark:text-slate-200 font-extrabold truncate">
+                                {lead.phone}
                               </div>
-                              {lead.phone && (
-                                <div className="text-slate-800 dark:text-slate-200 font-extrabold truncate">
-                                  {lead.phone}
-                                </div>
-                              )}
-                            </div>
+                            )}
                           </div>
                         </div>
-                      </td>
+                      </div>
+                    </td>
 
-                      {/* Company */}
-                      <td className="px-5 py-4 w-[200px]">
-                        <div className="flex items-center space-x-2 truncate">
-                          <Building2 className="w-3.5 h-3.5 text-[#a0a0b0] shrink-0" />
-                          <span className="font-bold text-white truncate">{lead.company}</span>
-                        </div>
-                      </td>
+                    {/* Company */}
+                    <td className="px-3 py-3 w-[22%]">
+                      <div className="flex items-center space-x-1.5 truncate">
+                        <Building2 className="w-3.5 h-3.5 text-[#a0a0b0] shrink-0" />
+                        <span className="font-bold text-white text-xs truncate">{lead.company}</span>
+                      </div>
+                    </td>
 
-                      {/* Source */}
-                      <td className="px-5 py-4 w-[140px]">
-                        <span className="inline-block px-2.5 py-1 rounded-full bg-[#161622] border border-white/10 text-[11px] text-[#a0a0b0] font-semibold whitespace-nowrap">
-                          {lead.source}
-                        </span>
-                      </td>
+                    {/* Source */}
+                    <td className="px-3 py-3 w-[14%]">
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-[#161622] border border-white/10 text-[10px] text-[#a0a0b0] font-semibold truncate max-w-full">
+                        {lead.source}
+                      </span>
+                    </td>
 
-                      {/* Value */}
-                      <td className="px-5 py-4 w-[140px]">
-                        <span className="font-mono font-extrabold text-[#00d4ff]" suppressHydrationWarning>
-                          {formatCurrency(lead.estimated_value)}
-                        </span>
-                      </td>
+                    {/* Value */}
+                    <td className="px-3 py-3 w-[14%]">
+                      <span className="font-mono font-extrabold text-[#00d4ff] text-xs truncate block" suppressHydrationWarning>
+                        {formatCurrency(lead.estimated_value)}
+                      </span>
+                    </td>
 
-                      {/* Status Selector */}
-                      <td className="px-5 py-4 w-[150px]">
-                        <select
-                          value={lead.status}
-                          onChange={(e) => onUpdateStatus(lead.id, e.target.value as LeadStatus)}
-                          className="bg-white dark:bg-[#12121a] border border-white/10 text-xs font-bold rounded-xl px-2.5 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer w-full"
-                        >
+                    {/* Status Selector */}
+                    <td className="px-3 py-3 w-[12%]">
+                      <select
+                        value={lead.status}
+                        onChange={(e) => onUpdateStatus(lead.id, e.target.value as LeadStatus)}
+                        className="bg-white dark:bg-[#12121a] border border-white/10 text-[11px] font-bold rounded-lg px-2 py-1 text-slate-900 dark:text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer w-full truncate"
+                      >
                           <option value="new">New</option>
                           <option value="contacted">Contacted</option>
                           <option value="qualified">Qualified</option>

@@ -350,27 +350,26 @@ export default function TeamPage() {
             </button>
           </div>
         ) : (
-          <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-[#a0a0b0]">
-                <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-semibold border-b border-white/10 text-[10px]">
-                  <tr>
-                    <th className="w-10 px-4 py-3.5">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.length > 0 && selectedIds.length === filteredMembers.length}
-                        onChange={handleToggleSelectAll}
-                        className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
-                      />
-                    </th>
-                    <th className="px-5 py-3.5">Member Name</th>
-                    <th className="px-5 py-3.5">Role</th>
-                    <th className="px-5 py-3.5">Type</th>
-                    <th className="px-5 py-3.5">Contact Number</th>
-                    <th className="px-5 py-3.5">Day Rate</th>
-                    <th className="px-5 py-3.5 text-right">Actions</th>
-                  </tr>
-                </thead>
+          <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full">
+            <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
+              <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+                <tr>
+                  <th className="w-10 px-2 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length > 0 && selectedIds.length === filteredMembers.length}
+                      onChange={handleToggleSelectAll}
+                      className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
+                    />
+                  </th>
+                  <th className="w-[30%] px-3 py-3">Member Name</th>
+                  <th className="w-[20%] px-3 py-3">Role</th>
+                  <th className="w-[15%] px-3 py-3">Type</th>
+                  <th className="w-[20%] px-3 py-3">Contact Number</th>
+                  <th className="w-[15%] px-3 py-3">Day Rate</th>
+                  <th className="w-[10%] px-3 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
                 <tbody className="divide-y divide-white/5">
                   {filteredMembers.map((m) => {
                     const isSelected = selectedIds.includes(m.id);
@@ -478,7 +477,6 @@ export default function TeamPage() {
                   })}
                 </tbody>
               </table>
-            </div>
           </div>
         )
       ) : (

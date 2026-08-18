@@ -203,7 +203,7 @@ export default function AutomationsPage() {
                     <span>{log.timestamp} ({log.duration})</span>
                     <span className="text-emerald-400 font-bold">{log.status}</span>
                   </div>
-                  <pre className="text-white overflow-x-auto text-[11px]">
+                  <pre className="text-white whitespace-pre-wrap break-all text-[11px]">
                     {JSON.stringify(log.output, null, 2)}
                   </pre>
                 </div>

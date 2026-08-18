@@ -488,29 +488,6 @@ export default function PostProductionPage() {
       </div>
 
       {/* Deliverables Data Table */}
-      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-[#a0a0b0]">
-            <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-semibold border-b border-white/10 text-[10px]">
-              <tr>
-                <th className="w-10 px-4 py-3.5">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.length > 0 && selectedIds.length === filteredDeliverables.length}
-                    onChange={handleToggleSelectAll}
-                    className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
-                  />
-                </th>
-                <th className="px-5 py-3.5">Project</th>
-                <th className="px-5 py-3.5">Type</th>
-                <th className="px-5 py-3.5">Specs</th>
-                <th className="px-5 py-3.5">Assigned To</th>
-                <th className="px-5 py-3.5">Status</th>
-                <th className="px-5 py-3.5">Gallery</th>
-                <th className="px-5 py-3.5">Client Access</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
-              </tr>
-            </thead>
             <tbody className="divide-y divide-white/5">
               {filteredDeliverables.length === 0 ? (
                 <tr>

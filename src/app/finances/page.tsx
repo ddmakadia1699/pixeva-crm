@@ -724,20 +724,19 @@ export default function FinancesPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs text-[#a0a0b0]">
-                        <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-semibold border-b border-white/10 text-[10px]">
-                          <tr>
-                            <th className="px-5 py-3.5">Type</th>
-                            <th className="px-5 py-3.5">Project</th>
-                            <th className="px-5 py-3.5">Category</th>
-                            <th className="px-5 py-3.5">Payment Mode</th>
-                            <th className="px-5 py-3.5">Amount</th>
-                            <th className="px-5 py-3.5">Date</th>
-                            <th className="px-5 py-3.5">Note</th>
-                          </tr>
-                        </thead>
+                  <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full">
+                    <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
+                      <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+                        <tr>
+                          <th className="w-[18%] px-3 py-3">Type</th>
+                          <th className="w-[22%] px-3 py-3">Project</th>
+                          <th className="w-[18%] px-3 py-3">Category</th>
+                          <th className="w-[14%] px-3 py-3">Payment Mode</th>
+                          <th className="w-[12%] px-3 py-3">Amount</th>
+                          <th className="w-[10%] px-3 py-3">Date</th>
+                          <th className="w-[6%] px-3 py-3 text-right">Note</th>
+                        </tr>
+                      </thead>
                         <tbody className="divide-y divide-white/5">
                           {filteredTxList.map((t) => (
                             <tr key={t.id} className="hover:bg-white/5 transition-colors">
@@ -773,7 +772,6 @@ export default function FinancesPage() {
                           ))}
                         </tbody>
                       </table>
-                    </div>
                   </div>
                 )}
               </div>

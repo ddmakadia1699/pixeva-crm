@@ -471,29 +471,28 @@ export default function ProjectsPage() {
       </div>
 
       {/* Projects Table */}
-      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-[#a0a0b0]">
-            <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-semibold border-b border-white/10 text-[10px]">
-              <tr>
-                <th className="w-10 px-4 py-3.5">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.length > 0 && selectedIds.length === filteredProjects.length}
-                    onChange={handleToggleSelectAll}
-                    className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
-                  />
-                </th>
-                <th className="px-5 py-3.5">Project</th>
-                <th className="px-5 py-3.5">Type</th>
-                <th className="px-5 py-3.5">Client</th>
-                <th className="px-5 py-3.5">First Event</th>
-                <th className="px-5 py-3.5">Status</th>
-                <th className="px-5 py-3.5">Completeness</th>
-                <th className="px-5 py-3.5">Contract</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
-              </tr>
-            </thead>
+      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full">
+        <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
+          <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+            <tr>
+              <th className="w-10 px-2 py-3 text-center">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.length > 0 && selectedIds.length === filteredProjects.length}
+                  onChange={handleToggleSelectAll}
+                  className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
+                />
+              </th>
+              <th className="w-[22%] px-3 py-3">Project</th>
+              <th className="w-[12%] px-3 py-3">Type</th>
+              <th className="w-[18%] px-3 py-3">Client</th>
+              <th className="w-[14%] px-3 py-3">First Event</th>
+              <th className="w-[10%] px-3 py-3">Status</th>
+              <th className="w-[12%] px-3 py-3">Completeness</th>
+              <th className="w-[10%] px-3 py-3">Contract</th>
+              <th className="w-[8%] px-3 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
             <tbody className="divide-y divide-white/5">
               {filteredProjects.length === 0 ? (
                 <tr>
@@ -667,7 +666,6 @@ export default function ProjectsPage() {
             </tbody>
           </table>
         </div>
-      </div>
 
       {/* New Project Modal */}
       {isAddModalOpen && (

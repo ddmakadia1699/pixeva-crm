@@ -470,196 +470,194 @@ export default function EnquiriesListTab({
       </div>
 
       {/* Data Table */}
-      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1050px] text-left text-xs text-[#a0a0b0] table-fixed">
-            <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full">
+        <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
+          <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+            <tr>
+              <th className="w-10 px-2 py-3 text-center">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.length > 0 && selectedIds.length === filteredEnquiries.length}
+                  onChange={handleToggleSelectAll}
+                  className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
+                  title="Select all"
+                />
+              </th>
+              <th className="w-[27%] px-3 py-3">Name & Contact</th>
+              <th className="w-[23%] px-3 py-3">Event & Date</th>
+              <th className="w-[12%] px-3 py-3">Source</th>
+              <th className="w-[12%] px-3 py-3">Est. Budget</th>
+              <th className="w-[15%] px-3 py-3">Status</th>
+              <th className="w-[11%] px-3 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {filteredEnquiries.length === 0 ? (
               <tr>
-                <th className="w-12 px-4 py-3.5 text-center">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.length > 0 && selectedIds.length === filteredEnquiries.length}
-                    onChange={handleToggleSelectAll}
-                    className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
-                    title="Select all"
-                  />
-                </th>
-                <th className="w-[300px] px-5 py-3.5">Name & Contact</th>
-                <th className="w-[280px] px-5 py-3.5">Event & Date</th>
-                <th className="w-[140px] px-5 py-3.5">Source</th>
-                <th className="w-[140px] px-5 py-3.5">Est. Budget</th>
-                <th className="w-[160px] px-5 py-3.5">Status</th>
-                <th className="w-[150px] px-5 py-3.5 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {filteredEnquiries.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-12">
-                    <div className="max-w-xs mx-auto space-y-3">
-                      <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto text-[#a0a0b0]">
-                        <Search className="w-6 h-6" />
-                      </div>
-                      <p className="text-sm font-semibold text-white">No enquiries match your filters.</p>
-                      <p className="text-xs text-[#a0a0b0]">
-                        Try tweaking your search term or clearing active status and source filters.
-                      </p>
-                      <button
-                        onClick={handleResetFilters}
-                        className="px-3.5 py-1.5 rounded-xl bg-[#00d4ff]/20 text-[#00d4ff] font-bold text-xs border border-[#00d4ff]/40 inline-flex items-center space-x-1.5"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" />
-                        <span>Clear All Filters</span>
-                      </button>
+                <td colSpan={7} className="text-center py-12">
+                  <div className="max-w-xs mx-auto space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto text-[#a0a0b0]">
+                      <Search className="w-6 h-6" />
                     </div>
-                  </td>
-                </tr>
-              ) : (
-                filteredEnquiries.map((enq) => {
-                  const isPdfRunning = activeLambdaTask === `pdf-${enq.id}`;
-                  const isEmailRunning = activeLambdaTask === `email-${enq.id}`;
-                  const isSelected = selectedIds.includes(enq.id);
+                    <p className="text-sm font-semibold text-white">No enquiries match your filters.</p>
+                    <p className="text-xs text-[#a0a0b0]">
+                      Try tweaking your search term or clearing active status and source filters.
+                    </p>
+                    <button
+                      onClick={handleResetFilters}
+                      className="px-3.5 py-1.5 rounded-xl bg-[#00d4ff]/20 text-[#00d4ff] font-bold text-xs border border-[#00d4ff]/40 inline-flex items-center space-x-1.5"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Clear All Filters</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              filteredEnquiries.map((enq) => {
+                const isPdfRunning = activeLambdaTask === `pdf-${enq.id}`;
+                const isEmailRunning = activeLambdaTask === `email-${enq.id}`;
+                const isSelected = selectedIds.includes(enq.id);
 
-                  return (
-                    <tr key={enq.id} className={`hover:bg-white/5 transition-colors group ${isSelected ? 'bg-[#00d4ff]/5' : ''}`}>
-                      {/* Checkbox */}
-                      <td className="w-12 px-4 py-4 text-center">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleSelect(enq.id)}
-                          className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
-                        />
-                      </td>
-                      {/* Name & Contact */}
-                      <td className="px-5 py-4 w-[300px]">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00d4ff] to-[#8b5cf6] flex items-center justify-center font-extrabold text-white text-xs shadow-md shrink-0">
-                            {enq.name
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')
-                              .slice(0, 2)}
-                          </div>
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <div className="font-extrabold text-white text-sm truncate" title={enq.name}>
-                              {enq.name}
-                            </div>
-                            <div className="text-[11px] font-mono space-y-0.5">
-                              <div className="flex items-center space-x-1.5 text-[#00d4ff] font-semibold truncate">
-                                <Mail className="w-3.5 h-3.5 shrink-0" />
-                                <span className="truncate">{enq.email}</span>
-                              </div>
-                              {enq.phone && (
-                                <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-extrabold truncate">
-                                  <Phone className="w-3.5 h-3.5 shrink-0 text-[#8b5cf6]" />
-                                  <span className="truncate">{enq.phone}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                return (
+                  <tr key={enq.id} className={`hover:bg-white/5 transition-colors group ${isSelected ? 'bg-[#00d4ff]/5' : ''}`}>
+                    {/* Checkbox */}
+                    <td className="w-10 px-2 py-3 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleToggleSelect(enq.id)}
+                        className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
+                      />
+                    </td>
+                    {/* Name & Contact */}
+                    <td className="px-3 py-3 w-[27%]">
+                      <div className="flex items-center space-x-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#00d4ff] to-[#8b5cf6] flex items-center justify-center font-extrabold text-white text-[11px] shadow-md shrink-0">
+                          {enq.name
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')
+                            .slice(0, 2)}
                         </div>
-                      </td>
-
-                      {/* Event & Date */}
-                      <td className="px-5 py-4 w-[280px]">
-                        <div className="space-y-1.5 min-w-0">
-                          <div className="font-bold text-white text-xs truncate" title={enq.event_name}>
-                            {enq.event_name}
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="font-extrabold text-white text-xs truncate" title={enq.name}>
+                            {enq.name}
                           </div>
-                          <div className="flex items-center space-x-2 text-[10px]">
-                            <span className="capitalize px-2 py-0.5 rounded-md bg-white/10 border border-white/10 font-bold text-white shrink-0">
-                              {enq.event_type}
-                            </span>
-                            {enq.event_date && (
-                              <span className="flex items-center space-x-1 font-mono text-[#00d4ff] font-bold shrink-0">
-                                <Calendar className="w-3 h-3" />
-                                <span>{enq.event_date}</span>
-                              </span>
+                          <div className="text-[10px] font-mono space-y-0.5">
+                            <div className="flex items-center space-x-1 text-[#00d4ff] font-semibold truncate">
+                              <Mail className="w-3 h-3 shrink-0" />
+                              <span className="truncate">{enq.email}</span>
+                            </div>
+                            {enq.phone && (
+                              <div className="flex items-center space-x-1 text-slate-800 dark:text-slate-200 font-extrabold truncate">
+                                <Phone className="w-3 h-3 shrink-0 text-[#8b5cf6]" />
+                                <span className="truncate">{enq.phone}</span>
+                              </div>
                             )}
                           </div>
                         </div>
-                      </td>
+                      </div>
+                    </td>
 
-                      {/* Source */}
-                      <td className="px-5 py-4 w-[140px]">
-                        <span className="inline-block px-2.5 py-1 rounded-full bg-[#161622] border border-white/10 text-[11px] text-[#a0a0b0] font-semibold whitespace-nowrap">
-                          {enq.source}
-                        </span>
-                      </td>
-
-                      {/* Est. Budget */}
-                      <td className="px-5 py-4 w-[140px]">
-                        <span className="font-mono font-extrabold text-[#00d4ff] text-xs whitespace-nowrap">
-                          {formatCurrency(enq.estimated_budget || 0)}
-                        </span>
-                      </td>
-
-                      {/* Status Selector */}
-                      <td className="px-5 py-4 w-[160px]">
-                        <select
-                          value={enq.status}
-                          onChange={(e) => onUpdateStatus(enq.id, e.target.value as EnquiryStatus)}
-                          className={`border text-xs font-bold rounded-xl px-2.5 py-1.5 focus:outline-none cursor-pointer w-full transition-all ${
-                            enq.status === 'new'
-                              ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
-                              : enq.status === 'contacted'
-                              ? 'bg-purple-500/20 text-purple-400 border-purple-500/40'
-                              : enq.status === 'qualified'
-                              ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-                              : enq.status === 'proposal'
-                              ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40'
-                              : enq.status === 'booked'
-                              ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                              : 'bg-rose-500/20 text-rose-400 border-rose-500/40'
-                          }`}
-                        >
-                          <option value="new" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">New</option>
-                          <option value="contacted" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Contacted</option>
-                          <option value="qualified" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Qualified</option>
-                          <option value="proposal" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Proposal</option>
-                          <option value="booked" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Booked</option>
-                          <option value="unqualified" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Unqualified</option>
-                        </select>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-5 py-4 w-[150px] text-right">
-                        <div className="flex items-center justify-end space-x-1.5">
-                          <button
-                            onClick={() => handleRunPdfLambda(enq)}
-                            disabled={Boolean(activeLambdaTask)}
-                            title="Generate PDF Proposal"
-                            className="p-2 rounded-xl bg-[#12121a] hover:bg-[#00d4ff]/20 text-[#00d4ff] border border-white/10 hover:border-[#00d4ff]/40 text-xs transition-all disabled:opacity-50"
-                          >
-                            {isPdfRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
-                          </button>
-
-                          <button
-                            onClick={() => handleRunEmailLambda(enq)}
-                            disabled={Boolean(activeLambdaTask)}
-                            title="Send Email Campaign"
-                            className="p-2 rounded-xl bg-[#12121a] hover:bg-[#8b5cf6]/20 text-[#8b5cf6] border border-white/10 hover:border-[#8b5cf6]/40 text-xs transition-all disabled:opacity-50"
-                          >
-                            {isEmailRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
-                          </button>
-
-                          <button
-                            onClick={() => onDeleteEnquiry(enq.id)}
-                            title="Delete Enquiry"
-                            className="p-2 rounded-xl bg-[#12121a] hover:bg-rose-500/20 text-rose-400 border border-white/10 hover:border-rose-500/40 text-xs transition-all"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                    {/* Event & Date */}
+                    <td className="px-3 py-3 w-[23%]">
+                      <div className="space-y-1 min-w-0">
+                        <div className="font-bold text-white text-xs truncate" title={enq.event_name}>
+                          {enq.event_name}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                        <div className="flex items-center space-x-1.5 text-[10px] truncate">
+                          <span className="capitalize px-1.5 py-0.5 rounded bg-white/10 border border-white/10 font-bold text-white shrink-0">
+                            {enq.event_type}
+                          </span>
+                          {enq.event_date && (
+                            <span className="flex items-center space-x-1 font-mono text-[#00d4ff] font-bold truncate">
+                              <Calendar className="w-3 h-3 shrink-0" />
+                              <span className="truncate">{enq.event_date}</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Source */}
+                    <td className="px-3 py-3 w-[12%]">
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-[#161622] border border-white/10 text-[10px] text-[#a0a0b0] font-semibold truncate max-w-full">
+                        {enq.source}
+                      </span>
+                    </td>
+
+                    {/* Est. Budget */}
+                    <td className="px-3 py-3 w-[12%]">
+                      <span className="font-mono font-extrabold text-[#00d4ff] text-xs truncate block">
+                        {formatCurrency(enq.estimated_budget || 0)}
+                      </span>
+                    </td>
+
+                    {/* Status Selector */}
+                    <td className="px-3 py-3 w-[15%]">
+                      <select
+                        value={enq.status}
+                        onChange={(e) => onUpdateStatus(enq.id, e.target.value as EnquiryStatus)}
+                        className={`border text-[11px] font-bold rounded-lg px-2 py-1 focus:outline-none cursor-pointer w-full transition-all truncate ${
+                          enq.status === 'new'
+                            ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
+                            : enq.status === 'contacted'
+                            ? 'bg-purple-500/20 text-purple-400 border-purple-500/40'
+                            : enq.status === 'qualified'
+                            ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                            : enq.status === 'proposal'
+                            ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40'
+                            : enq.status === 'booked'
+                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                            : 'bg-rose-500/20 text-rose-400 border-rose-500/40'
+                        }`}
+                      >
+                        <option value="new" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">New</option>
+                        <option value="contacted" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Contacted</option>
+                        <option value="qualified" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Qualified</option>
+                        <option value="proposal" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Proposal</option>
+                        <option value="booked" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Booked</option>
+                        <option value="unqualified" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Unqualified</option>
+                      </select>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-3 py-3 w-[11%] text-right">
+                      <div className="flex items-center justify-end space-x-1">
+                        <button
+                          onClick={() => handleRunPdfLambda(enq)}
+                          disabled={Boolean(activeLambdaTask)}
+                          title="Generate PDF Proposal"
+                          className="p-1.5 rounded-lg bg-[#12121a] hover:bg-[#00d4ff]/20 text-[#00d4ff] border border-white/10 hover:border-[#00d4ff]/40 text-xs transition-all disabled:opacity-50"
+                        >
+                          {isPdfRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                        </button>
+
+                        <button
+                          onClick={() => handleRunEmailLambda(enq)}
+                          disabled={Boolean(activeLambdaTask)}
+                          title="Send Email Campaign"
+                          className="p-1.5 rounded-lg bg-[#12121a] hover:bg-[#8b5cf6]/20 text-[#8b5cf6] border border-white/10 hover:border-[#8b5cf6]/40 text-xs transition-all disabled:opacity-50"
+                        >
+                          {isEmailRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                        </button>
+
+                        <button
+                          onClick={() => onDeleteEnquiry(enq.id)}
+                          title="Delete Enquiry"
+                          className="p-1.5 rounded-lg bg-[#12121a] hover:bg-rose-500/20 text-rose-400 border border-white/10 hover:border-rose-500/40 text-xs transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Add Enquiry Modal */}
