@@ -20,8 +20,11 @@ import {
   Briefcase,
   Layers,
   MessageSquare,
-  DollarSign
+  DollarSign,
+  Sun,
+  Moon
 } from 'lucide-react';
+import { useTheme } from '@/context/ThemeProvider';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -39,9 +42,10 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <aside className="w-64 shrink-0 h-screen sticky top-0 flex flex-col justify-between pixeva-card border-r border-white/10 bg-[#0a0a0f] p-4 z-40">
+    <aside className="w-64 shrink-0 h-screen sticky top-0 flex flex-col justify-between pixeva-card border-r border-white/10 bg-[#0a0a0f] p-4 z-40 transition-colors duration-250">
       <div className="space-y-4">
         {/* Pixeva Brand Header */}
         <div className="flex items-center space-x-3 px-2 py-1">
@@ -58,7 +62,7 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation Links */}
-        <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-250px)] pr-1">
+        <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-270px)] pr-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -79,10 +83,10 @@ export default function Sidebar() {
                 </div>
 
                 {item.badge && (
-                  <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full shrink-0 ${
+                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full shrink-0 transition-all ${
                     isActive 
-                      ? 'bg-[#00d4ff] text-black' 
-                      : 'bg-white/10 text-[#a0a0b0] group-hover:bg-white/20 group-hover:text-white'
+                      ? 'bg-[#00d4ff] text-slate-950 shadow-sm' 
+                      : 'bg-black/20 text-[#a0a0b0] group-hover:text-white'
                   }`}>
                     {item.badge}
                   </span>
@@ -93,8 +97,29 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      {/* Cloud Architecture & User Footer */}
+      {/* Cloud Architecture, Theme Switcher & User Footer */}
       <div className="space-y-2 pt-2 border-t border-white/10">
+        {/* Quick Theme Switcher Pill */}
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center justify-between p-2.5 rounded-xl pixeva-card bg-[#12121a] border border-white/10 text-xs hover:border-[#00d4ff]/40 transition-all"
+        >
+          <span className="text-xs text-[#a0a0b0] font-medium">Appearance</span>
+          <div className="flex items-center space-x-1.5 px-2 py-1 rounded-lg bg-white/5 text-[11px] font-bold">
+            {theme === 'dark' ? (
+              <>
+                <Moon className="w-3.5 h-3.5 text-[#00d4ff]" />
+                <span className="text-white">Dark (Black)</span>
+              </>
+            ) : (
+              <>
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[#0f172a]">Light (White)</span>
+              </>
+            )}
+          </div>
+        </button>
+
         <div className="p-3 rounded-xl pixeva-card bg-[#12121a] border border-white/10 space-y-1.5 text-[11px]">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-1.5">

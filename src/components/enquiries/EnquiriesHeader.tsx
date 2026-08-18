@@ -73,8 +73,10 @@ export default function EnquiriesHeader({ activeTab, onTabChange, enquiryCount }
               <span>{tab.label}</span>
               {tab.count !== undefined && (
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                    isActive ? 'bg-[#00d4ff] text-black' : 'bg-white/10 text-[#a0a0b0]'
+                  className={`text-[11px] px-2 py-0.5 rounded-full font-black shadow-sm transition-all ${
+                    isActive
+                      ? 'bg-[#00d4ff] text-slate-950'
+                      : 'bg-black/20 text-[#a0a0b0]'
                   }`}
                 >
                   {tab.count}

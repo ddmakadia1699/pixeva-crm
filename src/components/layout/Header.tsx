@@ -1,15 +1,18 @@
 'use client';
 
 import React from 'react';
-import { Search, Bell, Plus, Zap } from 'lucide-react';
+import { Search, Bell, Plus, Zap, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/context/ThemeProvider';
 
 interface HeaderProps {
   onOpenAddLeadModal?: () => void;
 }
 
 export default function Header({ onOpenAddLeadModal }: HeaderProps) {
+  const { theme, toggleTheme } = useTheme();
+
   return (
-    <header className="h-16 shrink-0 sticky top-0 z-30 pixeva-card border-b border-white/10 bg-[#0a0a0f]/90 backdrop-blur-xl px-6 flex items-center justify-between">
+    <header className="h-16 shrink-0 sticky top-0 z-30 pixeva-card border-b border-white/10 bg-[#0a0a0f]/90 backdrop-blur-xl px-6 flex items-center justify-between transition-colors duration-250">
       {/* Search Bar */}
       <div className="flex items-center space-x-4 flex-1 max-w-md">
         <div className="relative w-full">
@@ -22,12 +25,31 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
         </div>
       </div>
 
-      {/* Clean Production Status Badge */}
+      {/* Production Status & Controls */}
       <div className="flex items-center space-x-3">
         <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1 rounded-full badge-cyan text-[11px] font-bold">
           <Zap className="w-3.5 h-3.5 text-[#00d4ff]" />
           <span>Pixeva Studio: Live</span>
         </div>
+
+        {/* Theme Switcher Toggle */}
+        <button
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Switch to Light Theme (White)' : 'Switch to Dark Theme (Black)'}
+          className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold transition-all duration-200"
+        >
+          {theme === 'dark' ? (
+            <>
+              <Sun className="w-4 h-4 text-amber-400 animate-spin-slow" />
+              <span className="text-[#a0a0b0] hover:text-white hidden md:inline">Light Mode</span>
+            </>
+          ) : (
+            <>
+              <Moon className="w-4 h-4 text-[#8b5cf6]" />
+              <span className="text-[#0f172a] hidden md:inline">Dark Mode</span>
+            </>
+          )}
+        </button>
 
         {/* Action Button */}
         {onOpenAddLeadModal && (
