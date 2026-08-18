@@ -472,10 +472,10 @@ export default function EnquiriesListTab({
       {/* Data Table */}
       <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-[#a0a0b0]">
-            <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-semibold border-b border-white/10 text-[10px]">
+          <table className="w-full min-w-[1050px] text-left text-xs text-[#a0a0b0] table-fixed">
+            <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
               <tr>
-                <th className="w-10 px-4 py-3.5">
+                <th className="w-12 px-4 py-3.5 text-center">
                   <input
                     type="checkbox"
                     checked={selectedIds.length > 0 && selectedIds.length === filteredEnquiries.length}
@@ -484,12 +484,12 @@ export default function EnquiriesListTab({
                     title="Select all"
                   />
                 </th>
-                <th className="px-5 py-3.5">Name & Contact</th>
-                <th className="px-5 py-3.5">Event & Date</th>
-                <th className="px-5 py-3.5">Source</th>
-                <th className="px-5 py-3.5">Est. Budget</th>
-                <th className="px-5 py-3.5">Status</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
+                <th className="w-[300px] px-5 py-3.5">Name & Contact</th>
+                <th className="w-[280px] px-5 py-3.5">Event & Date</th>
+                <th className="w-[140px] px-5 py-3.5">Source</th>
+                <th className="w-[140px] px-5 py-3.5">Est. Budget</th>
+                <th className="w-[160px] px-5 py-3.5">Status</th>
+                <th className="w-[150px] px-5 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -523,7 +523,7 @@ export default function EnquiriesListTab({
                   return (
                     <tr key={enq.id} className={`hover:bg-white/5 transition-colors group ${isSelected ? 'bg-[#00d4ff]/5' : ''}`}>
                       {/* Checkbox */}
-                      <td className="w-10 px-4 py-4">
+                      <td className="w-12 px-4 py-4 text-center">
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -532,29 +532,29 @@ export default function EnquiriesListTab({
                         />
                       </td>
                       {/* Name & Contact */}
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-4 w-[300px]">
                         <div className="flex items-center space-x-3">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00d4ff] to-[#8b5cf6] flex items-center justify-center font-bold text-white text-xs shadow-md">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00d4ff] to-[#8b5cf6] flex items-center justify-center font-extrabold text-white text-xs shadow-md shrink-0">
                             {enq.name
                               .split(' ')
                               .map((n) => n[0])
                               .join('')
                               .slice(0, 2)}
                           </div>
-                          <div>
-                            <div className="font-bold text-white text-sm flex items-center space-x-1.5">
-                              <span>{enq.name}</span>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="font-extrabold text-white text-sm truncate" title={enq.name}>
+                              {enq.name}
                             </div>
-                            <div className="text-[11px] text-[#a0a0b0] font-mono flex items-center space-x-2 mt-0.5">
-                              <span className="flex items-center space-x-1">
-                                <Mail className="w-3 h-3 text-[#a0a0b0]" />
-                                <span>{enq.email}</span>
-                              </span>
+                            <div className="text-[11px] font-mono space-y-0.5">
+                              <div className="flex items-center space-x-1.5 text-[#00d4ff] font-semibold truncate">
+                                <Mail className="w-3.5 h-3.5 shrink-0" />
+                                <span className="truncate">{enq.email}</span>
+                              </div>
                               {enq.phone && (
-                                <span className="flex items-center space-x-1 text-white/60">
-                                  <Phone className="w-3 h-3 text-[#a0a0b0]" />
-                                  <span>{enq.phone}</span>
-                                </span>
+                                <div className="flex items-center space-x-1.5 text-slate-800 dark:text-slate-200 font-extrabold truncate">
+                                  <Phone className="w-3.5 h-3.5 shrink-0 text-[#8b5cf6]" />
+                                  <span className="truncate">{enq.phone}</span>
+                                </div>
                               )}
                             </div>
                           </div>
@@ -562,16 +562,18 @@ export default function EnquiriesListTab({
                       </td>
 
                       {/* Event & Date */}
-                      <td className="px-5 py-4">
-                        <div className="space-y-1">
-                          <div className="font-bold text-white text-xs">{enq.event_name}</div>
-                          <div className="flex items-center space-x-2 text-[10px] text-[#a0a0b0]">
-                            <span className="capitalize px-2 py-0.5 rounded bg-white/5 border border-white/10 font-semibold text-white">
+                      <td className="px-5 py-4 w-[280px]">
+                        <div className="space-y-1.5 min-w-0">
+                          <div className="font-bold text-white text-xs truncate" title={enq.event_name}>
+                            {enq.event_name}
+                          </div>
+                          <div className="flex items-center space-x-2 text-[10px]">
+                            <span className="capitalize px-2 py-0.5 rounded-md bg-white/10 border border-white/10 font-bold text-white shrink-0">
                               {enq.event_type}
                             </span>
                             {enq.event_date && (
-                              <span className="flex items-center space-x-1 font-mono text-white/70">
-                                <Calendar className="w-3 h-3 text-[#00d4ff]" />
+                              <span className="flex items-center space-x-1 font-mono text-[#00d4ff] font-bold shrink-0">
+                                <Calendar className="w-3 h-3" />
                                 <span>{enq.event_date}</span>
                               </span>
                             )}
@@ -580,25 +582,25 @@ export default function EnquiriesListTab({
                       </td>
 
                       {/* Source */}
-                      <td className="px-5 py-4">
-                        <span className="px-2.5 py-1 rounded-full bg-[#161622] border border-white/10 text-[11px] text-[#a0a0b0] font-medium">
+                      <td className="px-5 py-4 w-[140px]">
+                        <span className="inline-block px-2.5 py-1 rounded-full bg-[#161622] border border-white/10 text-[11px] text-[#a0a0b0] font-semibold whitespace-nowrap">
                           {enq.source}
                         </span>
                       </td>
 
                       {/* Est. Budget */}
-                      <td className="px-5 py-4">
-                        <span className="font-mono font-bold text-[#00d4ff] text-xs">
+                      <td className="px-5 py-4 w-[140px]">
+                        <span className="font-mono font-extrabold text-[#00d4ff] text-xs whitespace-nowrap">
                           {formatCurrency(enq.estimated_budget || 0)}
                         </span>
                       </td>
 
                       {/* Status Selector */}
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-4 w-[160px]">
                         <select
                           value={enq.status}
                           onChange={(e) => onUpdateStatus(enq.id, e.target.value as EnquiryStatus)}
-                          className={`border text-xs font-bold rounded-lg px-2.5 py-1 focus:outline-none cursor-pointer ${
+                          className={`border text-xs font-bold rounded-xl px-2.5 py-1.5 focus:outline-none cursor-pointer w-full transition-all ${
                             enq.status === 'new'
                               ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
                               : enq.status === 'contacted'
@@ -612,42 +614,44 @@ export default function EnquiriesListTab({
                               : 'bg-rose-500/20 text-rose-400 border-rose-500/40'
                           }`}
                         >
-                          <option value="new" className="bg-[#12121a] text-white">New</option>
-                          <option value="contacted" className="bg-[#12121a] text-white">Contacted</option>
-                          <option value="qualified" className="bg-[#12121a] text-white">Qualified</option>
-                          <option value="proposal" className="bg-[#12121a] text-white">Proposal</option>
-                          <option value="booked" className="bg-[#12121a] text-white">Booked</option>
-                          <option value="unqualified" className="bg-[#12121a] text-white">Unqualified</option>
+                          <option value="new" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">New</option>
+                          <option value="contacted" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Contacted</option>
+                          <option value="qualified" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Qualified</option>
+                          <option value="proposal" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Proposal</option>
+                          <option value="booked" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Booked</option>
+                          <option value="unqualified" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Unqualified</option>
                         </select>
                       </td>
 
                       {/* Actions */}
-                      <td className="px-5 py-4 text-right space-x-1.5">
-                        <button
-                          onClick={() => handleRunPdfLambda(enq)}
-                          disabled={Boolean(activeLambdaTask)}
-                          title="Generate PDF Proposal"
-                          className="p-1.5 rounded-lg bg-[#12121a] hover:bg-[#00d4ff]/20 text-[#00d4ff] border border-white/10 hover:border-[#00d4ff]/40 text-xs transition-all disabled:opacity-50 inline-flex items-center"
-                        >
-                          {isPdfRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
-                        </button>
+                      <td className="px-5 py-4 w-[150px] text-right">
+                        <div className="flex items-center justify-end space-x-1.5">
+                          <button
+                            onClick={() => handleRunPdfLambda(enq)}
+                            disabled={Boolean(activeLambdaTask)}
+                            title="Generate PDF Proposal"
+                            className="p-2 rounded-xl bg-[#12121a] hover:bg-[#00d4ff]/20 text-[#00d4ff] border border-white/10 hover:border-[#00d4ff]/40 text-xs transition-all disabled:opacity-50"
+                          >
+                            {isPdfRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                          </button>
 
-                        <button
-                          onClick={() => handleRunEmailLambda(enq)}
-                          disabled={Boolean(activeLambdaTask)}
-                          title="Send Email Campaign"
-                          className="p-1.5 rounded-lg bg-[#12121a] hover:bg-[#8b5cf6]/20 text-[#8b5cf6] border border-white/10 hover:border-[#8b5cf6]/40 text-xs transition-all disabled:opacity-50 inline-flex items-center"
-                        >
-                          {isEmailRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
-                        </button>
+                          <button
+                            onClick={() => handleRunEmailLambda(enq)}
+                            disabled={Boolean(activeLambdaTask)}
+                            title="Send Email Campaign"
+                            className="p-2 rounded-xl bg-[#12121a] hover:bg-[#8b5cf6]/20 text-[#8b5cf6] border border-white/10 hover:border-[#8b5cf6]/40 text-xs transition-all disabled:opacity-50"
+                          >
+                            {isEmailRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                          </button>
 
-                        <button
-                          onClick={() => onDeleteEnquiry(enq.id)}
-                          title="Delete Enquiry"
-                          className="p-1.5 rounded-lg bg-[#12121a] hover:bg-rose-500/20 text-rose-400 border border-white/10 hover:border-rose-500/40 text-xs transition-all inline-flex items-center"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                          <button
+                            onClick={() => onDeleteEnquiry(enq.id)}
+                            title="Delete Enquiry"
+                            className="p-2 rounded-xl bg-[#12121a] hover:bg-rose-500/20 text-rose-400 border border-white/10 hover:border-rose-500/40 text-xs transition-all"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
