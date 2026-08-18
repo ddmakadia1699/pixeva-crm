@@ -28,7 +28,7 @@ import { useTheme } from '@/context/ThemeProvider';
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { label: 'Enquiries', href: '/enquiries', icon: Inbox, badge: 'RevePod OS' },
+  { label: 'Enquiries', href: '/enquiries', icon: Inbox },
   { label: 'Projects', href: '/projects', icon: Briefcase },
   { label: 'Finances', href: '/finances', icon: DollarSign },
   { label: 'Post Production', href: '/post-production', icon: Layers },
