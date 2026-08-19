@@ -471,11 +471,11 @@ export default function ProjectsPage() {
       </div>
 
       {/* Projects Table */}
-      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full">
-        <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
+      <div className="pixeva-card rounded-2xl border border-white/10 overflow-x-auto shadow-card w-full">
+        <table className="w-full text-left text-xs text-[#a0a0b0] min-w-[960px]">
           <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
             <tr>
-              <th className="w-10 px-2 py-3 text-center">
+              <th className="w-10 px-3 py-3 text-center">
                 <input
                   type="checkbox"
                   checked={selectedIds.length > 0 && selectedIds.length === filteredProjects.length}
@@ -483,14 +483,14 @@ export default function ProjectsPage() {
                   className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
                 />
               </th>
-              <th className="w-[22%] px-3 py-3">Project</th>
-              <th className="w-[12%] px-3 py-3">Type</th>
-              <th className="w-[18%] px-3 py-3">Client</th>
-              <th className="w-[14%] px-3 py-3">First Event</th>
-              <th className="w-[10%] px-3 py-3">Status</th>
-              <th className="w-[12%] px-3 py-3">Completeness</th>
-              <th className="w-[10%] px-3 py-3">Contract</th>
-              <th className="w-[8%] px-3 py-3 text-right">Actions</th>
+              <th className="w-[20%] min-w-[170px] px-3 py-3">Project</th>
+              <th className="w-[10%] min-w-[90px] px-3 py-3">Type</th>
+              <th className="w-[15%] min-w-[130px] px-3 py-3">Client</th>
+              <th className="w-[13%] min-w-[110px] px-3 py-3">First Event</th>
+              <th className="w-[10%] min-w-[90px] px-3 py-3">Status</th>
+              <th className="w-[11%] min-w-[110px] px-3 py-3">Completeness</th>
+              <th className="w-[11%] min-w-[105px] px-3 py-3">Contract</th>
+              <th className="w-[10%] min-w-[115px] px-3 py-3 text-right">Actions</th>
             </tr>
           </thead>
             <tbody className="divide-y divide-white/5">
@@ -520,7 +520,7 @@ export default function ProjectsPage() {
                       }`}
                     >
                       {/* Checkbox */}
-                      <td className="w-10 px-4 py-4">
+                      <td className="w-10 px-3 py-3.5">
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -530,40 +530,40 @@ export default function ProjectsPage() {
                       </td>
 
                       {/* Project Name */}
-                      <td className="px-5 py-4">
+                      <td className="px-3 py-3.5">
                         <div className="flex items-center space-x-3">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#8b5cf6] to-[#00d4ff] flex items-center justify-center font-bold text-white text-xs shadow-md">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#8b5cf6] to-[#00d4ff] flex items-center justify-center font-bold text-white text-xs shadow-md shrink-0">
                             <Briefcase className="w-4 h-4" />
                           </div>
-                          <div>
-                            <div className="font-bold text-white text-sm">{p.name}</div>
+                          <div className="min-w-0">
+                            <div className="font-bold text-white text-sm truncate">{p.name}</div>
                           </div>
                         </div>
                       </td>
 
                       {/* Type */}
-                      <td className="px-5 py-4 font-semibold text-white">
+                      <td className="px-3 py-3.5 font-semibold text-white">
                         {p.type}
                       </td>
 
                       {/* Client */}
-                      <td className="px-5 py-4">
-                        <span className="text-white font-medium flex items-center space-x-1.5">
-                          <User className="w-3.5 h-3.5 text-[#00d4ff]" />
-                          <span>{p.client}</span>
+                      <td className="px-3 py-3.5">
+                        <span className="text-white font-medium flex items-center space-x-1.5 truncate">
+                          <User className="w-3.5 h-3.5 text-[#00d4ff] shrink-0" />
+                          <span className="truncate">{p.client}</span>
                         </span>
                       </td>
 
                       {/* First Event */}
-                      <td className="px-5 py-4 font-mono text-white/90">
+                      <td className="px-3 py-3.5 font-mono text-white/90 whitespace-nowrap">
                         <span className="flex items-center space-x-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-[#8b5cf6]" />
+                          <Calendar className="w-3.5 h-3.5 text-[#8b5cf6] shrink-0" />
                           <span>{p.first_event}</span>
                         </span>
                       </td>
 
                       {/* Status */}
-                      <td className="px-5 py-4">
+                      <td className="px-3 py-3.5">
                         <div className="space-y-1">
                           <span
                             className={`px-2.5 py-1 rounded-full text-xs font-bold border inline-block ${
@@ -583,30 +583,30 @@ export default function ProjectsPage() {
                       </td>
 
                       {/* Completeness */}
-                      <td className="px-5 py-4">
-                        <span className="px-2.5 py-1 rounded-full bg-[#00d4ff]/10 text-[#00d4ff] border border-[#00d4ff]/30 text-xs font-bold flex items-center space-x-1 w-fit">
-                          <CheckCircle2 className="w-3 h-3" />
+                      <td className="px-3 py-3.5">
+                        <span className="px-2.5 py-1 rounded-full bg-[#00d4ff]/10 text-[#00d4ff] border border-[#00d4ff]/30 text-xs font-bold flex items-center space-x-1 w-fit whitespace-nowrap">
+                          <CheckCircle2 className="w-3 h-3 shrink-0" />
                           <span>{p.completeness}</span>
                         </span>
                       </td>
 
                       {/* Contract */}
-                      <td className="px-5 py-4">
+                      <td className="px-3 py-3.5">
                         <span
-                          className={`px-2.5 py-1 rounded-full text-xs font-bold border flex items-center space-x-1 w-fit ${
+                          className={`px-2.5 py-1 rounded-full text-xs font-bold border flex items-center space-x-1 w-fit whitespace-nowrap ${
                             p.contract === 'Accepted'
                               ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
                               : 'bg-amber-500/20 text-amber-400 border-amber-500/40'
                           }`}
                         >
-                          <FileSignature className="w-3 h-3" />
+                          <FileSignature className="w-3 h-3 shrink-0" />
                           <span>{p.contract}</span>
                         </span>
                       </td>
 
                       {/* Actions */}
-                      <td className="px-5 py-4 text-right relative">
-                        <div className="flex items-center justify-end space-x-1.5">
+                      <td className="px-3 py-3.5 text-right relative whitespace-nowrap">
+                        <div className="flex items-center justify-end space-x-1.5 shrink-0">
                           <button
                             onClick={() => handleOpenEdit(p)}
                             className="px-3 py-1.5 rounded-lg bg-[#12121a] hover:bg-[#00d4ff]/20 text-white hover:text-[#00d4ff] border border-white/10 hover:border-[#00d4ff]/40 text-xs font-semibold transition-all inline-flex items-center space-x-1"
