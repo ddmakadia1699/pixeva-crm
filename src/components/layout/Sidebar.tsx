@@ -23,7 +23,8 @@ import {
   DollarSign,
   Sun,
   Moon,
-  HardDrive
+  HardDrive,
+  Bot
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeProvider';
 
@@ -44,6 +45,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Client Requests', href: '/client-requests', icon: MessageSquare },
   { label: 'Data', href: '/data', icon: HardDrive },
   { label: 'Team', href: '/team', icon: Users },
+  { label: 'Pixeva CRM AI', href: '/pixeva-ai', icon: Bot, badge: 'AI' },
 ];
 
 export default function Sidebar() {
