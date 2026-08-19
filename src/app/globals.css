@@ -238,6 +238,8 @@
 .light .bg-\[\#12121a\],
 .light .bg-\[\#14141f\],
 .light .bg-\[\#181825\],
+.light .bg-[#0f0f16]/60,
+.light .bg-\[\#161622\],
 .light .bg-slate-900,
 .light .bg-zinc-900,
 .light .bg-gray-900 {
@@ -290,27 +292,49 @@
 /* High-Contrast Neon Accents in Light Mode */
 .light .text-\[\#00d4ff\],
 .light .text-cyan-400,
-.light .text-cyan-300 {
+.light .text-cyan-300,
+.light .text-cyan-500 {
   color: #0284c7 !important;
 }
 
 .light .text-\[\#8b5cf6\],
 .light .text-purple-400,
 .light .text-purple-300,
-.light .text-c084fc {
+.light .text-purple-500,
+.light .text-[#c084fc] {
   color: #7c3aed !important;
 }
 
 .light .text-\[\#3b82f6\],
 .light .text-blue-400,
-.light .text-blue-300 {
+.light .text-blue-300,
+.light .text-blue-500 {
   color: #2563eb !important;
 }
 
 .light .text-\[\#10b981\],
 .light .text-emerald-400,
-.light .text-34d399 {
+.light .text-emerald-300,
+.light .text-emerald-500,
+.light .text-\[\#34d399\] {
   color: #059669 !important;
+}
+
+.light .text-rose-400,
+.light .text-rose-300,
+.light .text-rose-500,
+.light .text-red-400,
+.light .text-red-500 {
+  color: #dc2626 !important;
+}
+
+.light .text-amber-400,
+.light .text-amber-300,
+.light .text-amber-500,
+.light .text-yellow-400,
+.light .text-\[\#fbbf24\],
+.light .text-\[\#f59e0b\] {
+  color: #d97706 !important;
 }
 
 .light .bg-\[\#00d4ff\]\/15,
@@ -351,7 +375,7 @@
 .light .text-white\/40,
 .light .text-white\/30,
 .light .text-white\/20 {
-  color: #94a3b8 !important;
+  color: #64748b !important;
 }
 
 .light .border-white\/10,
@@ -372,14 +396,10 @@
   border-color: rgba(2, 132, 199, 0.35) !important;
 }
 
-/* Ensure Buttons & Gradient Items Keep Crisp White Text */
+/* Ensure Buttons & Gradient Items Keep Crisp Text */
 .light .btn-pixeva-primary,
-.light .btn-pixeva-primary *,
-.light .bg-gradient-to-tr *,
-.light .bg-gradient-to-r *,
-.light .bg-gradient-to-br *,
-.light .badge-solid * {
-  color: #ffffff;
+.light .btn-pixeva-primary * {
+  color: #ffffff !important;
 }
 
 /* Forms, Inputs & Select Dropdowns */
@@ -393,7 +413,7 @@
 
 .light input::placeholder,
 .light textarea::placeholder {
-  color: #94a3b8 !important;
+  color: #64748b !important;
 }
 
 .light select option {

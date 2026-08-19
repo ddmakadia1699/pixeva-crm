@@ -321,11 +321,11 @@ export default function ClientRequestsPage() {
       </div>
 
       {/* Requests Data Table */}
-      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full">
-        <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
+      <div className="pixeva-card rounded-2xl border border-white/10 overflow-x-auto shadow-card w-full">
+        <table className="w-full text-left text-xs text-[#a0a0b0] min-w-[850px]">
           <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
             <tr>
-              <th className="w-10 px-2 py-3 text-center">
+              <th className="w-10 px-3 py-3 text-center">
                 <input
                   type="checkbox"
                   checked={selectedIds.length > 0 && selectedIds.length === filteredRequests.length}
@@ -333,11 +333,11 @@ export default function ClientRequestsPage() {
                   className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
                 />
               </th>
-              <th className="w-[30%] px-3 py-3">Project</th>
-              <th className="w-[20%] px-3 py-3">Category</th>
-              <th className="w-[25%] px-3 py-3">Assign Team</th>
-              <th className="w-[15%] px-3 py-3">Status</th>
-              <th className="w-[10%] px-3 py-3 text-right">Actions</th>
+              <th className="w-[28%] min-w-[180px] px-3.5 py-3">Project</th>
+              <th className="w-[18%] min-w-[120px] px-3.5 py-3">Category</th>
+              <th className="w-[24%] min-w-[150px] px-3.5 py-3">Assign Team</th>
+              <th className="w-[15%] min-w-[110px] px-3.5 py-3">Status</th>
+              <th className="w-[12%] min-w-[100px] px-3.5 py-3 text-right">Actions</th>
             </tr>
           </thead>
             <tbody className="divide-y divide-white/5">

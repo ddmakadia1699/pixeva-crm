@@ -724,17 +724,17 @@ export default function FinancesPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full">
-                    <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
+                  <div className="pixeva-card rounded-2xl border border-white/10 overflow-x-auto shadow-card w-full">
+                    <table className="w-full text-left text-xs text-[#a0a0b0] min-w-[900px]">
                       <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
                         <tr>
-                          <th className="w-[18%] px-3 py-3">Type</th>
-                          <th className="w-[22%] px-3 py-3">Project</th>
-                          <th className="w-[18%] px-3 py-3">Category</th>
-                          <th className="w-[14%] px-3 py-3">Payment Mode</th>
-                          <th className="w-[12%] px-3 py-3">Amount</th>
-                          <th className="w-[10%] px-3 py-3">Date</th>
-                          <th className="w-[6%] px-3 py-3 text-right">Note</th>
+                          <th className="w-[18%] min-w-[120px] px-3.5 py-3">Type</th>
+                          <th className="w-[22%] min-w-[160px] px-3.5 py-3">Project</th>
+                          <th className="w-[18%] min-w-[130px] px-3.5 py-3">Category</th>
+                          <th className="w-[14%] min-w-[110px] px-3.5 py-3">Payment Mode</th>
+                          <th className="w-[12%] min-w-[100px] px-3.5 py-3">Amount</th>
+                          <th className="w-[10%] min-w-[90px] px-3.5 py-3">Date</th>
+                          <th className="w-[6%] min-w-[80px] px-3.5 py-3 text-right">Note</th>
                         </tr>
                       </thead>
                         <tbody className="divide-y divide-white/5">

@@ -470,11 +470,11 @@ export default function EnquiriesListTab({
       </div>
 
       {/* Data Table */}
-      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full">
-        <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
+      <div className="pixeva-card rounded-2xl border border-white/10 overflow-x-auto shadow-card w-full">
+        <table className="w-full text-left text-xs text-[#a0a0b0] min-w-[950px]">
           <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
             <tr>
-              <th className="w-10 px-2 py-3 text-center">
+              <th className="w-10 px-3 py-3 text-center">
                 <input
                   type="checkbox"
                   checked={selectedIds.length > 0 && selectedIds.length === filteredEnquiries.length}
@@ -483,12 +483,12 @@ export default function EnquiriesListTab({
                   title="Select all"
                 />
               </th>
-              <th className="w-[27%] px-3 py-3">Name & Contact</th>
-              <th className="w-[23%] px-3 py-3">Event & Date</th>
-              <th className="w-[12%] px-3 py-3">Source</th>
-              <th className="w-[12%] px-3 py-3">Est. Budget</th>
-              <th className="w-[15%] px-3 py-3">Status</th>
-              <th className="w-[11%] px-3 py-3 text-right">Actions</th>
+              <th className="w-[25%] min-w-[200px] px-3 py-3">Name & Contact</th>
+              <th className="w-[22%] min-w-[170px] px-3 py-3">Event & Date</th>
+              <th className="w-[12%] min-w-[100px] px-3 py-3">Source</th>
+              <th className="w-[12%] min-w-[100px] px-3 py-3">Est. Budget</th>
+              <th className="w-[16%] min-w-[130px] px-3 py-3">Status</th>
+              <th className="w-[13%] min-w-[120px] px-3 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">

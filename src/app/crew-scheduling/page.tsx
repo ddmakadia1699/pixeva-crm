@@ -342,15 +342,15 @@ export default function CrewSchedulingPage() {
         </div>
 
         {/* Unassigned Events Table */}
-        <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full">
-          <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
+        <div className="pixeva-card rounded-2xl border border-white/10 overflow-x-auto shadow-card w-full">
+          <table className="w-full text-left text-xs text-[#a0a0b0] min-w-[750px]">
             <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
               <tr>
-                <th className="w-[30%] px-5 py-3.5">Project</th>
-                <th className="w-[20%] px-5 py-3.5">Event</th>
-                <th className="w-[25%] px-5 py-3.5">Date & Time</th>
-                <th className="w-[15%] px-5 py-3.5">Status</th>
-                <th className="w-[10%] px-5 py-3.5 text-right">Actions</th>
+                <th className="w-[28%] min-w-[160px] px-4 py-3.5">Project</th>
+                <th className="w-[20%] min-w-[130px] px-4 py-3.5">Event</th>
+                <th className="w-[25%] min-w-[160px] px-4 py-3.5">Date & Time</th>
+                <th className="w-[15%] min-w-[100px] px-4 py-3.5">Status</th>
+                <th className="w-[12%] min-w-[100px] px-4 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
