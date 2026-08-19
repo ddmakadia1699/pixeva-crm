@@ -227,28 +227,27 @@
   color: #0f172a !important;
 }
 
-/* Surface & Background Hex Overrides */
-.light .bg-\[\#0a0a0f\],
-.light .bg-\[\#0b0f17\],
-.light .bg-\[\#09090e\],
-.light .bg-\[\#0d0d14\] {
+/* Surface & Background Overrides */
+.light [class*="bg-[#0a0a0f]"],
+.light [class*="bg-[#0b0f17]"],
+.light [class*="bg-[#09090e]"],
+.light [class*="bg-[#0d0d14]"] {
   background-color: #ffffff !important;
 }
 
-.light .bg-\[\#12121a\],
-.light .bg-\[\#14141f\],
-.light .bg-\[\#181825\],
-.light .bg-[#0f0f16]/60,
-.light .bg-\[\#161622\],
+.light [class*="bg-[#12121a]"],
+.light [class*="bg-[#14141f]"],
+.light [class*="bg-[#181825]"],
+.light [class*="bg-[#0f0f16]"],
 .light .bg-slate-900,
 .light .bg-zinc-900,
 .light .bg-gray-900 {
   background-color: #f8fafc !important;
 }
 
-.light .bg-\[\#161622\],
-.light .bg-\[\#1a1a24\],
-.light .bg-\[\#1e1e2d\],
+.light [class*="bg-[#161622]"],
+.light [class*="bg-[#1a1a24]"],
+.light [class*="bg-[#1e1e2d]"],
 .light .bg-slate-800,
 .light .bg-zinc-800,
 .light .bg-gray-800 {
@@ -290,33 +289,33 @@
 }
 
 /* High-Contrast Neon Accents in Light Mode */
-.light .text-\[\#00d4ff\],
+.light [class*="text-[#00d4ff]"],
 .light .text-cyan-400,
 .light .text-cyan-300,
 .light .text-cyan-500 {
   color: #0284c7 !important;
 }
 
-.light .text-\[\#8b5cf6\],
+.light [class*="text-[#8b5cf6]"],
 .light .text-purple-400,
 .light .text-purple-300,
 .light .text-purple-500,
-.light .text-[#c084fc] {
+.light [class*="text-[#c084fc]"] {
   color: #7c3aed !important;
 }
 
-.light .text-\[\#3b82f6\],
+.light [class*="text-[#3b82f6]"],
 .light .text-blue-400,
 .light .text-blue-300,
 .light .text-blue-500 {
   color: #2563eb !important;
 }
 
-.light .text-\[\#10b981\],
+.light [class*="text-[#10b981]"],
 .light .text-emerald-400,
 .light .text-emerald-300,
 .light .text-emerald-500,
-.light .text-\[\#34d399\] {
+.light [class*="text-[#34d399]"] {
   color: #059669 !important;
 }
 
@@ -332,24 +331,20 @@
 .light .text-amber-300,
 .light .text-amber-500,
 .light .text-yellow-400,
-.light .text-\[\#fbbf24\],
-.light .text-\[\#f59e0b\] {
+.light [class*="text-[#fbbf24]"],
+.light [class*="text-[#f59e0b]"] {
   color: #d97706 !important;
 }
 
-.light .bg-\[\#00d4ff\]\/15,
-.light .bg-\[\#00d4ff\]\/20,
-.light .bg-\[\#00d4ff\]\/10 {
+.light [class*="bg-[#00d4ff]"] {
   background-color: rgba(2, 132, 199, 0.12) !important;
 }
 
-.light .bg-\[\#8b5cf6\]\/15,
-.light .bg-\[\#8b5cf6\]\/20 {
+.light [class*="bg-[#8b5cf6]"] {
   background-color: rgba(124, 58, 237, 0.12) !important;
 }
 
-.light .bg-\[\#10b981\]\/15,
-.light .bg-\[\#10b981\]\/20 {
+.light [class*="bg-[#10b981]"] {
   background-color: rgba(5, 150, 105, 0.12) !important;
 }
 
@@ -364,7 +359,7 @@
   color: #1e293b !important;
 }
 
-.light .text-[#a0a0b0],
+.light [class*="text-[#a0a0b0]"],
 .light .text-white\/60,
 .light .text-white\/50,
 .light .text-slate-400,
@@ -391,15 +386,39 @@
   border-color: #e2e8f0 !important;
 }
 
-.light .border-\[\#00d4ff\]\/40,
-.light .border-\[\#00d4ff\]\/30 {
+.light [class*="border-[#00d4ff]"] {
   border-color: rgba(2, 132, 199, 0.35) !important;
 }
 
-/* Ensure Buttons & Gradient Items Keep Crisp Text */
+/* Ensure Buttons & Primary Action Badges Keep Crisp White Text */
 .light .btn-pixeva-primary,
 .light .btn-pixeva-primary * {
   color: #ffffff !important;
+}
+
+/* High-Contrast Badges */
+.light .badge-cyan {
+  background-color: #e0f2fe !important;
+  color: #0369a1 !important;
+  border-color: #7dd3fc !important;
+}
+
+.light .badge-emerald {
+  background-color: #dcfce7 !important;
+  color: #15803d !important;
+  border-color: #86efac !important;
+}
+
+.light .badge-purple {
+  background-color: #f3e8ff !important;
+  color: #6b21a8 !important;
+  border-color: #c084fc !important;
+}
+
+.light .badge-amber {
+  background-color: #fef3c7 !important;
+  color: #b45309 !important;
+  border-color: #fde047 !important;
 }
 
 /* Forms, Inputs & Select Dropdowns */
@@ -436,4 +455,3 @@
 .light ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
-
