@@ -46,6 +46,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Data', href: '/data', icon: HardDrive },
   { label: 'Team', href: '/team', icon: Users },
   { label: 'Pixeva CRM AI', href: '/pixeva-ai', icon: Bot, badge: 'AI' },
+  { label: 'Settings', href: '/settings', icon: Settings2 },
 ];
 
 export default function Sidebar() {
