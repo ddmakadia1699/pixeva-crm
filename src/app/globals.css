@@ -20,16 +20,16 @@
   }
 
   .light, [data-theme='light'] {
-    --pixeva-bg: #f8fafc;
+    --pixeva-bg: #f4f6f9;
     --pixeva-card: #ffffff;
-    --pixeva-surface: #f1f5f9;
+    --pixeva-surface: #ffffff;
     --pixeva-cyan: #0284c7;
     --pixeva-purple: #7c3aed;
     --pixeva-blue: #2563eb;
     --pixeva-emerald: #059669;
     --pixeva-amber: #d97706;
     --pixeva-muted: #475569;
-    --pixeva-border: rgba(15, 23, 42, 0.12);
+    --pixeva-border: #e2e8f0;
     --pixeva-text: #0f172a;
   }
 
@@ -95,6 +95,10 @@
   background: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%) !important;
 }
 
+.light .bg-pixeva-gradient {
+  background: linear-gradient(135deg, #0284c7 0%, #7c3aed 100%) !important;
+}
+
 .btn-pixeva-primary {
   background: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%) !important;
   color: #ffffff !important;
@@ -105,10 +109,21 @@
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
+.light .btn-pixeva-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #7c3aed 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 18px rgba(2, 132, 199, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
 .btn-pixeva-primary:hover {
   opacity: 0.95 !important;
   transform: translateY(-2px) !important;
   box-shadow: 0 0 30px rgba(0, 212, 255, 0.6) !important;
+}
+
+.light .btn-pixeva-primary:hover {
+  box-shadow: 0 6px 24px rgba(2, 132, 199, 0.45) !important;
 }
 
 /* Glassmorphism Cards */
@@ -118,7 +133,13 @@
   -webkit-backdrop-filter: blur(20px) !important;
   border: 1px solid var(--pixeva-border) !important;
   color: var(--pixeva-text) !important;
-  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.light .pixeva-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02) !important;
 }
 
 .pixeva-card-hover {
@@ -133,8 +154,9 @@
 }
 
 .light .pixeva-card-hover:hover {
+  background: #ffffff !important;
   border-color: rgba(2, 132, 199, 0.4) !important;
-  box-shadow: 0 12px 30px -8px rgba(15, 23, 42, 0.08), 0 0 20px -5px rgba(2, 132, 199, 0.2) !important;
+  box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.08), 0 0 20px -3px rgba(2, 132, 199, 0.15) !important;
 }
 
 /* Glow Effects */
@@ -142,8 +164,16 @@
   box-shadow: 0 0 25px rgba(0, 212, 255, 0.45) !important;
 }
 
+.light .glow-cyan {
+  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25) !important;
+}
+
 .glow-purple {
   box-shadow: 0 0 25px rgba(139, 92, 246, 0.45) !important;
+}
+
+.light .glow-purple {
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.25) !important;
 }
 
 .glow-blue {
@@ -158,9 +188,9 @@
 }
 
 .light .badge-cyan {
-  background: rgba(2, 132, 199, 0.12) !important;
-  color: #0284c7 !important;
-  border: 1px solid rgba(2, 132, 199, 0.35) !important;
+  background: #e0f2fe !important;
+  color: #0369a1 !important;
+  border: 1px solid #7dd3fc !important;
 }
 
 .badge-purple {
@@ -170,9 +200,9 @@
 }
 
 .light .badge-purple {
-  background: rgba(124, 58, 237, 0.12) !important;
-  color: #7c3aed !important;
-  border: 1px solid rgba(124, 58, 237, 0.35) !important;
+  background: #f3e8ff !important;
+  color: #6b21a8 !important;
+  border: 1px solid #c084fc !important;
 }
 
 .badge-emerald {
@@ -182,9 +212,9 @@
 }
 
 .light .badge-emerald {
-  background: rgba(5, 150, 105, 0.12) !important;
-  color: #059669 !important;
-  border: 1px solid rgba(5, 150, 105, 0.35) !important;
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border: 1px solid #86efac !important;
 }
 
 .badge-amber {
@@ -194,9 +224,9 @@
 }
 
 .light .badge-amber {
-  background: rgba(217, 119, 6, 0.12) !important;
-  color: #d97706 !important;
-  border: 1px solid rgba(217, 119, 6, 0.35) !important;
+  background: #fef3c7 !important;
+  color: #b45309 !important;
+  border: 1px solid #fde047 !important;
 }
 
 /* Custom Scrollbar */
@@ -219,12 +249,29 @@
 }
 
 /* ===================================================
-   COMPREHENSIVE LIGHT THEME UX & CONTRAST SYSTEM
+   ULTRA-PROFESSIONAL LIGHT THEME DESIGN SYSTEM
    =================================================== */
 
 .light body {
-  background-color: #f8fafc !important;
+  background-color: #f4f6f9 !important;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(2, 132, 199, 0.04) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(124, 58, 237, 0.04) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.03) 0px, transparent 50%) !important;
   color: #0f172a !important;
+}
+
+/* Header & Sidebar Specific Light Theme Enhancements */
+.light header {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.light aside {
+  background-color: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+  box-shadow: 4px 0 20px -2px rgba(15, 23, 42, 0.03) !important;
 }
 
 /* Surface & Background Overrides */
@@ -256,11 +303,11 @@
 
 /* Alpha Overlay Overrides */
 .light .bg-white\/5 {
-  background-color: rgba(15, 23, 42, 0.05) !important;
+  background-color: rgba(15, 23, 42, 0.04) !important;
 }
 
 .light .bg-white\/10 {
-  background-color: rgba(15, 23, 42, 0.09) !important;
+  background-color: rgba(15, 23, 42, 0.08) !important;
 }
 
 .light .bg-white\/15,
@@ -269,11 +316,11 @@
 }
 
 .light .hover\:bg-white\/5:hover {
-  background-color: rgba(15, 23, 42, 0.07) !important;
+  background-color: rgba(15, 23, 42, 0.06) !important;
 }
 
 .light .hover\:bg-white\/10:hover {
-  background-color: rgba(15, 23, 42, 0.11) !important;
+  background-color: rgba(15, 23, 42, 0.1) !important;
 }
 
 .light .bg-black\/80,
@@ -288,7 +335,7 @@
   background-color: rgba(15, 23, 42, 0.15) !important;
 }
 
-/* High-Contrast Neon Accents in Light Mode */
+/* High-Contrast Professional Typography & Accents in Light Mode */
 .light [class*="text-[#00d4ff]"],
 .light .text-cyan-400,
 .light .text-cyan-300,
@@ -378,7 +425,7 @@
 .light .border-white\/20,
 .light .border-white\/30,
 .light .border-white\/5 {
-  border-color: #cbd5e1 !important;
+  border-color: #e2e8f0 !important;
 }
 
 .light .divide-white\/5 > * + *,
@@ -396,31 +443,6 @@
   color: #ffffff !important;
 }
 
-/* High-Contrast Badges */
-.light .badge-cyan {
-  background-color: #e0f2fe !important;
-  color: #0369a1 !important;
-  border-color: #7dd3fc !important;
-}
-
-.light .badge-emerald {
-  background-color: #dcfce7 !important;
-  color: #15803d !important;
-  border-color: #86efac !important;
-}
-
-.light .badge-purple {
-  background-color: #f3e8ff !important;
-  color: #6b21a8 !important;
-  border-color: #c084fc !important;
-}
-
-.light .badge-amber {
-  background-color: #fef3c7 !important;
-  color: #b45309 !important;
-  border-color: #fde047 !important;
-}
-
 /* Forms, Inputs & Select Dropdowns */
 .light input,
 .light select,
@@ -428,6 +450,14 @@
   background-color: #ffffff !important;
   color: #0f172a !important;
   border-color: #cbd5e1 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+.light input:focus,
+.light select:focus,
+.light textarea:focus {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
 }
 
 .light input::placeholder,
@@ -455,3 +485,4 @@
 .light ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
