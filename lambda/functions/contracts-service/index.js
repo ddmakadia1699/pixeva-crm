@@ -1,12 +1,17 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://lmagwuarvxhhvoacezvl.supabase.co';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: { persistSession: false },
-  realtime: { enabled: false },
-});
+let supabaseClient = null;
+function getSupabase() {
+  if (!supabaseClient) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://lmagwuarvxhhvoacezvl.supabase.co';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'dummy_key_for_build_time_init';
+    supabaseClient = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false },
+      realtime: { enabled: false },
+    });
+  }
+  return supabaseClient;
+}
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -27,6 +32,7 @@ exports.handler = async (event) => {
     };
   }
 
+  const supabase = getSupabase();
   const rawBody = typeof event.body === 'string' ? JSON.parse(event.body || '{}') : (event.body || event);
   let action = 'GET';
   let payload = rawBody;
