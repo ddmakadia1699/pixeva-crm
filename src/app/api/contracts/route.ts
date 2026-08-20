@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
+
+export const dynamic = 'force-dynamic';
 const contractsHandler = require('../../../../lambda/functions/contracts-service/index.js').handler;
 
 const awsRegion = process.env.AWS_REGION || 'us-east-1';
