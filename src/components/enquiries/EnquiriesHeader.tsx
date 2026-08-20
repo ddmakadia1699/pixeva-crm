@@ -25,28 +25,28 @@ export default function EnquiriesHeader({ activeTab, onTabChange, enquiryCount }
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#00d4ff] to-[#8b5cf6] flex items-center justify-center shadow-md text-white">
+            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
               <Inbox className="w-4 h-4" />
             </div>
             <h1 className="text-2xl font-black text-white tracking-tight">Enquiries</h1>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#00d4ff]/15 text-[#00d4ff] border border-[#00d4ff]/30 uppercase tracking-widest">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold badge-cyan uppercase tracking-wider">
               RevePod OS Suite
             </span>
           </div>
           <p className="text-xs text-[#a0a0b0] mt-1 flex items-center space-x-1.5">
             <span>Landing page</span>
-            <span className="text-white/20">·</span>
+            <span className="text-slate-400">·</span>
             <span>leads</span>
-            <span className="text-white/20">·</span>
+            <span className="text-slate-400">·</span>
             <span>analytics</span>
-            <span className="text-white/20">·</span>
+            <span className="text-slate-400">·</span>
             <span>integrations</span>
           </p>
         </div>
 
         <div className="flex items-center space-x-2">
-          <div className="px-3 py-1.5 rounded-xl bg-[#12121a] border border-white/10 flex items-center space-x-2 text-xs">
-            <Sparkles className="w-3.5 h-3.5 text-[#00d4ff] animate-pulse" />
+          <div className="px-3 py-1.5 rounded-xl pixeva-card flex items-center space-x-2 text-xs">
+            <Sparkles className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
             <span className="text-[#a0a0b0]">Studio Status:</span>
             <span className="font-semibold text-white">Active Ingestion</span>
           </div>
@@ -63,19 +63,19 @@ export default function EnquiriesHeader({ activeTab, onTabChange, enquiryCount }
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 whitespace-nowrap ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 whitespace-nowrap ${
                 isActive
-                  ? 'bg-gradient-to-r from-[#00d4ff]/20 to-[#8b5cf6]/20 text-[#00d4ff] border border-[#00d4ff]/40 shadow-lg shadow-[#00d4ff]/10'
+                  ? 'bg-blue-600 text-white shadow-sm border border-blue-600'
                   : 'text-[#a0a0b0] hover:text-white hover:bg-white/5 border border-transparent'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-[#00d4ff]' : 'text-[#a0a0b0]'}`} />
+              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#a0a0b0]'}`} />
               <span>{tab.label}</span>
               {tab.count !== undefined && (
                 <span
-                  className={`text-[11px] px-2 py-0.5 rounded-full font-black shadow-sm transition-all ${
+                  className={`text-[11px] px-2 py-0.5 rounded-full font-black transition-all ${
                     isActive
-                      ? 'bg-[#00d4ff] text-slate-950'
+                      ? 'bg-white/20 text-white'
                       : 'bg-black/20 text-[#a0a0b0]'
                   }`}
                 >

@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileSignature, CheckCircle2, Clock, Eye, Sparkles, X, ShieldCheck } from 'lucide-react';
+
+const AWS_API_GATEWAY = process.env.NEXT_PUBLIC_AWS_API_GATEWAY_URL || 'https://wng538wd9k.execute-api.us-east-1.amazonaws.com';
 
 export interface Contract {
   id: string;
@@ -44,6 +46,38 @@ export const INITIAL_CONTRACTS: Contract[] = [
 export default function ContractManager() {
   const [contracts, setContracts] = useState<Contract[]>(INITIAL_CONTRACTS);
   const [activePreview, setActivePreview] = useState<Contract | null>(null);
+
+  useEffect(() => {
+    async function fetchContracts() {
+      try {
+        const res = await fetch(`${AWS_API_GATEWAY}/contracts`);
+        if (!res.ok) return;
+        const result = await res.json();
+        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+          setContracts(result.data);
+        }
+      } catch (e) {
+        console.error('Error fetching contracts via Amazon API Gateway:', e);
+      }
+    }
+    fetchContracts();
+  }, []);
+
+  const handleSignContract = async (id: string) => {
+    setContracts((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status: 'signed', signed_at: new Date().toLocaleString() } : c))
+    );
+
+    try {
+      await fetch(`${AWS_API_GATEWAY}/contracts`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+    } catch (e) {
+      console.error('Failed to sign contract via Amazon API Gateway:', e);
+    }
+  };
 
   return (
     <div className="space-y-6">
