@@ -53,8 +53,13 @@ exports.handler = async (event) => {
     else if (httpMethod === 'PUT') action = 'UPDATE';
     else if (httpMethod === 'DELETE') action = 'DELETE';
 
-    if (event.queryStringParameters?.id) {
-      payload = { ...payload, id: event.queryStringParameters.id };
+    let qId = event.queryStringParameters?.id;
+    if (!qId && event.rawQueryString) {
+      const match = event.rawQueryString.match(/id=([^&]+)/);
+      if (match) qId = decodeURIComponent(match[1]);
+    }
+    if (qId) {
+      payload = { ...payload, id: qId };
     }
   } else {
     action = rawBody.action || event.action || 'GET';
@@ -105,7 +110,6 @@ exports.handler = async (event) => {
         ]).select();
 
         if (error && error.code === '23505') {
-          // If email exists, insert with timestamped email
           const fallbackEmail = `${firstName.toLowerCase()}.${Date.now()}@client.com`;
           const retryRes = await supabase.from('leads').insert([
             {
@@ -164,9 +168,41 @@ exports.handler = async (event) => {
       }
 
       case 'DELETE': {
-        const { id } = payload;
-        const { error } = await supabase.from('leads').delete().eq('id', id);
+        let id = payload.id || event.queryStringParameters?.id;
+        if (!id && event.rawQueryString) {
+          const match = event.rawQueryString.match(/id=([^&]+)/);
+          if (match) id = decodeURIComponent(match[1]);
+        }
 
+        if (payload.clearAll) {
+          const { error } = await supabase.from('leads').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+          if (error) throw error;
+          return {
+            statusCode: 200,
+            headers: CORS_HEADERS,
+            body: JSON.stringify({ success: true, action: 'DELETE_ALL', executionTimeMs: Date.now() - startTime }),
+          };
+        }
+
+        if (Array.isArray(payload.ids) && payload.ids.length > 0) {
+          const { error } = await supabase.from('leads').delete().in('id', payload.ids);
+          if (error) throw error;
+          return {
+            statusCode: 200,
+            headers: CORS_HEADERS,
+            body: JSON.stringify({ success: true, action: 'DELETE_BATCH', executionTimeMs: Date.now() - startTime }),
+          };
+        }
+
+        if (!id) {
+          return {
+            statusCode: 400,
+            headers: CORS_HEADERS,
+            body: JSON.stringify({ success: false, error: 'Missing id parameter for DELETE' }),
+          };
+        }
+
+        const { error } = await supabase.from('leads').delete().eq('id', id);
         if (error) throw error;
 
         return {

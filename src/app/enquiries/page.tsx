@@ -11,35 +11,78 @@ import { MOCK_ENQUIRIES } from '@/lib/supabase/client';
 import { Enquiry, EnquiryStatus } from '@/lib/supabase/types';
 
 const AWS_API_GATEWAY = process.env.NEXT_PUBLIC_AWS_API_GATEWAY_URL || 'https://zvt3ypue5l.execute-api.us-east-1.amazonaws.com';
+const DELETED_IDS_KEY = 'pixeva_deleted_enquiries';
+
+function getDeletedIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(DELETED_IDS_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function addDeletedId(id: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const set = getDeletedIds();
+    set.add(id);
+    localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(Array.from(set)));
+  } catch (e) {
+    console.error('Failed to save deleted ID in localStorage:', e);
+  }
+}
+
+function clearDeletedIds() {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(DELETED_IDS_KEY);
+  } catch (e) {
+    console.error('Failed to clear deleted IDs in localStorage:', e);
+  }
+}
 
 export default function EnquiriesPage() {
   const [activeTab, setActiveTab] = useState<EnquiryTab>('enquiries');
-  const [enquiries, setEnquiries] = useState<Enquiry[]>(MOCK_ENQUIRIES);
+  const [enquiries, setEnquiries] = useState<Enquiry[]>(() => {
+    const deletedSet = getDeletedIds();
+    return MOCK_ENQUIRIES.filter((e) => !deletedSet.has(e.id));
+  });
 
   // Fetch enquiries directly via Amazon API Gateway HTTP Trigger (AWS Lambda Backend)
   useEffect(() => {
     async function fetchFromAmazonApiGateway() {
+      const deletedSet = getDeletedIds();
       try {
         const res = await fetch(`${AWS_API_GATEWAY}/enquiries`);
         if (!res.ok) return;
 
         const result = await res.json();
-        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-          const mapped: Enquiry[] = result.data.map((lead: any) => ({
-            id: lead.id,
-            name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Client',
-            email: lead.email || '',
-            phone: lead.phone || '',
-            event_name: lead.company || 'Event',
-            event_type: lead.notes?.includes('wedding') ? 'wedding' : 'corporate',
-            event_date: lead.notes?.match(/\d{4}-\d{2}-\d{2}/)?.[0] || new Date().toISOString().split('T')[0],
-            estimated_budget: Number(lead.estimated_value) || 0,
-            source: lead.source || 'Website',
-            status: lead.status || 'new',
-            notes: lead.notes || '',
-            created_at: lead.created_at || new Date().toISOString(),
-          }));
-          setEnquiries(mapped);
+        if (result.success && Array.isArray(result.data)) {
+          if (result.data.length > 0) {
+            const mapped: Enquiry[] = result.data
+              .map((lead: any) => ({
+                id: lead.id,
+                name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Client',
+                email: lead.email || '',
+                phone: lead.phone || '',
+                event_name: lead.company || 'Event',
+                event_type: lead.notes?.includes('wedding') ? 'wedding' : 'corporate',
+                event_date: lead.notes?.match(/\d{4}-\d{2}-\d{2}/)?.[0] || new Date().toISOString().split('T')[0],
+                estimated_budget: Number(lead.estimated_value) || 0,
+                source: lead.source || 'Website',
+                status: lead.status || 'new',
+                notes: lead.notes || '',
+                created_at: lead.created_at || new Date().toISOString(),
+              }))
+              .filter((item) => !deletedSet.has(item.id));
+
+            setEnquiries(mapped);
+          } else {
+            // If backend table is empty, filter mock items against deletedSet
+            setEnquiries(MOCK_ENQUIRIES.filter((e) => !deletedSet.has(e.id)));
+          }
         }
       } catch (e) {
         console.error('Error fetching via Amazon API Gateway:', e);
@@ -105,26 +148,54 @@ export default function EnquiriesPage() {
 
   // Delete Single directly via Amazon API Gateway HTTP Trigger (AWS Lambda Backend)
   const handleDeleteEnquiry = async (id: string) => {
+    // 1. Immediately remove from local state
     setEnquiries((prev) => prev.filter((e) => e.id !== id));
+    // 2. Persist deleted ID locally so refresh never restores it
+    addDeletedId(id);
 
     try {
+      // 3. Send DELETE request to AWS Lambda with both body and query parameter
       await fetch(`${AWS_API_GATEWAY}/enquiries?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
       });
     } catch (e) {
       console.error('Failed to delete enquiry via Amazon API Gateway Trigger:', e);
     }
   };
 
-  // Delete Batch
-  const handleDeleteBatchEnquiries = (ids: string[]) => {
+  // Delete Batch directly via Amazon API Gateway HTTP Trigger (AWS Lambda Backend)
+  const handleDeleteBatchEnquiries = async (ids: string[]) => {
     const idSet = new Set(ids);
     setEnquiries((prev) => prev.filter((e) => !idSet.has(e.id)));
+    ids.forEach((id) => addDeletedId(id));
+
+    try {
+      await fetch(`${AWS_API_GATEWAY}/enquiries`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+    } catch (e) {
+      console.error('Failed to delete batch enquiries via Amazon API Gateway:', e);
+    }
   };
 
-  // Clear All
-  const handleClearAllEnquiries = () => {
+  // Clear All directly via Amazon API Gateway HTTP Trigger (AWS Lambda Backend)
+  const handleClearAllEnquiries = async () => {
+    enquiries.forEach((e) => addDeletedId(e.id));
     setEnquiries([]);
+
+    try {
+      await fetch(`${AWS_API_GATEWAY}/enquiries`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clearAll: true }),
+      });
+    } catch (e) {
+      console.error('Failed to clear all enquiries via Amazon API Gateway:', e);
+    }
   };
 
   return (
@@ -150,14 +221,11 @@ export default function EnquiriesPage() {
       )}
 
       {activeTab === 'landing-page' && <LandingPageTab />}
-
-      {activeTab === 'analytics' && <AnalyticsTab enquiries={enquiries} />}
-
+      {activeTab === 'analytics' && <AnalyticsTab />}
       {activeTab === 'integrations' && <IntegrationsTab />}
 
-      {/* Persistent RevePod Beta Feedback Drawer Button */}
+      {/* Floating Feedback Modal */}
       <FeedbackModal />
     </div>
   );
 }
-
