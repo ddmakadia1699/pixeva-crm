@@ -34,26 +34,17 @@ function addDeletedId(id: string) {
   }
 }
 
-function clearDeletedIds() {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.removeItem(DELETED_IDS_KEY);
-  } catch (e) {
-    console.error('Failed to clear deleted IDs in localStorage:', e);
-  }
-}
-
 export default function EnquiriesPage() {
   const [activeTab, setActiveTab] = useState<EnquiryTab>('enquiries');
-  const [enquiries, setEnquiries] = useState<Enquiry[]>(() => {
-    const deletedSet = getDeletedIds();
-    return MOCK_ENQUIRIES.filter((e) => !deletedSet.has(e.id));
-  });
+  // Initialize with MOCK_ENQUIRIES so SSR and initial hydration render identically
+  const [enquiries, setEnquiries] = useState<Enquiry[]>(MOCK_ENQUIRIES);
 
-  // Fetch enquiries directly via Amazon API Gateway HTTP Trigger (AWS Lambda Backend)
+  // Apply local deletion filter and fetch from AWS Lambda after hydration
   useEffect(() => {
+    const deletedSet = getDeletedIds();
+    setEnquiries(MOCK_ENQUIRIES.filter((e) => !deletedSet.has(e.id)));
+
     async function fetchFromAmazonApiGateway() {
-      const deletedSet = getDeletedIds();
       try {
         const res = await fetch(`${AWS_API_GATEWAY}/enquiries`);
         if (!res.ok) return;
