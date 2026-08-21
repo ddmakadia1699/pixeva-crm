@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Inbox, Layout, BarChart2, Share2, Sparkles } from 'lucide-react';
+import { Inbox, Layout, BarChart2, Share2 } from 'lucide-react';
 
 export type EnquiryTab = 'enquiries' | 'landing-page' | 'analytics' | 'integrations';
 
@@ -20,35 +20,20 @@ export default function EnquiriesHeader({ activeTab, onTabChange, enquiryCount }
   ];
 
   return (
-    <div className="space-y-4 pb-2 border-b border-white/10">
-      {/* Top Banner & Header Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div className="space-y-4 pb-3 border-b border-white/10">
+      {/* Professional Clean Header Title */}
+      <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
-              <Inbox className="w-4 h-4" />
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00d4ff] to-[#8b5cf6] text-white flex items-center justify-center shadow-lg glow-cyan">
+              <Inbox className="w-5 h-5" />
             </div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Enquiries</h1>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold badge-cyan uppercase tracking-wider">
-              RevePod OS Suite
-            </span>
-          </div>
-          <p className="text-xs text-[#a0a0b0] mt-1 flex items-center space-x-1.5">
-            <span>Landing page</span>
-            <span className="text-slate-400">·</span>
-            <span>leads</span>
-            <span className="text-slate-400">·</span>
-            <span>analytics</span>
-            <span className="text-slate-400">·</span>
-            <span>integrations</span>
-          </p>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <div className="px-3 py-1.5 rounded-xl pixeva-card flex items-center space-x-2 text-xs">
-            <Sparkles className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
-            <span className="text-[#a0a0b0]">Studio Status:</span>
-            <span className="font-semibold text-white">Active Ingestion</span>
+            <div>
+              <h1 className="text-2xl font-extrabold text-white tracking-tight">Enquiries Management</h1>
+              <p className="text-xs text-slate-300 font-medium">
+                Track incoming leads, automate follow-ups, and manage event inquiries.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -65,18 +50,18 @@ export default function EnquiriesHeader({ activeTab, onTabChange, enquiryCount }
               onClick={() => onTabChange(tab.id)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 whitespace-nowrap ${
                 isActive
-                  ? 'bg-blue-600 text-white shadow-sm border border-blue-600'
-                  : 'text-[#a0a0b0] hover:text-white hover:bg-white/5 border border-transparent'
+                  ? 'bg-gradient-to-r from-[#00d4ff] to-[#3b82f6] text-white shadow-md border border-[#00d4ff]/50'
+                  : 'text-slate-300 hover:text-white hover:bg-white/10 border border-white/5 bg-[#12121a]'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#a0a0b0]'}`} />
+              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-300'}`} />
               <span>{tab.label}</span>
               {tab.count !== undefined && (
                 <span
-                  className={`text-[11px] px-2 py-0.5 rounded-full font-black transition-all ${
+                  className={`text-[11px] px-2 py-0.5 rounded-full font-extrabold transition-all ${
                     isActive
                       ? 'bg-white/20 text-white'
-                      : 'bg-black/20 text-[#a0a0b0]'
+                      : 'bg-white/10 text-cyan-300'
                   }`}
                 >
                   {tab.count}

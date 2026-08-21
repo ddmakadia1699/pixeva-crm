@@ -550,7 +550,7 @@ export default function EnquiriesListTab({
                               <span className="truncate">{enq.email}</span>
                             </div>
                             {enq.phone && (
-                              <div className="flex items-center space-x-1 text-slate-800 dark:text-slate-200 font-extrabold truncate">
+                              <div className="flex items-center space-x-1 text-slate-200 font-medium truncate">
                                 <Phone className="w-3 h-3 shrink-0 text-[#8b5cf6]" />
                                 <span className="truncate">{enq.phone}</span>
                               </div>
@@ -582,7 +582,7 @@ export default function EnquiriesListTab({
 
                     {/* Source */}
                     <td className="px-3 py-3 w-[12%]">
-                      <span className="inline-block px-2 py-0.5 rounded-full bg-[#161622] border border-white/10 text-[10px] text-[#a0a0b0] font-semibold truncate max-w-full">
+                      <span className="inline-block px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-[10px] text-slate-200 font-bold truncate max-w-full">
                         {enq.source}
                       </span>
                     </td>
@@ -601,24 +601,24 @@ export default function EnquiriesListTab({
                         onChange={(e) => onUpdateStatus(enq.id, e.target.value as EnquiryStatus)}
                         className={`border text-[11px] font-bold rounded-lg px-2 py-1 focus:outline-none cursor-pointer w-full transition-all truncate ${
                           enq.status === 'new'
-                            ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
+                            ? 'bg-blue-500/20 text-blue-300 border-blue-500/50'
                             : enq.status === 'contacted'
-                            ? 'bg-purple-500/20 text-purple-400 border-purple-500/40'
+                            ? 'bg-purple-500/20 text-purple-300 border-purple-500/50'
                             : enq.status === 'qualified'
-                            ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
                             : enq.status === 'proposal'
-                            ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40'
+                            ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50'
                             : enq.status === 'booked'
-                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                            : 'bg-rose-500/20 text-rose-400 border-rose-500/40'
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                            : 'bg-rose-500/20 text-rose-300 border-rose-500/50'
                         }`}
                       >
-                        <option value="new" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">New</option>
-                        <option value="contacted" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Contacted</option>
-                        <option value="qualified" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Qualified</option>
-                        <option value="proposal" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Proposal</option>
-                        <option value="booked" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Booked</option>
-                        <option value="unqualified" className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">Unqualified</option>
+                        <option value="new" className="bg-[#12121a] text-white">New</option>
+                        <option value="contacted" className="bg-[#12121a] text-white">Contacted</option>
+                        <option value="qualified" className="bg-[#12121a] text-white">Qualified</option>
+                        <option value="proposal" className="bg-[#12121a] text-white">Proposal</option>
+                        <option value="booked" className="bg-[#12121a] text-white">Booked</option>
+                        <option value="unqualified" className="bg-[#12121a] text-white">Unqualified</option>
                       </select>
                     </td>
 
