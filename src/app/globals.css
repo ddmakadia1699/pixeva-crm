@@ -97,7 +97,7 @@
 }
 
 .light .bg-pixeva-gradient {
-  background: #2563eb !important;
+  background: #0284c7 !important;
 }
 
 .btn-pixeva-primary {
@@ -111,10 +111,10 @@
 }
 
 .light .btn-pixeva-primary {
-  background: #2563eb !important;
+  background: #0284c7 !important;
   color: #ffffff !important;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-  border: 1px solid #1d4ed8 !important;
+  border: 1px solid #0369a1 !important;
 }
 
 .btn-pixeva-primary:hover {
@@ -124,8 +124,8 @@
 }
 
 .light .btn-pixeva-primary:hover {
-  background: #1d4ed8 !important;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+  background: #0369a1 !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25) !important;
 }
 
 /* Glassmorphism Cards */
@@ -196,9 +196,9 @@
 }
 
 .light .badge-cyan {
-  background: #eff6ff !important;
-  color: #1d4ed8 !important;
-  border: 1px solid #bfdbfe !important;
+  background: #e0f2fe !important;
+  color: #0369a1 !important;
+  border: 1px solid #bae6fd !important;
 }
 
 .badge-purple {
@@ -257,7 +257,7 @@
 }
 
 /* ===================================================
-   ENTERPRISE-GRADE CLEAN LIGHT THEME OVERRIDES
+   ENTERPRISE-GRADE LIGHT THEME LIGHT-BLUE OVERRIDES
    =================================================== */
 
 .light body {
@@ -266,7 +266,20 @@
   color: #0f172a !important;
 }
 
-/* Header & Sidebar Specific Light Theme Enhancements */
+/* Light Blue Active Buttons and Badges Override */
+.light .bg-blue-600,
+.light .bg-blue-500 {
+  background-color: #e0f2fe !important;
+  color: #0369a1 !important;
+  border-color: #bae6fd !important;
+}
+
+.light .bg-blue-600 *,
+.light .bg-blue-500 * {
+  color: #0369a1 !important;
+}
+
+/* Light Mode Card and Surface Overrides */
 .light header {
   background-color: #ffffff !important;
   backdrop-filter: none !important;
@@ -304,29 +317,29 @@
 .light .bg-slate-800,
 .light .bg-zinc-800,
 .light .bg-gray-800 {
-  background-color: #f1f5f9 !important;
+  background-color: #f0f9ff !important;
 }
 
 /* Alpha Overlay Overrides */
 .light .bg-white\/5 {
-  background-color: #f1f5f9 !important;
+  background-color: #f0f9ff !important;
 }
 
 .light .bg-white\/10 {
-  background-color: #e2e8f0 !important;
+  background-color: #e0f2fe !important;
 }
 
 .light .bg-white\/15,
 .light .bg-white\/20 {
-  background-color: #cbd5e1 !important;
+  background-color: #bae6fd !important;
 }
 
 .light .hover\:bg-white\/5:hover {
-  background-color: #f1f5f9 !important;
+  background-color: #e0f2fe !important;
 }
 
 .light .hover\:bg-white\/10:hover {
-  background-color: #e2e8f0 !important;
+  background-color: #bae6fd !important;
 }
 
 .light .bg-black\/80,
@@ -346,7 +359,7 @@
 .light .text-cyan-400,
 .light .text-cyan-300,
 .light .text-cyan-500 {
-  color: #2563eb !important;
+  color: #0284c7 !important;
 }
 
 .light [class*="text-[#8b5cf6]"],
@@ -361,7 +374,7 @@
 .light .text-blue-400,
 .light .text-blue-300,
 .light .text-blue-500 {
-  color: #2563eb !important;
+  color: #0284c7 !important;
 }
 
 .light [class*="text-[#10b981]"],
@@ -390,7 +403,7 @@
 }
 
 .light [class*="bg-[#00d4ff]"] {
-  background-color: #dbeafe !important;
+  background-color: #e0f2fe !important;
 }
 
 .light [class*="bg-[#8b5cf6]"] {
@@ -440,16 +453,16 @@
 }
 
 .light [class*="border-[#00d4ff]"] {
-  border-color: #cbd5e1 !important;
+  border-color: #bae6fd !important;
 }
 
-/* Ensure Primary Action Buttons Keep Crisp White Text */
+/* Primary Action Buttons Keep Crisp White Text */
 .light .btn-pixeva-primary,
 .light .btn-pixeva-primary * {
   color: #ffffff !important;
 }
 
-/* Forms, Inputs & Select Dropdowns */
+/* Light Mode Input Fields & Select Options */
 .light input,
 .light select,
 .light textarea {
@@ -463,8 +476,8 @@
 .light input:focus,
 .light select:focus,
 .light textarea:focus {
-  border-color: #2563eb !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12) !important;
 }
 
 .light input::placeholder,
@@ -486,9 +499,9 @@
 }
 
 .light ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #bae6fd;
 }
 
 .light ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #7dd3fc;
 }

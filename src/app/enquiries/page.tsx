@@ -214,6 +214,9 @@ export default function EnquiriesPage() {
       {activeTab === 'landing-page' && <LandingPageTab />}
       {activeTab === 'analytics' && <AnalyticsTab enquiries={enquiries} />}
       {activeTab === 'integrations' && <IntegrationsTab />}
+
+      {/* Floating Feedback Modal */}
+      <FeedbackModal />
     </div>
   );
 }
