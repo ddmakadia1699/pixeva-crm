@@ -35,11 +35,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Safety timeout to ensure loading screen resolves within 1 second max
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      clearTimeout(timer);
+    }).catch(() => {
+      setLoading(false);
+      clearTimeout(timer);
     });
 
     // Listen for auth state changes (login, logout, token refresh)
@@ -47,9 +56,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      clearTimeout(timer);
     });
 
     return () => {
+      clearTimeout(timer);
       subscription.unsubscribe();
     };
   }, []);

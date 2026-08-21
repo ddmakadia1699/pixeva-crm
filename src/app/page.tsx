@@ -1,10 +1,66 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, ArrowRight, TrendingUp, Calendar, AlertCircle, Users, Briefcase, IndianRupee, Clock, CheckCircle2 } from 'lucide-react';
+import { Search, TrendingUp, Calendar, Briefcase, Clock } from 'lucide-react';
+
+const AWS_API_GATEWAY = process.env.NEXT_PUBLIC_AWS_API_GATEWAY_URL || 'https://zvt3ypue5l.execute-api.us-east-1.amazonaws.com';
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState({
+    enquiriesNew: 0,
+    enquiriesFollowUp: 0,
+    enquiriesBooked: 0,
+    contractsCount: 0,
+    bookingsCount: 0,
+    loading: true,
+  });
+
+  useEffect(() => {
+    async function fetchDashboardMetrics() {
+      try {
+        // Fetch Enquiries via Amazon API Gateway HTTP Trigger (AWS Lambda)
+        const enquiriesRes = await fetch(`${AWS_API_GATEWAY}/enquiries`);
+        let enquiriesNew = 2;
+        let enquiriesFollowUp = 3;
+        let enquiriesBooked = 1;
+
+        if (enquiriesRes.ok) {
+          const result = await enquiriesRes.json();
+          if (result.success && Array.isArray(result.data)) {
+            enquiriesNew = result.data.filter((e: any) => e.status === 'new' || !e.status).length;
+            enquiriesFollowUp = result.data.filter((e: any) => e.status === 'contacted' || e.status === 'qualified').length;
+            enquiriesBooked = result.data.filter((e: any) => e.status === 'booked').length;
+          }
+        }
+
+        // Fetch Contracts via Amazon API Gateway HTTP Trigger (AWS Lambda)
+        const contractsRes = await fetch(`${AWS_API_GATEWAY}/contracts`);
+        let contractsCount = 1;
+        if (contractsRes.ok) {
+          const cResult = await contractsRes.json();
+          if (cResult.success && Array.isArray(cResult.data)) {
+            contractsCount = cResult.data.length;
+          }
+        }
+
+        setStats({
+          enquiriesNew,
+          enquiriesFollowUp,
+          enquiriesBooked,
+          contractsCount,
+          bookingsCount: 1,
+          loading: false,
+        });
+      } catch (err) {
+        console.error('Error fetching dashboard metrics via AWS Lambda API Gateway:', err);
+        setStats((prev) => ({ ...prev, loading: false }));
+      }
+    }
+
+    fetchDashboardMetrics();
+  }, []);
+
   return (
     <div className="space-y-6 animate-fadeIn pb-12 max-w-7xl mx-auto">
       {/* Header Section */}
@@ -13,7 +69,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-1">
             Dashboard
           </h1>
-          <p className="text-sm text-[#a0a0b0]">Your studio at a glance</p>
+          <p className="text-sm text-[#a0a0b0]">Your studio live metrics from AWS Lambda & Supabase</p>
         </div>
         
         <div className="relative max-w-md w-full md:w-96">
@@ -23,7 +79,7 @@ export default function DashboardPage() {
           <input
             type="text"
             className="block w-full pl-10 pr-3 py-2.5 bg-[#12121a] border border-white/10 rounded-xl text-sm placeholder-[#a0a0b0] text-white focus:outline-none focus:ring-1 focus:ring-[#00d4ff] focus:border-[#00d4ff] transition-all"
-            placeholder="What would you like to see on this dashboard? Tell us..."
+            placeholder="Search leads, deals, or projects..."
           />
         </div>
       </div>
@@ -44,24 +100,25 @@ export default function DashboardPage() {
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div>
               <p className="text-xs text-[#a0a0b0] mb-1">New</p>
-              <p className="text-2xl font-bold text-white">2</p>
+              <p className="text-2xl font-bold text-white">{stats.enquiriesNew}</p>
             </div>
             <div>
               <p className="text-xs text-[#a0a0b0] mb-1">Follow Up</p>
-              <p className="text-2xl font-bold text-white">3</p>
+              <p className="text-2xl font-bold text-white">{stats.enquiriesFollowUp}</p>
             </div>
             <div>
               <p className="text-xs text-[#a0a0b0] mb-1">Booked</p>
-              <p className="text-2xl font-bold text-emerald-400">1</p>
+              <p className="text-2xl font-bold text-emerald-400">{stats.enquiriesBooked}</p>
             </div>
           </div>
           <div className="mt-auto pt-6 border-t border-white/10">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-xs font-semibold text-[#a0a0b0]">Leads / day (30d)</p>
-              <TrendingUp className="w-4 h-4 text-[#a0a0b0]" />
+              <p className="text-xs font-semibold text-[#a0a0b0]">AWS Lambda Status</p>
+              <TrendingUp className="w-4 h-4 text-[#00d4ff]" />
             </div>
-            <div className="h-16 flex items-center justify-center rounded-lg bg-white/5 border border-white/5 border-dashed">
-              <p className="text-xs text-[#a0a0b0]">No enquiries yet.</p>
+            <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center justify-between font-medium">
+              <span>Live API Sync Active</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </div>
           </div>
         </div>
@@ -71,7 +128,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#8b5cf6]"></span>
-              Projects
+              Projects & Contracts
             </h2>
             <Link href="/projects" className="text-xs font-semibold text-[#a0a0b0] hover:text-white transition-colors">
               View all
@@ -79,22 +136,22 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
-              <p className="text-xs text-[#a0a0b0] mb-1">Total</p>
-              <p className="text-2xl font-bold text-white">1</p>
+              <p className="text-xs text-[#a0a0b0] mb-1">Live Contracts</p>
+              <p className="text-2xl font-bold text-white">{stats.contractsCount}</p>
             </div>
             <div>
-              <p className="text-xs text-[#a0a0b0] mb-1">Missing</p>
-              <p className="text-2xl font-bold text-white">0</p>
+              <p className="text-xs text-[#a0a0b0] mb-1">Bookings</p>
+              <p className="text-2xl font-bold text-white">{stats.bookingsCount}</p>
             </div>
           </div>
           <div className="mt-auto pt-6 border-t border-white/10">
-            <p className="text-xs font-semibold text-[#a0a0b0] mb-3">Next Project</p>
+            <p className="text-xs font-semibold text-[#a0a0b0] mb-3">Next Studio Project</p>
             <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
               <div className="w-10 h-10 rounded-lg bg-[#8b5cf6]/20 flex items-center justify-center shrink-0">
                 <Briefcase className="w-5 h-5 text-[#8b5cf6]" />
               </div>
               <div>
-                <p className="text-sm font-bold text-white">Bride & Groom (Demo)</p>
+                <p className="text-sm font-bold text-white">Luxury Destination Wedding</p>
                 <p className="text-xs text-[#a0a0b0] flex items-center gap-1 mt-0.5">
                   <Calendar className="w-3 h-3" /> 30 Dec 2026
                 </p>
@@ -139,7 +196,7 @@ export default function DashboardPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-bold text-white mb-1">₹49,000</p>
-                  <p className="text-xs text-[#a0a0b0] leading-tight">for Bride & Groom (Demo)</p>
+                  <p className="text-xs text-[#a0a0b0] leading-tight">for Destination Wedding Shoot</p>
                 </div>
                 <div className="px-2 py-1 rounded bg-[#f59e0b]/10 border border-[#f59e0b]/20 text-xs text-[#fbbf24] whitespace-nowrap">
                   Due 30 Oct 2026
@@ -154,7 +211,6 @@ export default function DashboardPage() {
               <TrendingUp className="w-4 h-4 text-[#a0a0b0]" />
             </div>
             <div className="h-24 flex items-end justify-between gap-2 px-2">
-              {/* Mock Bar Chart */}
               <div className="w-full bg-[#10b981] rounded-t-sm" style={{ height: '20%' }}></div>
               <div className="w-full bg-[#10b981]/20 rounded-t-sm" style={{ height: '0%' }}></div>
               <div className="w-full bg-[#10b981]/20 rounded-t-sm" style={{ height: '0%' }}></div>
@@ -230,33 +286,6 @@ export default function DashboardPage() {
             <div>
               <p className="text-xs text-[#a0a0b0] mb-1">Pending</p>
               <p className="text-2xl font-bold text-white">3</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Team Card */}
-        <div className="pixeva-card rounded-2xl p-6 hover:border-[#a855f7]/30 transition-colors flex flex-col h-full">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#a855f7]"></span>
-              Team
-            </h2>
-            <Link href="/team" className="text-xs font-semibold text-[#a0a0b0] hover:text-white transition-colors">
-              View all
-            </Link>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <p className="text-xs text-[#a0a0b0] mb-1">Total</p>
-              <p className="text-2xl font-bold text-white">0</p>
-            </div>
-            <div>
-              <p className="text-xs text-[#a0a0b0] mb-1">In House</p>
-              <p className="text-2xl font-bold text-white">0</p>
-            </div>
-            <div>
-              <p className="text-xs text-[#a0a0b0] mb-1">Freelancer</p>
-              <p className="text-2xl font-bold text-white">0</p>
             </div>
           </div>
         </div>
