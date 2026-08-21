@@ -53,6 +53,10 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
 
+  if (pathname === '/login') {
+    return null;
+  }
+
   return (
     <aside className="w-64 shrink-0 h-screen sticky top-0 flex flex-col justify-between pixeva-card border-r border-white/10 bg-[#0a0a0f] p-4 z-40 transition-colors duration-250">
       <div className="space-y-4">

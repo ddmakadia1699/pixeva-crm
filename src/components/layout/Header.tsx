@@ -1,15 +1,25 @@
 'use client';
 
 import React from 'react';
-import { Search, Bell, Plus, Zap, Sun, Moon } from 'lucide-react';
+import Link from 'next/link';
+import { Search, Bell, Plus, Zap, Sun, Moon, LogOut, User as UserIcon } from 'lucide-react';
 import { useTheme } from '@/context/ThemeProvider';
+import { useAuth } from '@/context/AuthContext';
+
+import { usePathname } from 'next/navigation';
 
 interface HeaderProps {
   onOpenAddLeadModal?: () => void;
 }
 
 export default function Header({ onOpenAddLeadModal }: HeaderProps) {
+  const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
+
+  if (pathname === '/login') {
+    return null;
+  }
 
   return (
     <header className="h-16 shrink-0 sticky top-0 z-30 pixeva-card border-b border-white/10 bg-[#0a0a0f]/90 backdrop-blur-xl px-6 flex items-center justify-between transition-colors duration-250">
@@ -50,6 +60,44 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
             </>
           )}
         </button>
+
+        {/* User Auth Profile / Logout */}
+        {user ? (
+          <div className="flex items-center space-x-2 border-l border-white/10 pl-3">
+            <div className="flex items-center space-x-2">
+              {user.user_metadata?.avatar_url ? (
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt={user.email || 'User'}
+                  className="w-7 h-7 rounded-full border border-blue-500/50"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-blue-600/30 text-blue-400 border border-blue-500/40 flex items-center justify-center text-xs font-bold">
+                  {user.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+              )}
+              <span className="text-xs font-medium text-white hidden lg:inline max-w-[120px] truncate">
+                {user.user_metadata?.full_name || user.email}
+              </span>
+            </div>
+
+            <button
+              onClick={() => signOut()}
+              title="Sign Out"
+              className="p-1.5 rounded-lg text-[#a0a0b0] hover:text-red-400 hover:bg-red-500/10 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <Link
+            href="/login"
+            className="flex items-center space-x-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-blue-600 text-white hover:bg-blue-500 transition-colors"
+          >
+            <UserIcon className="w-3.5 h-3.5" />
+            <span>Sign In</span>
+          </Link>
+        )}
 
         {/* Action Button */}
         {onOpenAddLeadModal && (

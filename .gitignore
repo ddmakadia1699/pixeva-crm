@@ -42,3 +42,6 @@ scratch/
 *.zip
 dist/
 response.json
+.aws-sam/
+client_secret_*.json
+

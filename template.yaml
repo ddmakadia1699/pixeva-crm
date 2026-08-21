@@ -1,0 +1,108 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Pixeva CRM AWS SAM Serverless Backend
+
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 128
+    Runtime: nodejs22.x
+    Environment:
+      Variables:
+        NEXT_PUBLIC_SUPABASE_URL: https://lmagwuarvxhhvoacezvl.supabase.co
+        SUPABASE_SERVICE_ROLE_KEY: dummy_key_for_sam_build
+
+Resources:
+  # Amazon API Gateway (HTTP API)
+  PixevaApiGateway:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: '$default'
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+          - X-Requested-With
+
+  # 1. Enquiries Microservice
+  EnquiriesServiceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/functions/enquiries-service/dist/
+      Handler: index.handler
+      Events:
+        EnquiriesApi:
+          Type: HttpApi
+          Properties:
+            Path: /enquiries
+            Method: ANY
+            ApiId: !Ref PixevaApiGateway
+
+  # 2. Contracts Microservice
+  ContractsServiceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/functions/contracts-service/dist/
+      Handler: index.handler
+      Events:
+        ContractsApi:
+          Type: HttpApi
+          Properties:
+            Path: /contracts
+            Method: ANY
+            ApiId: !Ref PixevaApiGateway
+
+  # 3. Bookings Microservice
+  BookingsServiceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/functions/bookings-service/dist/
+      Handler: index.handler
+      Events:
+        BookingsApi:
+          Type: HttpApi
+          Properties:
+            Path: /bookings
+            Method: ANY
+            ApiId: !Ref PixevaApiGateway
+
+  # 4. PDF Generator Microservice
+  PdfGeneratorServiceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/functions/pdf-generator/dist/
+      Handler: index.handler
+      Events:
+        PdfApi:
+          Type: HttpApi
+          Properties:
+            Path: /pdf-generator
+            Method: POST
+            ApiId: !Ref PixevaApiGateway
+
+  # 5. Batch Email Microservice
+  BatchEmailServiceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/functions/batch-email/dist/
+      Handler: index.handler
+      Events:
+        BatchEmailApi:
+          Type: HttpApi
+          Properties:
+            Path: /batch-email
+            Method: POST
+            ApiId: !Ref PixevaApiGateway
+
+Outputs:
+  PixevaApiGatewayUrl:
+    Description: Live SAM Amazon API Gateway HTTP Base URL
+    Value: !Sub "https://${PixevaApiGateway}.execute-api.${AWS::Region}.amazonaws.com"
