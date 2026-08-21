@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Inbox, Layout, BarChart2, Share2, Sparkles } from 'lucide-react';
+import { Inbox, Layout, BarChart2, Share2 } from 'lucide-react';
 
 export type EnquiryTab = 'enquiries' | 'landing-page' | 'analytics' | 'integrations';
 
@@ -21,40 +21,21 @@ export default function EnquiriesHeader({ activeTab, onTabChange, enquiryCount }
 
   return (
     <div className="space-y-4 pb-2 border-b border-white/10">
-      {/* Top Banner & Header Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
-              <Inbox className="w-4 h-4" />
-            </div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Enquiries</h1>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold badge-cyan uppercase tracking-wider">
-              RevePod OS Suite
-            </span>
+      {/* Title */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
+            <Inbox className="w-5 h-5" />
           </div>
-          <p className="text-xs text-[#a0a0b0] mt-1 flex items-center space-x-1.5">
-            <span>Landing page</span>
-            <span className="text-slate-400">·</span>
-            <span>leads</span>
-            <span className="text-slate-400">·</span>
-            <span>analytics</span>
-            <span className="text-slate-400">·</span>
-            <span>integrations</span>
-          </p>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <div className="px-3 py-1.5 rounded-xl pixeva-card flex items-center space-x-2 text-xs">
-            <Sparkles className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
-            <span className="text-[#a0a0b0]">Studio Status:</span>
-            <span className="font-semibold text-white">Active Ingestion</span>
+          <div>
+            <h1 className="text-xl font-bold text-white tracking-tight">Enquiries</h1>
+            <p className="text-xs text-[#a0a0b0]">Manage inbound leads, client requests, and integrations</p>
           </div>
         </div>
       </div>
 
-      {/* Navigation Sub-Tabs */}
-      <div className="flex items-center space-x-2 overflow-x-auto pt-2 scrollbar-none">
+      {/* Navigation Tabs */}
+      <div className="flex items-center space-x-2 overflow-x-auto pt-1 scrollbar-none">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -63,7 +44,7 @@ export default function EnquiriesHeader({ activeTab, onTabChange, enquiryCount }
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 whitespace-nowrap ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200 whitespace-nowrap ${
                 isActive
                   ? 'bg-blue-600 text-white shadow-sm border border-blue-600'
                   : 'text-[#a0a0b0] hover:text-white hover:bg-white/5 border border-transparent'
@@ -73,7 +54,7 @@ export default function EnquiriesHeader({ activeTab, onTabChange, enquiryCount }
               <span>{tab.label}</span>
               {tab.count !== undefined && (
                 <span
-                  className={`text-[11px] px-2 py-0.5 rounded-full font-black transition-all ${
+                  className={`text-[11px] px-2 py-0.5 rounded-full font-bold transition-all ${
                     isActive
                       ? 'bg-white/20 text-white'
                       : 'bg-black/20 text-[#a0a0b0]'
