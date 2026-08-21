@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileSignature, CheckCircle2, Clock, Eye, Sparkles, X, ShieldCheck } from 'lucide-react';
 
-const AWS_API_GATEWAY = process.env.NEXT_PUBLIC_AWS_API_GATEWAY_URL || 'https://wng538wd9k.execute-api.us-east-1.amazonaws.com';
+const AWS_API_GATEWAY = process.env.NEXT_PUBLIC_AWS_API_GATEWAY_URL || 'https://zvt3ypue5l.execute-api.us-east-1.amazonaws.com';
 
 export interface Contract {
   id: string;

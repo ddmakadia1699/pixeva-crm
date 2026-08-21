@@ -10,7 +10,7 @@ import FeedbackModal from '@/components/enquiries/FeedbackModal';
 import { MOCK_ENQUIRIES } from '@/lib/supabase/client';
 import { Enquiry, EnquiryStatus } from '@/lib/supabase/types';
 
-const AWS_API_GATEWAY = process.env.NEXT_PUBLIC_AWS_API_GATEWAY_URL || 'https://wng538wd9k.execute-api.us-east-1.amazonaws.com';
+const AWS_API_GATEWAY = process.env.NEXT_PUBLIC_AWS_API_GATEWAY_URL || 'https://zvt3ypue5l.execute-api.us-east-1.amazonaws.com';
 
 export default function EnquiriesPage() {
   const [activeTab, setActiveTab] = useState<EnquiryTab>('enquiries');
