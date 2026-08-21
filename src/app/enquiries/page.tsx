@@ -76,7 +76,7 @@ export default function EnquiriesPage() {
                 notes: lead.notes || '',
                 created_at: lead.created_at || new Date().toISOString(),
               }))
-              .filter((item) => !deletedSet.has(item.id));
+              .filter((item: Enquiry) => !deletedSet.has(item.id));
 
             setEnquiries(mapped);
           } else {
@@ -221,7 +221,7 @@ export default function EnquiriesPage() {
       )}
 
       {activeTab === 'landing-page' && <LandingPageTab />}
-      {activeTab === 'analytics' && <AnalyticsTab />}
+      {activeTab === 'analytics' && <AnalyticsTab enquiries={enquiries} />}
       {activeTab === 'integrations' && <IntegrationsTab />}
 
       {/* Floating Feedback Modal */}
