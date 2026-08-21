@@ -6,16 +6,10 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Users, 
-  KanbanSquare, 
-  Cpu, 
   Settings2, 
   Camera,
   Zap,
-  ShieldCheck,
   CalendarDays,
-  Receipt,
-  FileSignature,
-  QrCode,
   Inbox,
   Briefcase,
   Layers,
@@ -24,9 +18,11 @@ import {
   Sun,
   Moon,
   HardDrive,
-  Bot
+  Bot,
+  LogOut
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeProvider';
+import { useAuth } from '@/context/AuthContext';
 
 interface NavItem {
   label: string;
@@ -52,6 +48,7 @@ const NAV_ITEMS: NavItem[] = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
 
   if (pathname === '/login') {
     return null;
@@ -75,7 +72,7 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation Links */}
-        <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-270px)] pr-1">
+        <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-320px)] pr-1">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -122,44 +119,50 @@ export default function Sidebar() {
             {theme === 'dark' ? (
               <>
                 <Moon className="w-3.5 h-3.5 text-[#00d4ff]" />
-                <span className="text-white">Dark (Black)</span>
+                <span className="text-white">Dark</span>
               </>
             ) : (
               <>
                 <Sun className="w-3.5 h-3.5 text-amber-500" />
-                <span className="text-[#0f172a]">Light (White)</span>
+                <span className="text-[#0f172a]">Light</span>
               </>
             )}
           </div>
         </button>
 
-        <div className="p-3 rounded-xl pixeva-card bg-[#12121a] border border-white/10 space-y-1.5 text-[11px]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-1.5">
-              <Zap className="w-3.5 h-3.5 text-[#00d4ff] animate-pulse" />
-              <span className="font-bold text-white text-[11px]">Pixeva Studio Engine</span>
+        {/* User Profile Card */}
+        <div className="flex items-center justify-between p-2 rounded-xl pixeva-card bg-[#12121a] border border-white/10">
+          <div className="flex items-center space-x-2 truncate">
+            {user?.user_metadata?.avatar_url ? (
+              <img
+                src={user.user_metadata.avatar_url}
+                alt={user.email || 'User'}
+                className="w-7 h-7 rounded-full border border-[#00d4ff]/40 shrink-0"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#00d4ff] to-[#8b5cf6] flex items-center justify-center font-bold text-[10px] text-white shadow-sm shrink-0">
+                {user?.email?.charAt(0).toUpperCase() || 'PX'}
+              </div>
+            )}
+            <div className="truncate">
+              <p className="text-xs font-bold text-white truncate">
+                {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Studio User'}
+              </p>
+              <p className="text-[9px] text-[#a0a0b0] truncate">{user?.email || 'admin@pixeva.co'}</p>
             </div>
-            <span className="w-2 h-2 rounded-full bg-[#00d4ff] glow-cyan" />
-          </div>
-          <div className="flex justify-between items-center text-[#a0a0b0] text-[10px]">
-            <span>Platform Status</span>
-            <span className="text-[#00d4ff] font-mono font-bold">Active & Online</span>
           </div>
         </div>
 
-        {/* User Card */}
-        <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl pixeva-card border border-white/10">
-          <div className="flex items-center space-x-2 truncate">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#00d4ff] to-[#8b5cf6] flex items-center justify-center font-bold text-[10px] text-white shadow-sm shrink-0">
-              PX
-            </div>
-            <div className="truncate">
-              <p className="text-xs font-bold text-white truncate">Pixeva Admin</p>
-              <p className="text-[9px] text-[#a0a0b0] truncate">admin@pixeva.co</p>
-            </div>
-          </div>
-          <ShieldCheck className="w-3.5 h-3.5 text-[#00d4ff] shrink-0" />
-        </div>
+        {/* Explicit Sign Out / Log Out Button */}
+        {user && (
+          <button
+            onClick={() => signOut()}
+            className="w-full flex items-center justify-center space-x-2 py-2 px-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white font-bold text-xs transition-all duration-200 group"
+          >
+            <LogOut className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+            <span>Sign Out / Log Out</span>
+          </button>
+        )}
       </div>
     </aside>
   );
