@@ -335,23 +335,23 @@ export default function EnquiriesListTab({
       {/* Control Bar: Search, Filters & Action Buttons */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         {/* Left Side: Search + Dropdown Filters */}
-        <div className="flex flex-wrap items-center gap-2 flex-1">
+        <div className="flex flex-wrap items-center gap-2.5 flex-1">
           {/* Search Box */}
-          <div className="relative flex-1 min-w-[220px] max-w-md">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a0a0b0]" />
+          <div className="relative flex-1 min-w-[240px] max-w-md">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search name, contact, event…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#12121a] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]/60 transition-colors"
+              className="w-full bg-[#12121a] border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-[#00d4ff] transition-colors"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a0a0b0] hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -361,7 +361,7 @@ export default function EnquiriesListTab({
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-[#12121a] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-8 appearance-none"
+              className="bg-[#12121a] border border-white/10 text-sm font-semibold rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-9 appearance-none"
             >
               <option value="all">All Status</option>
               <option value="new">New</option>
@@ -371,7 +371,7 @@ export default function EnquiriesListTab({
               <option value="booked">Booked</option>
               <option value="unqualified">Unqualified</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {/* Source Dropdown Filter */}
@@ -379,7 +379,7 @@ export default function EnquiriesListTab({
             <select
               value={selectedSource}
               onChange={(e) => setSelectedSource(e.target.value)}
-              className="bg-[#12121a] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-8 appearance-none"
+              className="bg-[#12121a] border border-white/10 text-sm font-semibold rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-9 appearance-none"
             >
               <option value="all">All Sources</option>
               <option value="Landing Page">Landing Page</option>
@@ -389,15 +389,15 @@ export default function EnquiriesListTab({
               <option value="Google Ads">Google Ads</option>
               <option value="Inbound API">Inbound API</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {(searchTerm || selectedStatus !== 'all' || selectedSource !== 'all') && (
             <button
               onClick={handleResetFilters}
-              className="text-xs text-[#00d4ff] hover:underline flex items-center space-x-1 px-2 py-1"
+              className="text-xs font-semibold text-[#00d4ff] hover:underline flex items-center space-x-1 px-2.5 py-1.5"
             >
-              <RefreshCw className="w-3 h-3" />
+              <RefreshCw className="w-3.5 h-3.5" />
               <span>Reset</span>
             </button>
           )}
@@ -408,9 +408,9 @@ export default function EnquiriesListTab({
           {selectedIds.length > 0 && (
             <button
               onClick={handleDeleteSelected}
-              className="flex items-center space-x-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 transition-all animate-fadeIn"
+              className="flex items-center space-x-1.5 text-xs font-bold px-3.5 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition-all animate-fadeIn"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" />
               <span>Delete Selected ({selectedIds.length})</span>
             </button>
           )}
@@ -418,17 +418,17 @@ export default function EnquiriesListTab({
           {enquiries.length > 0 && (
             <button
               onClick={handleClearAll}
-              className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 transition-all"
+              className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 transition-all"
               title="Delete all enquiries from list"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4" />
               <span>Delete All</span>
             </button>
           )}
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="btn-pixeva-primary flex items-center space-x-1.5 text-xs font-bold px-3.5 py-2 rounded-xl shadow-md transition-all"
+            className="btn-pixeva-primary flex items-center space-x-1.5 text-xs font-bold px-4 py-2.5 rounded-xl shadow-md transition-all"
           >
             <Plus className="w-4 h-4" />
             <span>Add Enquiry</span>
@@ -436,25 +436,25 @@ export default function EnquiriesListTab({
 
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all"
+            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2.5 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all"
           >
-            <FileUp className="w-3.5 h-3.5 text-[#00d4ff]" />
+            <FileUp className="w-4 h-4 text-[#00d4ff]" />
             <span>Import CSV</span>
           </button>
 
           <button
             onClick={handleExportCsv}
             disabled={filteredEnquiries.length === 0}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all disabled:opacity-40"
+            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2.5 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all disabled:opacity-40"
           >
-            <Download className="w-3.5 h-3.5 text-[#8b5cf6]" />
+            <Download className="w-4 h-4 text-[#8b5cf6]" />
             <span>Export CSV</span>
           </button>
         </div>
       </div>
 
       {/* Showing Counter & Table Header Bar */}
-      <div className="flex items-center justify-between px-1 text-xs text-[#a0a0b0]">
+      <div className="flex items-center justify-between px-1 text-xs text-slate-300">
         <div className="font-semibold flex items-center space-x-2">
           <span>
             Showing <span className="text-white font-bold">{filteredEnquiries.length}</span> of{' '}
@@ -466,15 +466,14 @@ export default function EnquiriesListTab({
             </span>
           )}
         </div>
-        <div className="text-[11px]">Actions Available</div>
       </div>
 
       {/* Data Table */}
       <div className="pixeva-card rounded-2xl border border-white/10 overflow-x-auto shadow-card w-full">
-        <table className="w-full text-left text-xs text-[#a0a0b0] min-w-[950px]">
-          <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+        <table className="w-full text-left text-sm text-slate-200 min-w-[950px]">
+          <thead className="bg-[#0a0a0f] text-slate-300 uppercase tracking-wider font-bold border-b border-white/10 text-xs">
             <tr>
-              <th className="w-10 px-3 py-3 text-center">
+              <th className="w-10 px-3.5 py-3.5 text-center">
                 <input
                   type="checkbox"
                   checked={selectedIds.length > 0 && selectedIds.length === filteredEnquiries.length}
@@ -483,12 +482,12 @@ export default function EnquiriesListTab({
                   title="Select all"
                 />
               </th>
-              <th className="w-[25%] min-w-[200px] px-3 py-3">Name & Contact</th>
-              <th className="w-[22%] min-w-[170px] px-3 py-3">Event & Date</th>
-              <th className="w-[12%] min-w-[100px] px-3 py-3">Source</th>
-              <th className="w-[12%] min-w-[100px] px-3 py-3">Est. Budget</th>
-              <th className="w-[16%] min-w-[130px] px-3 py-3">Status</th>
-              <th className="w-[13%] min-w-[120px] px-3 py-3 text-right">Actions</th>
+              <th className="w-[25%] min-w-[200px] px-3.5 py-3.5">Name & Contact</th>
+              <th className="w-[22%] min-w-[170px] px-3.5 py-3.5">Event & Date</th>
+              <th className="w-[12%] min-w-[100px] px-3.5 py-3.5">Source</th>
+              <th className="w-[12%] min-w-[100px] px-3.5 py-3.5">Est. Budget</th>
+              <th className="w-[16%] min-w-[130px] px-3.5 py-3.5">Status</th>
+              <th className="w-[13%] min-w-[120px] px-3.5 py-3.5 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
