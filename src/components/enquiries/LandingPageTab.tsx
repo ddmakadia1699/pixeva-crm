@@ -20,8 +20,14 @@ export default function LandingPageTab() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // 1. Public link
-  const publicLink = 'https://pixeva.app/enquire/user_3I2lBpsfTZcxw4L1GpKAMPCc45a';
+  // 1. Dynamic Public link pointing to live /enquire/studio page
+  const [publicLink, setPublicLink] = useState('http://localhost:3000/enquire/studio');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setPublicLink(`${window.location.origin}/enquire/studio`);
+    }
+  }, []);
 
   // 2. Cover Photo
   const [coverPhoto, setCoverPhoto] = useState<string>('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1920&q=80');
