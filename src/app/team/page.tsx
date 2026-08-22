@@ -79,20 +79,7 @@ const INITIAL_MEMBERS: TeamMember[] = [
 ];
 
 export default function TeamPage() {
-  const [members, setMembers] = useState<TeamMember[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(TEAM_STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        }
-      } catch {}
-    }
-    return INITIAL_MEMBERS;
-  });
+  const [members, setMembers] = useState<TeamMember[]>(INITIAL_MEMBERS);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from localStorage on mount

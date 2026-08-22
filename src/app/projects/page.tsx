@@ -146,20 +146,7 @@ function getCountdownText(eventDateStr: string): { text: string; isImminent: boo
 }
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('pixeva_projects');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
-        }
-      } catch {}
-    }
-    return INITIAL_PROJECTS;
-  });
+  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
   const [isLoaded, setIsLoaded] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 

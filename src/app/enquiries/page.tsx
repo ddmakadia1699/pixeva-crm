@@ -37,23 +37,7 @@ function addDeletedId(id: string) {
 
 export default function EnquiriesPage() {
   const [activeTab, setActiveTab] = useState<EnquiryTab>('enquiries');
-  const [enquiries, setEnquiries] = useState<Enquiry[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(ENQUIRIES_STORAGE_KEY);
-        if (saved) {
-          const parsed: Enquiry[] = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const deletedSet = getDeletedIds();
-            return parsed.filter((e) => !deletedSet.has(e.id));
-          }
-        }
-      } catch (e) {
-        console.error('Error reading initial localStorage enquiries:', e);
-      }
-    }
-    return MOCK_ENQUIRIES;
-  });
+  const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Helper to update both React state AND localStorage immediately
@@ -260,7 +244,7 @@ export default function EnquiriesPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-12 relative min-h-[calc(100vh-100px)]">
+    <div suppressHydrationWarning className="space-y-6 animate-fadeIn pb-12 relative min-h-[calc(100vh-100px)]">
       {/* Top Header & Sub-Navigation */}
       <EnquiriesHeader
         activeTab={activeTab}

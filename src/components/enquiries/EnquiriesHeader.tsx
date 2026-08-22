@@ -56,6 +56,7 @@ export default function EnquiriesHeader({ activeTab, onTabChange, enquiryCount }
               <span>{tab.label}</span>
               {tab.count !== undefined && (
                 <span
+                  suppressHydrationWarning
                   className={`text-[11px] px-2 py-0.5 rounded-full font-black transition-all ${
                     isActive
                       ? 'bg-white/20 text-white'

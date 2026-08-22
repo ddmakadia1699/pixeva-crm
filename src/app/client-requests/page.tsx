@@ -63,18 +63,7 @@ const INITIAL_REQUESTS: ClientRequestItem[] = [
 ];
 
 export default function ClientRequestsPage() {
-  const [requests, setRequests] = useState<ClientRequestItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(CLIENT_REQUESTS_STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {}
-    }
-    return INITIAL_REQUESTS;
-  });
+  const [requests, setRequests] = useState<ClientRequestItem[]>(INITIAL_REQUESTS);
 
   // Load from localStorage on mount
   useEffect(() => {

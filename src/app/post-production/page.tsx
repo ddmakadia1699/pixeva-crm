@@ -113,18 +113,7 @@ const INITIAL_DELIVERABLES: Deliverable[] = [
 const POST_PROD_STORAGE_KEY = 'pixeva_post_prod_deliverables';
 
 export default function PostProductionPage() {
-  const [deliverables, setDeliverables] = useState<Deliverable[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(POST_PROD_STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-      } catch {}
-    }
-    return INITIAL_DELIVERABLES;
-  });
+  const [deliverables, setDeliverables] = useState<Deliverable[]>(INITIAL_DELIVERABLES);
 
   // Load from localStorage on mount
   useEffect(() => {
