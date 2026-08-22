@@ -19,15 +19,16 @@ const STORAGE_KEY = 'pixeva_landing_page_config';
 export default function LandingPageTab() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-
-  // 1. Dynamic Public link pointing to live /enquire/studio page
-  const [publicLink, setPublicLink] = useState('http://localhost:3000/enquire/studio');
+  const [origin, setOrigin] = useState('http://localhost:3000');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setPublicLink(`${window.location.origin}/enquire/studio`);
+      setOrigin(window.location.origin);
     }
   }, []);
+
+  // 1. Dynamic Public link (working locally on localhost:3000 and in production)
+  const publicLink = `${origin}/enquire/user_3I2lBpsfTZcxw4L1GpKAMPCc45a`;
 
   // 2. Cover Photo
   const [coverPhoto, setCoverPhoto] = useState<string>('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1920&q=80');

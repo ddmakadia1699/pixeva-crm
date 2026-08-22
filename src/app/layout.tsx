@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import AppShell from "@/components/layout/AppShell";
+import Sidebar from "@/components/layout/Sidebar";
+import Header from "@/components/layout/Header";
 import { ThemeProvider } from "@/context/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
 import { SidebarProvider } from "@/context/SidebarContext";
@@ -43,9 +44,18 @@ export default function RootLayout({
           <AuthProvider>
             <SidebarProvider>
               <AuthGuard>
-                <AppShell>
-                  {children}
-                </AppShell>
+                <div className="flex min-h-screen w-full">
+                  {/* Persistent Sidebar */}
+                  <Sidebar />
+
+                  {/* Main Content Area */}
+                  <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+                    <Header />
+                    <main className="flex-1 p-6 md:p-8 space-y-6 overflow-y-auto">
+                      {children}
+                    </main>
+                  </div>
+                </div>
               </AuthGuard>
             </SidebarProvider>
           </AuthProvider>
