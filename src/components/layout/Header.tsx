@@ -23,7 +23,7 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
   }
 
   return (
-    <header className="h-16 shrink-0 sticky top-0 z-30 pixeva-card border-b border-white/10 bg-[#0a0a0f]/90 backdrop-blur-xl px-4 md:px-6 flex items-center justify-between transition-colors duration-250">
+    <header className="h-16 shrink-0 sticky top-0 z-30 border-b border-slate-200 dark:border-white/10 bg-white/95 dark:bg-[#0a0a0f]/90 backdrop-blur-xl px-4 md:px-6 flex items-center justify-between transition-colors duration-250">
       {/* Left Area: Sidebar Toggle & Search Bar */}
       <div className="flex items-center space-x-3 flex-1 max-w-md">
         <button
@@ -36,17 +36,17 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
             }
           }}
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-[#a0a0b0] hover:text-[#00d4ff] hover:border-[#00d4ff]/30 transition-all shrink-0 cursor-pointer"
+          className="p-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-[#a0a0b0] hover:text-slate-900 dark:hover:text-[#00d4ff] hover:border-slate-300 dark:hover:border-[#00d4ff]/30 transition-all shrink-0 cursor-pointer"
         >
           <Menu className="w-4 h-4" />
         </button>
 
         <div className="relative w-full">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a0a0b0]" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#a0a0b0]" />
           <input
             type="text"
             placeholder="Search leads, deals, galleries, or studio tasks..."
-            className="w-full bg-[#12121a] border border-white/15 rounded-xl pl-10 pr-4 py-1.5 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff] focus:ring-1 focus:ring-[#00d4ff]"
+            className="w-full bg-slate-100 dark:bg-[#12121a] border border-slate-200 dark:border-white/15 rounded-xl pl-10 pr-4 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#a0a0b0] focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
           />
         </div>
       </div>
@@ -58,7 +58,7 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
         <button
           onClick={toggleTheme}
           title={theme === 'dark' ? 'Switch to Light Theme (White)' : 'Switch to Dark Theme (Black)'}
-          className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-xs font-semibold transition-all duration-200"
+          className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-xs font-semibold transition-all duration-200"
         >
           {theme === 'dark' ? (
             <>

@@ -71,7 +71,7 @@ export default function Sidebar() {
 
       {/* Main Sidebar (Desktop Sticky + Mobile Slide-out Drawer) */}
       <aside
-        className={`fixed md:sticky top-0 left-0 h-screen z-50 md:z-40 flex flex-col justify-between pixeva-card border-r border-white/10 bg-[#0a0a0f] p-3 md:p-4 transition-all duration-300 ease-in-out ${
+        className={`fixed md:sticky top-0 left-0 h-screen z-50 md:z-40 flex flex-col justify-between border-r border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a0a0f] p-3 md:p-4 transition-all duration-300 ease-in-out ${
           isCollapsed ? 'md:w-20' : 'md:w-64'
         } ${
           isMobileOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
@@ -87,10 +87,10 @@ export default function Sidebar() {
               {(!isCollapsed || isMobileOpen) && (
                 <div className="truncate">
                   <div className="flex items-center space-x-1.5">
-                    <h1 className="font-extrabold text-xl tracking-tight text-white">Pixeva</h1>
+                    <h1 className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">Pixeva</h1>
                     <span className="badge-cyan text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded">STUDIO</span>
                   </div>
-                  <p className="text-[11px] text-[#a0a0b0] truncate">AI Photography & Studio</p>
+                  <p className="text-[11px] text-slate-500 dark:text-[#a0a0b0] truncate">AI Photography & Studio</p>
                 </div>
               )}
             </div>
@@ -98,7 +98,7 @@ export default function Sidebar() {
             {/* Mobile Close Button */}
             <button
               onClick={closeMobile}
-              className="p-1.5 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/10 md:hidden"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-[#a0a0b0] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 md:hidden"
               title="Close Menu"
             >
               <X className="w-5 h-5" />
@@ -107,7 +107,7 @@ export default function Sidebar() {
             {/* Desktop Collapse Toggle Button in Header */}
             <button
               onClick={toggleCollapse}
-              className="hidden md:flex p-1.5 rounded-lg text-[#a0a0b0] hover:text-[#00d4ff] hover:bg-white/5 transition-colors shrink-0"
+              className="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-[#a0a0b0] dark:hover:text-[#00d4ff] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors shrink-0"
               title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             >
               {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -132,14 +132,14 @@ export default function Sidebar() {
                     isCollapsed ? 'md:justify-center md:px-0' : 'justify-between px-3'
                   } py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 group ${
                     isActive
-                      ? 'bg-[#00d4ff]/15 text-[#00d4ff] border border-[#00d4ff]/40 shadow-md shadow-[#00d4ff]/15'
-                      : 'text-[#a0a0b0] hover:text-white hover:bg-white/5'
+                      ? 'bg-sky-50 dark:bg-[#00d4ff]/15 text-sky-600 dark:text-[#00d4ff] border border-sky-300 dark:border-[#00d4ff]/40 shadow-sm'
+                      : 'text-slate-600 dark:text-[#a0a0b0] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
                   }`}
                 >
                   <div className={`flex items-center space-x-2.5 ${isCollapsed ? 'md:space-x-0' : 'truncate'}`}>
                     <Icon
                       className={`w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${
-                        isActive ? 'text-[#00d4ff]' : 'text-[#a0a0b0] group-hover:text-white'
+                        isActive ? 'text-sky-600 dark:text-[#00d4ff]' : 'text-slate-400 dark:text-[#a0a0b0] group-hover:text-slate-900 dark:group-hover:text-white'
                       }`}
                     />
                     {(!isCollapsed || isMobileOpen) && (
@@ -152,7 +152,7 @@ export default function Sidebar() {
                       className={`text-[9px] font-black px-2 py-0.5 rounded-full shrink-0 transition-all ${
                         isActive 
                           ? 'bg-[#00d4ff] text-slate-950 shadow-sm' 
-                          : 'bg-black/20 text-[#a0a0b0] group-hover:text-white'
+                          : 'bg-slate-100 dark:bg-black/20 text-slate-600 dark:text-[#a0a0b0] group-hover:text-slate-900 dark:group-hover:text-white'
                       }`}
                     >
                       {item.badge}
@@ -165,19 +165,19 @@ export default function Sidebar() {
         </div>
 
         {/* Theme Switcher & User Footer */}
-        <div className="space-y-2 pt-2 border-t border-white/10">
+        <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/10">
           {/* Theme Switcher Button */}
           <button
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
             className={`w-full flex items-center ${
               isCollapsed ? 'md:justify-center p-2.5' : 'justify-between p-2.5'
-            } rounded-xl pixeva-card bg-[#12121a] border border-white/10 text-xs hover:border-[#00d4ff]/40 transition-all`}
+            } rounded-xl bg-slate-50 dark:bg-[#12121a] border border-slate-200 dark:border-white/10 text-xs hover:border-sky-400 dark:hover:border-[#00d4ff]/40 transition-all`}
           >
             {(!isCollapsed || isMobileOpen) && (
-              <span className="text-xs text-[#a0a0b0] font-medium">Appearance</span>
+              <span className="text-xs text-slate-500 dark:text-[#a0a0b0] font-medium">Appearance</span>
             )}
-            <div className="flex items-center space-x-1.5 px-2 py-1 rounded-lg bg-white/5 text-[11px] font-bold">
+            <div className="flex items-center space-x-1.5 px-2 py-1 rounded-lg bg-slate-200/60 dark:bg-white/5 text-[11px] font-bold">
               {theme === 'dark' ? (
                 <>
                   <Moon className="w-3.5 h-3.5 text-[#00d4ff]" />
@@ -186,7 +186,7 @@ export default function Sidebar() {
               ) : (
                 <>
                   <Sun className="w-3.5 h-3.5 text-amber-500" />
-                  {(!isCollapsed || isMobileOpen) && <span className="text-[#0f172a]">Light</span>}
+                  {(!isCollapsed || isMobileOpen) && <span className="text-slate-900">Light</span>}
                 </>
               )}
             </div>
@@ -196,7 +196,7 @@ export default function Sidebar() {
           <div
             className={`flex items-center ${
               isCollapsed ? 'md:justify-center p-2' : 'justify-between p-2'
-            } rounded-xl pixeva-card bg-[#12121a] border border-white/10`}
+            } rounded-xl bg-slate-50 dark:bg-[#12121a] border border-slate-200 dark:border-white/10`}
           >
             <div className="flex items-center space-x-2 truncate">
               {user?.user_metadata?.avatar_url ? (
@@ -212,10 +212,10 @@ export default function Sidebar() {
               )}
               {(!isCollapsed || isMobileOpen) && (
                 <div className="truncate">
-                  <p className="text-xs font-bold text-white truncate">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                     {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Studio User'}
                   </p>
-                  <p className="text-[9px] text-[#a0a0b0] truncate">{user?.email || 'admin@pixeva.co'}</p>
+                  <p className="text-[9px] text-slate-500 dark:text-[#a0a0b0] truncate">{user?.email || 'admin@pixeva.co'}</p>
                 </div>
               )}
             </div>
