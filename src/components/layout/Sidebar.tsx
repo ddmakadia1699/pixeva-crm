@@ -1,27 +1,30 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Users, 
   Settings2, 
-  Camera,
-  CalendarDays,
-  Inbox,
-  Briefcase,
-  Layers,
-  MessageSquare,
-  DollarSign,
-  Sun,
-  Moon,
-  HardDrive,
-  Bot,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  X
+  Camera, 
+  CalendarDays, 
+  Inbox, 
+  Briefcase, 
+  Layers, 
+  MessageSquare, 
+  DollarSign, 
+  Sun, 
+  Moon, 
+  HardDrive, 
+  Bot, 
+  LogOut, 
+  ChevronLeft, 
+  ChevronRight, 
+  X,
+  MoreVertical,
+  ShieldCheck,
+  UserCheck
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeProvider';
 import { useAuth } from '@/context/AuthContext';
@@ -54,9 +57,32 @@ export default function Sidebar() {
   const { user, signOut } = useAuth();
   const { isCollapsed, isMobileOpen, toggleCollapse, closeMobile } = useSidebar();
 
-  if (pathname === '/login') {
+  // User Account Popover State
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close popup when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isUserMenuOpen]);
+
+  if (pathname === '/login' || pathname.startsWith('/enquire') || pathname.startsWith('/proposal')) {
     return null;
   }
+
+  const userName = user?.user_metadata?.full_name || 'Dhruvi Govani';
+  const userEmail = user?.email || 'dhruvigovani1699@gmail.com';
+  const userInitial = userName ? userName.charAt(0).toUpperCase() : 'D';
 
   return (
     <>
@@ -107,7 +133,7 @@ export default function Sidebar() {
             {/* Desktop Collapse Toggle Button in Header */}
             <button
               onClick={toggleCollapse}
-              className="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-[#a0a0b0] dark:hover:text-[#00d4ff] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors shrink-0"
+              className="hidden md:flex p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-[#a0a0b0] dark:hover:text-[#00d4ff] hover:bg-slate-100 dark:hover:bg-white/5 transition-colors shrink-0 cursor-pointer"
               title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             >
               {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -164,15 +190,79 @@ export default function Sidebar() {
           </nav>
         </div>
 
-        {/* Theme Switcher & User Footer */}
-        <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/10">
+        {/* Theme Switcher & Interactive User Footer */}
+        <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/10 relative" ref={userMenuRef}>
+          {/* Floating Luxury User Popover Menu */}
+          {isUserMenuOpen && (
+            <div
+              className={`absolute bottom-full mb-2 ${
+                isCollapsed ? 'left-0 w-64' : 'left-0 right-0'
+              } z-50 p-3 rounded-2xl bg-white dark:bg-[#161622] border border-slate-200 dark:border-white/10 shadow-2xl shadow-slate-900/15 dark:shadow-black/70 animate-fadeIn space-y-2.5`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Account Header */}
+              <div className="flex items-center space-x-3 pb-2.5 border-b border-slate-100 dark:border-white/10">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-blue-600 to-indigo-600 flex items-center justify-center font-black text-sm text-white shadow-md shadow-sky-500/20 shrink-0">
+                  {userInitial}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="text-xs font-black text-slate-900 dark:text-white truncate">
+                      {userName}
+                    </p>
+                    <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300 shrink-0">
+                      Owner
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate mt-0.5">
+                    {userEmail}
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Navigation Items */}
+              <div className="space-y-1 text-xs">
+                <Link
+                  href="/settings"
+                  onClick={() => setIsUserMenuOpen(false)}
+                  className="flex items-center space-x-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 font-semibold transition-colors"
+                >
+                  <Settings2 className="w-4 h-4 text-slate-400" />
+                  <span>Studio & Billing Settings</span>
+                </Link>
+                <Link
+                  href="/team"
+                  onClick={() => setIsUserMenuOpen(false)}
+                  className="flex items-center space-x-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 font-semibold transition-colors"
+                >
+                  <Users className="w-4 h-4 text-slate-400" />
+                  <span>Team & Crew Permissions</span>
+                </Link>
+              </div>
+
+              {/* Sign Out Action Button */}
+              <div className="pt-2 border-t border-slate-100 dark:border-white/10">
+                <button
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    signOut();
+                  }}
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-bold text-xs transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out of Pixeva</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Theme Switcher Button */}
           <button
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
             className={`w-full flex items-center ${
               isCollapsed ? 'md:justify-center p-2.5' : 'justify-between p-2.5'
-            } rounded-xl bg-slate-50 dark:bg-[#12121a] border border-slate-200 dark:border-white/10 text-xs hover:border-sky-400 dark:hover:border-[#00d4ff]/40 transition-all`}
+            } rounded-xl bg-slate-50 dark:bg-[#12121a] border border-slate-200 dark:border-white/10 text-xs hover:border-sky-400 dark:hover:border-[#00d4ff]/40 transition-all cursor-pointer`}
           >
             {(!isCollapsed || isMobileOpen) && (
               <span className="text-xs text-slate-500 dark:text-[#a0a0b0] font-medium">Appearance</span>
@@ -192,48 +282,49 @@ export default function Sidebar() {
             </div>
           </button>
 
-          {/* User Profile Card */}
-          <div
-            className={`flex items-center ${
+          {/* Interactive User Profile Trigger Card (Opens Popover on Click) */}
+          <button
+            type="button"
+            onClick={() => setIsUserMenuOpen((prev) => !prev)}
+            className={`w-full flex items-center ${
               isCollapsed ? 'md:justify-center p-2' : 'justify-between p-2'
-            } rounded-xl bg-slate-50 dark:bg-[#12121a] border border-slate-200 dark:border-white/10`}
+            } rounded-xl bg-slate-50 dark:bg-[#12121a] border ${
+              isUserMenuOpen 
+                ? 'border-sky-500 ring-2 ring-sky-500/20 bg-sky-50/50 dark:bg-sky-500/10' 
+                : 'border-slate-200 dark:border-white/10 hover:border-sky-400 dark:hover:border-white/20'
+            } transition-all text-left cursor-pointer group`}
+            title="Click to view profile & sign out"
           >
-            <div className="flex items-center space-x-2 truncate">
+            <div className="flex items-center space-x-2.5 truncate">
               {user?.user_metadata?.avatar_url ? (
                 <img
                   src={user.user_metadata.avatar_url}
-                  alt={user.email || 'User'}
-                  className="w-7 h-7 rounded-full border border-[#00d4ff]/40 shrink-0"
+                  alt={userName}
+                  className="w-8 h-8 rounded-xl border border-sky-400/40 shrink-0 object-cover"
                 />
               ) : (
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#00d4ff] to-[#8b5cf6] flex items-center justify-center font-bold text-[10px] text-white shadow-sm shrink-0">
-                  {user?.email?.charAt(0).toUpperCase() || 'PX'}
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 via-blue-600 to-indigo-600 flex items-center justify-center font-black text-xs text-white shadow-sm shrink-0">
+                  {userInitial}
                 </div>
               )}
               {(!isCollapsed || isMobileOpen) && (
                 <div className="truncate">
-                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                    {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Studio User'}
+                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
+                    {userName}
                   </p>
-                  <p className="text-[9px] text-slate-500 dark:text-[#a0a0b0] truncate">{user?.email || 'admin@pixeva.co'}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-[#a0a0b0] truncate font-mono">
+                    {userEmail}
+                  </p>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Sign Out / Log Out Button */}
-          {user && (
-            <button
-              onClick={() => signOut()}
-              title="Sign Out"
-              className={`w-full flex items-center justify-center space-x-2 py-2 ${
-                isCollapsed ? 'md:px-2' : 'px-3'
-              } rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white font-bold text-xs transition-all duration-200 group`}
-            >
-              <LogOut className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-              {(!isCollapsed || isMobileOpen) && <span>Sign Out</span>}
-            </button>
-          )}
+            {(!isCollapsed || isMobileOpen) && (
+              <div className="p-1 rounded-lg text-slate-400 group-hover:text-slate-700 dark:text-[#a0a0b0] dark:group-hover:text-white transition-colors shrink-0">
+                <MoreVertical className="w-4 h-4" />
+              </div>
+            )}
+          </button>
         </div>
       </aside>
     </>
