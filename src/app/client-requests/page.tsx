@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import FeedbackModal from '@/components/enquiries/FeedbackModal';
 import {
   Search,
@@ -17,6 +17,8 @@ import {
   Sparkles,
   FileText
 } from 'lucide-react';
+
+const CLIENT_REQUESTS_STORAGE_KEY = 'pixeva_client_requests';
 
 export type RequestStatus = 'Pending' | 'Completed';
 
@@ -62,6 +64,40 @@ const INITIAL_REQUESTS: ClientRequestItem[] = [
 
 export default function ClientRequestsPage() {
   const [requests, setRequests] = useState<ClientRequestItem[]>(INITIAL_REQUESTS);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(CLIENT_REQUESTS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setRequests(parsed);
+        } else {
+          localStorage.setItem(CLIENT_REQUESTS_STORAGE_KEY, JSON.stringify(INITIAL_REQUESTS));
+        }
+      } else {
+        localStorage.setItem(CLIENT_REQUESTS_STORAGE_KEY, JSON.stringify(INITIAL_REQUESTS));
+      }
+    } catch (e) {
+      console.error('Error reading client requests from localStorage:', e);
+    }
+  }, []);
+
+  const updateRequests = (updater: ClientRequestItem[] | ((prev: ClientRequestItem[]) => ClientRequestItem[])) => {
+    setRequests((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(CLIENT_REQUESTS_STORAGE_KEY, JSON.stringify(next));
+        } catch (e) {
+          console.error('Failed to save client requests to localStorage:', e);
+        }
+      }
+      return next;
+    });
+  };
+
   const [activeTab, setActiveTab] = useState<'Pending' | 'Completed'>('Pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -128,13 +164,13 @@ export default function ClientRequestsPage() {
 
   // Status Handlers
   const handleMarkDone = (id: string) => {
-    setRequests(
+    updateRequests(
       requests.map((r) => (r.id === id ? { ...r, status: 'Completed' } : r))
     );
   };
 
   const handleReopen = (id: string) => {
-    setRequests(
+    updateRequests(
       requests.map((r) => (r.id === id ? { ...r, status: 'Pending' } : r))
     );
   };
@@ -144,7 +180,7 @@ export default function ClientRequestsPage() {
     e.preventDefault();
     if (!assigningItem) return;
 
-    setRequests(
+    updateRequests(
       requests.map((r) =>
         r.id === assigningItem.id
           ? { ...r, assign_team: teamMemberInput === 'Unassigned' ? null : teamMemberInput }
@@ -169,7 +205,7 @@ export default function ClientRequestsPage() {
       created_at: new Date().toISOString(),
     };
 
-    setRequests([newReq, ...requests]);
+    updateRequests([newReq, ...requests]);
     setFormData({
       project: 'Bride & Groom (Demo)',
       category: 'Photos',

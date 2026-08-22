@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import FeedbackModal from '@/components/enquiries/FeedbackModal';
 import {
   Search,
@@ -96,9 +96,71 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
   },
 ];
 
+const FINANCES_STORAGE_KEY = 'pixeva_finances';
+const TRANSACTIONS_STORAGE_KEY = 'pixeva_transactions';
+
 export default function FinancesPage() {
   const [projectFinances, setProjectFinances] = useState<ProjectFinanceItem[]>(INITIAL_PROJECT_FINANCES);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedFin = localStorage.getItem(FINANCES_STORAGE_KEY);
+      if (savedFin) {
+        const parsed = JSON.parse(savedFin);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setProjectFinances(parsed);
+        } else {
+          localStorage.setItem(FINANCES_STORAGE_KEY, JSON.stringify(INITIAL_PROJECT_FINANCES));
+        }
+      } else {
+        localStorage.setItem(FINANCES_STORAGE_KEY, JSON.stringify(INITIAL_PROJECT_FINANCES));
+      }
+
+      const savedTx = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
+      if (savedTx) {
+        const parsedTx = JSON.parse(savedTx);
+        if (Array.isArray(parsedTx) && parsedTx.length > 0) {
+          setTransactions(parsedTx);
+        } else {
+          localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(INITIAL_TRANSACTIONS));
+        }
+      } else {
+        localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(INITIAL_TRANSACTIONS));
+      }
+    } catch (e) {
+      console.error('Error reading finances from localStorage:', e);
+    }
+  }, []);
+
+  const updateFinances = (updater: ProjectFinanceItem[] | ((prev: ProjectFinanceItem[]) => ProjectFinanceItem[])) => {
+    setProjectFinances((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(FINANCES_STORAGE_KEY, JSON.stringify(next));
+        } catch (e) {
+          console.error('Failed to save finances to localStorage:', e);
+        }
+      }
+      return next;
+    });
+  };
+
+  const updateTransactions = (updater: Transaction[] | ((prev: Transaction[]) => Transaction[])) => {
+    setTransactions((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(next));
+        } catch (e) {
+          console.error('Failed to save transactions to localStorage:', e);
+        }
+      }
+      return next;
+    });
+  };
   const [activeTab, setActiveTab] = useState<'Project Finances' | 'Company Expenses' | 'All Transactions'>('Project Finances');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>('fin-proj-1');
@@ -179,8 +241,10 @@ export default function FinancesPage() {
 
     setTransactions([newTx, ...transactions]);
 
+    updateTransactions([newTx, ...transactions]);
+
     // Update project finances
-    setProjectFinances(
+    updateFinances(
       projectFinances.map((p) =>
         p.project_name === expenseForm.project_name
           ? { ...p, expenses: p.expenses + amt }
@@ -214,10 +278,10 @@ export default function FinancesPage() {
       note: paymentForm.note || undefined,
     };
 
-    setTransactions([newTx, ...transactions]);
+    updateTransactions([newTx, ...transactions]);
 
     // Update project finances
-    setProjectFinances(
+    updateFinances(
       projectFinances.map((p) =>
         p.project_name === paymentForm.project_name
           ? {

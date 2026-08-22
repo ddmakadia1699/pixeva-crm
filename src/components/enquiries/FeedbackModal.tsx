@@ -41,7 +41,7 @@ export default function FeedbackModal() {
                 <Sparkles className="w-5 h-5 text-[#00d4ff]" />
                 <div>
                   <h3 className="font-extrabold text-white text-base">Help us improve Pixeva CRM</h3>
-                  <p className="text-[11px] text-[#a0a0b0]">RevePod OS Beta Feedback</p>
+                  <p className="text-[11px] text-[#a0a0b0]">Product Feedback</p>
                 </div>
               </div>
               <button
@@ -57,7 +57,7 @@ export default function FeedbackModal() {
                 <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto animate-bounce" />
                 <h4 className="font-bold text-white text-base">Thank you for your feedback!</h4>
                 <p className="text-xs text-[#a0a0b0]">
-                  Your input directly shapes the future of Pixeva CRM & RevePod Studio OS.
+                  Your input directly helps us improve Pixeva CRM.
                 </p>
               </div>
             ) : (

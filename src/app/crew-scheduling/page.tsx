@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CalendarDays,
   ChevronLeft,
@@ -91,6 +91,8 @@ const MONTHS = [
   'December 2026',
 ];
 
+const CREW_STORAGE_KEY = 'pixeva_scheduled_events';
+
 export default function CrewSchedulingPage() {
   const [events, setEvents] = useState<ScheduledEvent[]>(INITIAL_EVENTS);
   const [currentMonthIndex, setCurrentMonthIndex] = useState(7); // August 2026
@@ -99,6 +101,39 @@ export default function CrewSchedulingPage() {
   const [assigningEvent, setAssigningEvent] = useState<ScheduledEvent | null>(null);
   const [selectedCrew, setSelectedCrew] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(CREW_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setEvents(parsed);
+        } else {
+          localStorage.setItem(CREW_STORAGE_KEY, JSON.stringify(INITIAL_EVENTS));
+        }
+      } else {
+        localStorage.setItem(CREW_STORAGE_KEY, JSON.stringify(INITIAL_EVENTS));
+      }
+    } catch (e) {
+      console.error('Error reading crew events from localStorage:', e);
+    }
+  }, []);
+
+  const updateEvents = (updater: ScheduledEvent[] | ((prev: ScheduledEvent[]) => ScheduledEvent[])) => {
+    setEvents((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(CREW_STORAGE_KEY, JSON.stringify(next));
+        } catch (e) {
+          console.error('Failed to save crew events to localStorage:', e);
+        }
+      }
+      return next;
+    });
+  };
 
   // Unassigned Events Filter
   const unassignedEvents = events.filter((e) => e.is_unassigned);
@@ -133,7 +168,7 @@ export default function CrewSchedulingPage() {
     e.preventDefault();
     if (!assigningEvent) return;
 
-    setEvents(
+    updateEvents(
       events.map((evt) =>
         evt.id === assigningEvent.id
           ? {

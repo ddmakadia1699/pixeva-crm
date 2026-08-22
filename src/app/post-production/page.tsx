@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import FeedbackModal from '@/components/enquiries/FeedbackModal';
 import {
@@ -110,8 +110,43 @@ const INITIAL_DELIVERABLES: Deliverable[] = [
   },
 ];
 
+const POST_PROD_STORAGE_KEY = 'pixeva_post_prod_deliverables';
+
 export default function PostProductionPage() {
   const [deliverables, setDeliverables] = useState<Deliverable[]>(INITIAL_DELIVERABLES);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(POST_PROD_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setDeliverables(parsed);
+        } else {
+          localStorage.setItem(POST_PROD_STORAGE_KEY, JSON.stringify(INITIAL_DELIVERABLES));
+        }
+      } else {
+        localStorage.setItem(POST_PROD_STORAGE_KEY, JSON.stringify(INITIAL_DELIVERABLES));
+      }
+    } catch (e) {
+      console.error('Error reading deliverables from localStorage:', e);
+    }
+  }, []);
+
+  const updateDeliverables = (updater: Deliverable[] | ((prev: Deliverable[]) => Deliverable[])) => {
+    setDeliverables((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(POST_PROD_STORAGE_KEY, JSON.stringify(next));
+        } catch (e) {
+          console.error('Failed to save deliverables to localStorage:', e);
+        }
+      }
+      return next;
+    });
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [memberFilter, setMemberFilter] = useState<string>('all');
@@ -202,7 +237,7 @@ export default function PostProductionPage() {
 
   // Status Change
   const handleUpdateStatus = (id: string, newStatus: DeliverableStatus) => {
-    setDeliverables(deliverables.map((d) => (d.id === id ? { ...d, status: newStatus } : d)));
+    updateDeliverables(deliverables.map((d) => (d.id === id ? { ...d, status: newStatus } : d)));
   };
 
   // Assign Member Submit
@@ -210,7 +245,7 @@ export default function PostProductionPage() {
     e.preventDefault();
     if (!assigningItem) return;
 
-    setDeliverables(
+    updateDeliverables(
       deliverables.map((d) =>
         d.id === assigningItem.id ? { ...d, assigned_to: memberInput } : d
       )
@@ -230,7 +265,7 @@ export default function PostProductionPage() {
     e.preventDefault();
     if (!galleryItem || !galleryUrl) return;
 
-    setDeliverables(
+    updateDeliverables(
       deliverables.map((d) =>
         d.id === galleryItem.id
           ? {

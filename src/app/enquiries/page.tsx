@@ -11,6 +11,7 @@ import { MOCK_ENQUIRIES } from '@/lib/supabase/client';
 import { Enquiry, EnquiryStatus } from '@/lib/supabase/types';
 
 const AWS_API_GATEWAY = process.env.NEXT_PUBLIC_AWS_API_GATEWAY_URL || 'https://zvt3ypue5l.execute-api.us-east-1.amazonaws.com';
+const ENQUIRIES_STORAGE_KEY = 'pixeva_enquiries';
 const DELETED_IDS_KEY = 'pixeva_deleted_enquiries';
 
 function getDeletedIds(): Set<string> {
@@ -36,54 +37,89 @@ function addDeletedId(id: string) {
 
 export default function EnquiriesPage() {
   const [activeTab, setActiveTab] = useState<EnquiryTab>('enquiries');
-  // Initialize with MOCK_ENQUIRIES so SSR and initial hydration render identically
   const [enquiries, setEnquiries] = useState<Enquiry[]>(MOCK_ENQUIRIES);
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Apply local deletion filter and fetch from AWS Lambda after hydration
+  // Helper to update both React state AND localStorage immediately
+  const updateEnquiries = (updater: Enquiry[] | ((prev: Enquiry[]) => Enquiry[])) => {
+    setEnquiries((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(next));
+        } catch (e) {
+          console.error('Failed to persist enquiries to localStorage:', e);
+        }
+      }
+      return next;
+    });
+  };
+
+  // 1. On Mount: Load saved enquiries from localStorage first
   useEffect(() => {
     const deletedSet = getDeletedIds();
-    setEnquiries(MOCK_ENQUIRIES.filter((e) => !deletedSet.has(e.id)));
+    let initialList: Enquiry[] = [];
 
-    async function fetchFromAmazonApiGateway() {
+    try {
+      const saved = localStorage.getItem(ENQUIRIES_STORAGE_KEY);
+      if (saved) {
+        const parsed: Enquiry[] = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          initialList = parsed.filter((e) => !deletedSet.has(e.id));
+        }
+      }
+    } catch (e) {
+      console.error('Error reading localStorage enquiries:', e);
+    }
+
+    if (initialList.length === 0) {
+      initialList = MOCK_ENQUIRIES.filter((e) => !deletedSet.has(e.id));
+    }
+
+    setEnquiries(initialList);
+    try {
+      localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(initialList));
+    } catch {}
+    setIsHydrated(true);
+
+    // 2. Background sync with AWS API Gateway if available
+    async function syncFromCloud() {
       try {
         const res = await fetch(`${AWS_API_GATEWAY}/enquiries`);
         if (!res.ok) return;
 
         const result = await res.json();
-        if (result.success && Array.isArray(result.data)) {
-          if (result.data.length > 0) {
-            const mapped: Enquiry[] = result.data
-              .map((lead: any) => ({
-                id: lead.id,
-                name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Client',
-                email: lead.email || '',
-                phone: lead.phone || '',
-                event_name: lead.company || 'Event',
-                event_type: lead.notes?.includes('wedding') ? 'wedding' : 'corporate',
-                event_date: lead.notes?.match(/\d{4}-\d{2}-\d{2}/)?.[0] || new Date().toISOString().split('T')[0],
-                estimated_budget: Number(lead.estimated_value) || 0,
-                source: lead.source || 'Website',
-                status: lead.status || 'new',
-                notes: lead.notes || '',
-                created_at: lead.created_at || new Date().toISOString(),
-              }))
-              .filter((item: Enquiry) => !deletedSet.has(item.id));
+        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+          const mapped: Enquiry[] = result.data
+            .map((lead: any) => ({
+              id: lead.id,
+              name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Client',
+              email: lead.email || '',
+              phone: lead.phone || '',
+              event_name: lead.company || 'Event',
+              event_type: lead.notes?.includes('wedding') ? 'wedding' : 'corporate',
+              event_date: lead.notes?.match(/\d{4}-\d{2}-\d{2}/)?.[0] || new Date().toISOString().split('T')[0],
+              estimated_budget: Number(lead.estimated_value) || 0,
+              source: lead.source || 'Website',
+              status: lead.status || 'new',
+              notes: lead.notes || '',
+              created_at: lead.created_at || new Date().toISOString(),
+            }))
+            .filter((item: Enquiry) => !deletedSet.has(item.id));
 
-            setEnquiries(mapped);
-          } else {
-            // If backend table is empty, filter mock items against deletedSet
-            setEnquiries(MOCK_ENQUIRIES.filter((e) => !deletedSet.has(e.id)));
+          if (mapped.length > 0) {
+            updateEnquiries(mapped);
           }
         }
       } catch (e) {
-        console.error('Error fetching via Amazon API Gateway:', e);
+        console.warn('Cloud sync offline, working seamlessly with persistent local storage.');
       }
     }
 
-    fetchFromAmazonApiGateway();
+    syncFromCloud();
   }, []);
 
-  // Add Single Enquiry directly via Amazon API Gateway HTTP Trigger (AWS Lambda Backend)
+  // Add Single Enquiry
   const handleAddEnquiry = async (newEnquiryData: Omit<Enquiry, 'id' | 'created_at'>) => {
     const tempId = `enq-${Date.now()}`;
     const newEnquiry: Enquiry = {
@@ -92,7 +128,7 @@ export default function EnquiriesPage() {
       created_at: new Date().toISOString(),
     };
 
-    setEnquiries((prev) => [newEnquiry, ...prev]);
+    updateEnquiries((prev) => [newEnquiry, ...prev]);
 
     try {
       const res = await fetch(`${AWS_API_GATEWAY}/enquiries`, {
@@ -103,12 +139,12 @@ export default function EnquiriesPage() {
 
       const result = await res.json();
       if (result.success && result.data?.id) {
-        setEnquiries((prev) =>
+        updateEnquiries((prev) =>
           prev.map((item) => (item.id === tempId ? { ...item, id: result.data.id } : item))
         );
       }
     } catch (e) {
-      console.error('Failed to add enquiry via Amazon API Gateway Trigger:', e);
+      console.error('Failed to sync added enquiry to cloud:', e);
     }
   };
 
@@ -119,12 +155,12 @@ export default function EnquiriesPage() {
       id: `enq-imp-${Date.now()}-${idx}`,
       created_at: new Date().toISOString(),
     }));
-    setEnquiries([...formatted, ...enquiries]);
+    updateEnquiries((prev) => [...formatted, ...prev]);
   };
 
-  // Status Change directly via Amazon API Gateway HTTP Trigger (AWS Lambda Backend)
+  // Status Change
   const handleUpdateStatus = async (id: string, status: EnquiryStatus) => {
-    setEnquiries((prev) => prev.map((e) => (e.id === id ? { ...e, status } : e)));
+    updateEnquiries((prev) => prev.map((e) => (e.id === id ? { ...e, status } : e)));
 
     try {
       await fetch(`${AWS_API_GATEWAY}/enquiries`, {
@@ -133,33 +169,47 @@ export default function EnquiriesPage() {
         body: JSON.stringify({ id, status }),
       });
     } catch (e) {
-      console.error('Failed to update status via Amazon API Gateway Trigger:', e);
+      console.error('Failed to sync status to cloud:', e);
     }
   };
 
-  // Delete Single directly via Amazon API Gateway HTTP Trigger (AWS Lambda Backend)
+  // Update Full Enquiry details (Save Button from Edit Modal)
+  const handleUpdateEnquiry = async (updatedEnquiry: Enquiry) => {
+    updateEnquiries((prev) =>
+      prev.map((e) => (e.id === updatedEnquiry.id ? updatedEnquiry : e))
+    );
+
+    try {
+      await fetch(`${AWS_API_GATEWAY}/enquiries`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedEnquiry),
+      });
+    } catch (e) {
+      console.error('Failed to sync updated enquiry to cloud:', e);
+    }
+  };
+
+  // Delete Single Enquiry
   const handleDeleteEnquiry = async (id: string) => {
-    // 1. Immediately remove from local state
-    setEnquiries((prev) => prev.filter((e) => e.id !== id));
-    // 2. Persist deleted ID locally so refresh never restores it
+    updateEnquiries((prev) => prev.filter((e) => e.id !== id));
     addDeletedId(id);
 
     try {
-      // 3. Send DELETE request to AWS Lambda with both body and query parameter
       await fetch(`${AWS_API_GATEWAY}/enquiries?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
     } catch (e) {
-      console.error('Failed to delete enquiry via Amazon API Gateway Trigger:', e);
+      console.error('Failed to delete enquiry in cloud:', e);
     }
   };
 
-  // Delete Batch directly via Amazon API Gateway HTTP Trigger (AWS Lambda Backend)
+  // Delete Batch
   const handleDeleteBatchEnquiries = async (ids: string[]) => {
     const idSet = new Set(ids);
-    setEnquiries((prev) => prev.filter((e) => !idSet.has(e.id)));
+    updateEnquiries((prev) => prev.filter((e) => !idSet.has(e.id)));
     ids.forEach((id) => addDeletedId(id));
 
     try {
@@ -169,14 +219,14 @@ export default function EnquiriesPage() {
         body: JSON.stringify({ ids }),
       });
     } catch (e) {
-      console.error('Failed to delete batch enquiries via Amazon API Gateway:', e);
+      console.error('Failed to delete batch enquiries in cloud:', e);
     }
   };
 
-  // Clear All directly via Amazon API Gateway HTTP Trigger (AWS Lambda Backend)
+  // Clear All
   const handleClearAllEnquiries = async () => {
     enquiries.forEach((e) => addDeletedId(e.id));
-    setEnquiries([]);
+    updateEnquiries([]);
 
     try {
       await fetch(`${AWS_API_GATEWAY}/enquiries`, {
@@ -185,7 +235,7 @@ export default function EnquiriesPage() {
         body: JSON.stringify({ clearAll: true }),
       });
     } catch (e) {
-      console.error('Failed to clear all enquiries via Amazon API Gateway:', e);
+      console.error('Failed to clear all enquiries in cloud:', e);
     }
   };
 
@@ -205,6 +255,7 @@ export default function EnquiriesPage() {
           onAddEnquiry={handleAddEnquiry}
           onImportEnquiries={handleImportEnquiries}
           onUpdateStatus={handleUpdateStatus}
+          onUpdateEnquiry={handleUpdateEnquiry}
           onDeleteEnquiry={handleDeleteEnquiry}
           onDeleteBatchEnquiries={handleDeleteBatchEnquiries}
           onClearAllEnquiries={handleClearAllEnquiries}

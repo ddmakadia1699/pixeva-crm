@@ -69,7 +69,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-1">
             Dashboard
           </h1>
-          <p className="text-sm text-[#a0a0b0]">Your studio live metrics from AWS Lambda & Supabase</p>
+          <p className="text-sm text-[#a0a0b0]">Overview of your studio metrics, leads, and active projects</p>
         </div>
         
         <div className="relative max-w-md w-full md:w-96">

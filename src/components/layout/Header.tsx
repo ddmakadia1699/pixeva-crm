@@ -2,10 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Search, Bell, Plus, Zap, Sun, Moon, LogOut, User as UserIcon } from 'lucide-react';
+import { Search, Bell, Plus, Zap, Sun, Moon, LogOut, User as UserIcon, Menu } from 'lucide-react';
 import { useTheme } from '@/context/ThemeProvider';
 import { useAuth } from '@/context/AuthContext';
-
+import { useSidebar } from '@/context/SidebarContext';
 import { usePathname } from 'next/navigation';
 
 interface HeaderProps {
@@ -16,15 +16,31 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
+  const { isCollapsed, toggleCollapse, toggleMobileOpen } = useSidebar();
 
   if (pathname === '/login') {
     return null;
   }
 
   return (
-    <header className="h-16 shrink-0 sticky top-0 z-30 pixeva-card border-b border-white/10 bg-[#0a0a0f]/90 backdrop-blur-xl px-6 flex items-center justify-between transition-colors duration-250">
-      {/* Search Bar */}
-      <div className="flex items-center space-x-4 flex-1 max-w-md">
+    <header className="h-16 shrink-0 sticky top-0 z-30 pixeva-card border-b border-white/10 bg-[#0a0a0f]/90 backdrop-blur-xl px-4 md:px-6 flex items-center justify-between transition-colors duration-250">
+      {/* Left Area: Sidebar Toggle & Search Bar */}
+      <div className="flex items-center space-x-3 flex-1 max-w-md">
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+              toggleMobileOpen();
+            } else {
+              toggleCollapse();
+            }
+          }}
+          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-[#a0a0b0] hover:text-[#00d4ff] hover:border-[#00d4ff]/30 transition-all shrink-0 cursor-pointer"
+        >
+          <Menu className="w-4 h-4" />
+        </button>
+
         <div className="relative w-full">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a0a0b0]" />
           <input
@@ -35,12 +51,8 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
         </div>
       </div>
 
-      {/* Production Status & Controls */}
+      {/* Theme Switcher & User Controls */}
       <div className="flex items-center space-x-3">
-        <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1 rounded-full badge-cyan text-[11px] font-bold">
-          <Zap className="w-3.5 h-3.5 text-[#00d4ff]" />
-          <span>Pixeva Studio: Live</span>
-        </div>
 
         {/* Theme Switcher Toggle */}
         <button

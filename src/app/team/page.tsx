@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import FeedbackModal from '@/components/enquiries/FeedbackModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import {
   Search,
   Download,
@@ -39,10 +40,82 @@ export interface TeamMember {
   created_at: string;
 }
 
-const INITIAL_MEMBERS: TeamMember[] = [];
+const TEAM_STORAGE_KEY = 'pixeva_team_members';
+
+const INITIAL_MEMBERS: TeamMember[] = [
+  {
+    id: 'team-1',
+    name: 'Alex Rivers',
+    role: 'Master Cinematographer',
+    type: 'In House',
+    phone: '+91 98234 56789',
+    is_phone_visible: true,
+    email: 'alex.rivers@pixevastudio.com',
+    day_rate: '₹25,000',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'team-2',
+    name: 'Elena Rostova',
+    role: 'Lead Candid Photographer',
+    type: 'In House',
+    phone: '+91 98765 43210',
+    is_phone_visible: true,
+    email: 'elena@pixevastudio.com',
+    day_rate: '₹22,000',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'team-3',
+    name: 'Marcus Brody',
+    role: 'FPV & Aerial Drone Pilot',
+    type: 'Freelancer',
+    phone: '+91 98450 11223',
+    is_phone_visible: false,
+    email: 'marcus.drone@freelance.io',
+    day_rate: '₹18,000',
+    created_at: new Date().toISOString(),
+  },
+];
 
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>(INITIAL_MEMBERS);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(TEAM_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMembers(parsed);
+        } else {
+          localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(INITIAL_MEMBERS));
+        }
+      } else {
+        localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(INITIAL_MEMBERS));
+      }
+    } catch (e) {
+      console.error('Error reading team members from localStorage:', e);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, []);
+
+  const updateMembers = (updater: TeamMember[] | ((prev: TeamMember[]) => TeamMember[])) => {
+    setMembers((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(next));
+        } catch (e) {
+          console.error('Failed to save team members to localStorage:', e);
+        }
+      }
+      return next;
+    });
+  };
   const [activeTab, setActiveTab] = useState<'Roster' | 'Freelancer Priority'>('Roster');
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -102,22 +175,54 @@ export default function TeamPage() {
     }
   };
 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Delete',
+    onConfirm: () => {},
+  });
+
   const handleDeleteSelected = () => {
     if (selectedIds.length === 0) return;
-    if (window.confirm(`Delete ${selectedIds.length} selected team members?`)) {
-      setMembers(members.filter((m) => !selectedIds.includes(m.id)));
-      setSelectedIds([]);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Selected Team Members',
+      message: `Are you sure you want to delete ${selectedIds.length} selected team member(s)? This action cannot be undone.`,
+      confirmText: `Delete (${selectedIds.length})`,
+      onConfirm: () => {
+        updateMembers(members.filter((m) => !selectedIds.includes(m.id)));
+        setSelectedIds([]);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   const handleDeleteSingle = (id: string) => {
-    setMembers(members.filter((m) => m.id !== id));
-    setSelectedIds(selectedIds.filter((i) => i !== id));
+    const member = members.find((m) => m.id === id);
+    const name = member ? `"${member.name}"` : 'this team member';
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Team Member',
+      message: `Are you sure you want to delete ${name}? All linked assignments and contact data will be removed.`,
+      confirmText: 'Delete',
+      onConfirm: () => {
+        updateMembers(members.filter((m) => m.id !== id));
+        setSelectedIds(selectedIds.filter((i) => i !== id));
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   // Visibility Toggle
   const handleTogglePhoneVisibility = (id: string) => {
-    setMembers(
+    updateMembers(
       members.map((m) =>
         m.id === id ? { ...m, is_phone_visible: !m.is_phone_visible } : m
       )
@@ -135,7 +240,7 @@ export default function TeamPage() {
     updatedFreelancers.splice(toIndex, 0, itemToMove);
 
     const nonFreelancers = members.filter((m) => m.type !== 'Freelancer');
-    setMembers([...nonFreelancers, ...updatedFreelancers]);
+    updateMembers([...nonFreelancers, ...updatedFreelancers]);
   };
 
   // Add Submit
@@ -155,7 +260,7 @@ export default function TeamPage() {
       created_at: new Date().toISOString(),
     };
 
-    setMembers([newMember, ...members]);
+    updateMembers([newMember, ...members]);
     setFormData({
       name: '',
       role: 'Lead Photographer',
@@ -173,7 +278,7 @@ export default function TeamPage() {
     e.preventDefault();
     if (!editingMember) return;
 
-    setMembers(
+    updateMembers(
       members.map((m) => (m.id === editingMember.id ? editingMember : m))
     );
     setEditingMember(null);
@@ -793,6 +898,16 @@ export default function TeamPage() {
 
       {/* Feedback Modal */}
       <FeedbackModal />
+
+      {/* Custom Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText || 'Delete'}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

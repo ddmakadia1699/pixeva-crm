@@ -21,7 +21,7 @@ export default function EnquiriesHeader({ activeTab, onTabChange, enquiryCount }
 
   return (
     <div className="space-y-4 pb-2 border-b border-white/10">
-      {/* Top Banner & Header Title */}
+      {/* Header Title */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <div className="flex items-center space-x-2.5">
@@ -29,27 +29,10 @@ export default function EnquiriesHeader({ activeTab, onTabChange, enquiryCount }
               <Inbox className="w-4 h-4" />
             </div>
             <h1 className="text-2xl font-black text-white tracking-tight">Enquiries</h1>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold badge-cyan uppercase tracking-wider">
-              RevePod OS Suite
-            </span>
           </div>
-          <p className="text-xs text-[#a0a0b0] mt-1 flex items-center space-x-1.5">
-            <span>Landing page</span>
-            <span className="text-slate-400">·</span>
-            <span>leads</span>
-            <span className="text-slate-400">·</span>
-            <span>analytics</span>
-            <span className="text-slate-400">·</span>
-            <span>integrations</span>
+          <p className="text-xs text-[#a0a0b0] mt-1">
+            Track and manage incoming leads, landing page bookings, and conversions.
           </p>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <div className="px-3 py-1.5 rounded-xl pixeva-card flex items-center space-x-2 text-xs">
-            <Sparkles className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
-            <span className="text-[#a0a0b0]">Studio Status:</span>
-            <span className="font-semibold text-white">Active Ingestion</span>
-          </div>
         </div>
       </div>
 

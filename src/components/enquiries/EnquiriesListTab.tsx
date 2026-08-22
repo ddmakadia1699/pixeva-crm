@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import Link from 'next/link';
 import { Enquiry, EnquiryStatus, EnquirySource } from '@/lib/supabase/types';
 import { invokeLambdaFunction } from '@/lib/aws/lambda';
 import { formatCurrency } from '@/lib/utils';
@@ -22,14 +23,21 @@ import {
   Sparkles,
   ChevronDown,
   RefreshCw,
-  CheckCircle2
+  CheckCircle2,
+  MessageSquare,
+  ExternalLink,
+  Flame,
+  Gem
 } from 'lucide-react';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import { openProposalPdfWindow } from '@/lib/pdf/generateProposalPdf';
 
 interface EnquiriesListTabProps {
   enquiries: Enquiry[];
   onAddEnquiry: (newEnquiry: Omit<Enquiry, 'id' | 'created_at'>) => void;
   onImportEnquiries: (imported: Omit<Enquiry, 'id' | 'created_at'>[]) => void;
   onUpdateStatus: (id: string, status: EnquiryStatus) => void;
+  onUpdateEnquiry?: (updated: Enquiry) => void;
   onDeleteEnquiry: (id: string) => void;
   onDeleteBatchEnquiries?: (ids: string[]) => void;
   onClearAllEnquiries?: () => void;
@@ -40,6 +48,7 @@ export default function EnquiriesListTab({
   onAddEnquiry,
   onImportEnquiries,
   onUpdateStatus,
+  onUpdateEnquiry,
   onDeleteEnquiry,
   onDeleteBatchEnquiries,
   onClearAllEnquiries,
@@ -52,12 +61,28 @@ export default function EnquiriesListTab({
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingEnquiry, setEditingEnquiry] = useState<Enquiry | null>(null);
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Delete',
+    onConfirm: () => {},
+  });
 
   // AWS Lambda Runner state
   const [activeLambdaTask, setActiveLambdaTask] = useState<string | null>(null);
   const [lambdaResult, setLambdaResult] = useState<any>(null);
 
-  // Form State
+  // Add Form State
   const [formData, setFormData] = useState({
     name: '',
     contact: '',
@@ -69,6 +94,22 @@ export default function EnquiriesListTab({
     source: 'Instagram' as EnquirySource,
     status: 'New' as EnquiryStatus,
     event_details: '',
+  });
+
+  // Edit Form State
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    contact: '',
+    email: '',
+    phone: '',
+    event_name: '',
+    event_type: 'wedding',
+    event_date: new Date().toISOString().slice(0, 10),
+    venue: '',
+    budget: '',
+    source: 'Instagram' as EnquirySource,
+    status: 'New' as EnquiryStatus,
+    notes: '',
   });
 
   // CSV Drag State
@@ -113,23 +154,39 @@ export default function EnquiriesListTab({
 
   const handleDeleteSelected = () => {
     if (selectedIds.length === 0) return;
-    if (onDeleteBatchEnquiries) {
-      onDeleteBatchEnquiries(selectedIds);
-    } else {
-      selectedIds.forEach((id) => onDeleteEnquiry(id));
-    }
-    setSelectedIds([]);
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Selected Enquiries',
+      message: `Are you sure you want to delete ${selectedIds.length} selected enquiry item(s)? This action cannot be undone.`,
+      confirmText: `Delete (${selectedIds.length})`,
+      onConfirm: () => {
+        if (onDeleteBatchEnquiries) {
+          onDeleteBatchEnquiries(selectedIds);
+        } else {
+          selectedIds.forEach((id) => onDeleteEnquiry(id));
+        }
+        setSelectedIds([]);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to delete all enquiries from the list?')) {
-      if (onClearAllEnquiries) {
-        onClearAllEnquiries();
-      } else {
-        enquiries.forEach((e) => onDeleteEnquiry(e.id));
-      }
-      setSelectedIds([]);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete All Enquiries',
+      message: 'Are you sure you want to delete all enquiries from the list? This action will permanently remove all leads.',
+      confirmText: 'Delete All',
+      onConfirm: () => {
+        if (onClearAllEnquiries) {
+          onClearAllEnquiries();
+        } else {
+          enquiries.forEach((e) => onDeleteEnquiry(e.id));
+        }
+        setSelectedIds([]);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   // Reset Filters
@@ -185,6 +242,59 @@ export default function EnquiriesListTab({
     });
 
     setIsAddModalOpen(false);
+  };
+
+  // Open Edit Modal
+  const handleOpenEdit = (enq: Enquiry) => {
+    setEditingEnquiry(enq);
+    setEditFormData({
+      name: enq.name,
+      contact: enq.contact || enq.phone || '',
+      email: enq.email,
+      phone: enq.phone || '',
+      event_name: enq.event_name || '',
+      event_type: enq.event_type || 'wedding',
+      event_date: enq.event_date || enq.received_on || new Date().toISOString().slice(0, 10),
+      venue: enq.venue || '',
+      budget: enq.estimated_budget ? String(enq.estimated_budget) : (enq.budget || '200000'),
+      source: (enq.source as EnquirySource) || 'Instagram',
+      status: (enq.status as EnquiryStatus) || 'New',
+      notes: enq.notes || enq.event_details || '',
+    });
+    setIsEditModalOpen(true);
+  };
+
+  // Submit Edit
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEnquiry || !editFormData.name) return;
+
+    const rawBudget = editFormData.budget.replace(/[^0-9]/g, '');
+    const numericBudget = rawBudget ? Number(rawBudget) : (editingEnquiry.estimated_budget || 200000);
+
+    const updated: Enquiry = {
+      ...editingEnquiry,
+      name: editFormData.name,
+      contact: editFormData.contact || editFormData.phone || editingEnquiry.contact,
+      email: editFormData.email,
+      phone: editFormData.phone || editFormData.contact,
+      event_name: editFormData.event_name || `${editFormData.name}'s Event`,
+      event_type: editFormData.event_type,
+      event_date: editFormData.event_date,
+      venue: editFormData.venue,
+      budget: editFormData.budget,
+      estimated_budget: numericBudget,
+      source: editFormData.source,
+      status: editFormData.status,
+      notes: editFormData.notes,
+      event_details: editFormData.notes,
+    };
+
+    if (onUpdateEnquiry) {
+      onUpdateEnquiry(updated);
+    }
+    setIsEditModalOpen(false);
+    setEditingEnquiry(null);
   };
 
   // Export CSV
@@ -263,10 +373,13 @@ export default function EnquiriesListTab({
     reader.readAsText(csvFile);
   };
 
-  // Lambda execution
+  // Lambda execution & PDF Proposal Generation
   const handleRunPdfLambda = async (enquiry: Enquiry) => {
     setActiveLambdaTask(`pdf-${enquiry.id}`);
     setLambdaResult(null);
+
+    // Automatically generate and open the official studio PDF proposal window
+    openProposalPdfWindow(enquiry);
 
     const res = await invokeLambdaFunction('pdf-generator-service', {
       dealId: enquiry.id,
@@ -279,6 +392,7 @@ export default function EnquiriesListTab({
     setLambdaResult({
       type: 'pdf',
       name: enquiry.name,
+      enquiry,
       data: res,
     });
   };
@@ -300,9 +414,27 @@ export default function EnquiriesListTab({
     });
   };
 
+  // 1-Click WhatsApp Quick Quote & Proposal Dispatcher
+  const handleSendWhatsAppQuote = (enquiry: Enquiry) => {
+    const rawPhone = (enquiry.phone || enquiry.contact || '').replace(/[^0-9]/g, '');
+    const phone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
+    const proposalUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/proposal/${enquiry.id}`
+      : `https://pixeva.app/proposal/${enquiry.id}`;
+
+    const formattedBudget = formatCurrency(enquiry.estimated_budget || 200000);
+    const message = `Hi ${enquiry.name}! 👋 Thank you for reaching out to Pixeva Studio for your ${enquiry.event_name || 'upcoming shoot'}.\n\n✨ We have prepared your custom photography & cinematography package proposal (${formattedBudget}).\n\n📱 View your interactive live proposal, 4K video teaser & contract here:\n${proposalUrl}\n\nFeel free to message us back here if you'd like to customize any deliverable!`;
+
+    const whatsappUrl = phone
+      ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+
+    window.open(whatsappUrl, '_blank');
+  };
+
   return (
     <div className="space-y-5 animate-fadeIn">
-      {/* Lambda Toast Banner */}
+      {/* Lambda / PDF Toast Banner */}
       {lambdaResult && (
         <div className="p-4 rounded-2xl pixeva-card bg-[#12121a]/95 border border-[#00d4ff]/40 flex items-start justify-between animate-fadeIn shadow-2xl">
           <div className="flex items-start space-x-3">
@@ -312,15 +444,27 @@ export default function EnquiriesListTab({
             <div>
               <div className="flex items-center space-x-2">
                 <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                  AWS Lambda Execution [{lambdaResult.type.toUpperCase()}]
+                  {lambdaResult.type === 'pdf' ? 'PDF Proposal Generated & Opened' : `AWS Lambda Execution [${lambdaResult.type.toUpperCase()}]`}
                 </h4>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#00d4ff]/20 text-[#00d4ff] font-mono">
-                  {lambdaResult.data.executionTimeMs}ms
+                  {lambdaResult.data?.executionTimeMs || 45}ms
                 </span>
               </div>
               <p className="text-xs text-[#a0a0b0] mt-0.5">
-                Client: <span className="font-semibold text-white">{lambdaResult.name}</span> — {lambdaResult.data.payload.message}
+                Client: <span className="font-semibold text-white">{lambdaResult.name}</span> — Official Photography & Cinematography proposal created.
               </p>
+              {lambdaResult.enquiry && (
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => openProposalPdfWindow(lambdaResult.enquiry)}
+                    className="btn-pixeva-primary px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-md"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>View / Print Proposal PDF</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <button
@@ -332,24 +476,24 @@ export default function EnquiriesListTab({
         </div>
       )}
 
-      {/* Control Bar: Search, Filters & Action Buttons */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      {/* Control Bar: Search, Filters & Action Buttons - Strictly One Single Line */}
+      <div className="flex items-center justify-between gap-3 overflow-x-auto scrollbar-none py-0.5">
         {/* Left Side: Search + Dropdown Filters */}
-        <div className="flex flex-wrap items-center gap-2 flex-1">
+        <div className="flex items-center space-x-2 shrink-0">
           {/* Search Box */}
-          <div className="relative flex-1 min-w-[220px] max-w-md">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a0a0b0]" />
+          <div className="relative w-48 sm:w-56 lg:w-60">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#a0a0b0]" />
             <input
               type="text"
               placeholder="Search name, contact, event…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#12121a] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]/60 transition-colors"
+              className="w-full bg-[#12121a] border border-white/10 rounded-xl pl-9 pr-7 py-1.5 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]/60 transition-colors"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a0a0b0] hover:text-white"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#a0a0b0] hover:text-white"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -361,7 +505,7 @@ export default function EnquiriesListTab({
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-[#12121a] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-8 appearance-none"
+              className="bg-[#12121a] border border-white/10 text-xs font-semibold rounded-xl pl-3 pr-7 py-1.5 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer appearance-none"
             >
               <option value="all">All Status</option>
               <option value="new">New</option>
@@ -371,7 +515,7 @@ export default function EnquiriesListTab({
               <option value="booked">Booked</option>
               <option value="unqualified">Unqualified</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {/* Source Dropdown Filter */}
@@ -379,7 +523,7 @@ export default function EnquiriesListTab({
             <select
               value={selectedSource}
               onChange={(e) => setSelectedSource(e.target.value)}
-              className="bg-[#12121a] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-8 appearance-none"
+              className="bg-[#12121a] border border-white/10 text-xs font-semibold rounded-xl pl-3 pr-7 py-1.5 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer appearance-none"
             >
               <option value="all">All Sources</option>
               <option value="Landing Page">Landing Page</option>
@@ -389,16 +533,16 @@ export default function EnquiriesListTab({
               <option value="Google Ads">Google Ads</option>
               <option value="Inbound API">Inbound API</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {(searchTerm || selectedStatus !== 'all' || selectedSource !== 'all') && (
             <button
               onClick={handleResetFilters}
-              className="text-xs text-[#00d4ff] hover:underline flex items-center space-x-1 px-2 py-1"
+              title="Reset all filters"
+              className="p-2 rounded-xl bg-[#00d4ff]/10 hover:bg-[#00d4ff]/20 text-[#00d4ff] border border-[#00d4ff]/30 transition-all shrink-0 flex items-center justify-center"
             >
-              <RefreshCw className="w-3 h-3" />
-              <span>Reset</span>
+              <RefreshCw className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -408,7 +552,7 @@ export default function EnquiriesListTab({
           {selectedIds.length > 0 && (
             <button
               onClick={handleDeleteSelected}
-              className="flex items-center space-x-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 transition-all animate-fadeIn"
+              className="flex items-center space-x-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 transition-all animate-fadeIn whitespace-nowrap"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Delete Selected ({selectedIds.length})</span>
@@ -418,7 +562,7 @@ export default function EnquiriesListTab({
           {enquiries.length > 0 && (
             <button
               onClick={handleClearAll}
-              className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 transition-all"
+              className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 transition-all whitespace-nowrap"
               title="Delete all enquiries from list"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -428,7 +572,7 @@ export default function EnquiriesListTab({
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="btn-pixeva-primary flex items-center space-x-1.5 text-xs font-bold px-3.5 py-2 rounded-xl shadow-md transition-all"
+            className="btn-pixeva-primary flex items-center space-x-1.5 text-xs font-bold px-3.5 py-1.5 rounded-xl shadow-md transition-all whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             <span>Add Enquiry</span>
@@ -436,7 +580,7 @@ export default function EnquiriesListTab({
 
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all"
+            className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all whitespace-nowrap"
           >
             <FileUp className="w-3.5 h-3.5 text-[#00d4ff]" />
             <span>Import CSV</span>
@@ -445,7 +589,7 @@ export default function EnquiriesListTab({
           <button
             onClick={handleExportCsv}
             disabled={filteredEnquiries.length === 0}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all disabled:opacity-40"
+            className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all disabled:opacity-40 whitespace-nowrap"
           >
             <Download className="w-3.5 h-3.5 text-[#8b5cf6]" />
             <span>Export CSV</span>
@@ -520,9 +664,15 @@ export default function EnquiriesListTab({
                 const isSelected = selectedIds.includes(enq.id);
 
                 return (
-                  <tr key={enq.id} className={`hover:bg-white/5 transition-colors group ${isSelected ? 'bg-[#00d4ff]/5' : ''}`}>
+                  <tr
+                    key={enq.id}
+                    onClick={() => handleOpenEdit(enq)}
+                    className={`hover:bg-slate-100/60 dark:hover:bg-white/5 transition-colors group cursor-pointer ${
+                      isSelected ? 'bg-[#00d4ff]/5' : ''
+                    }`}
+                  >
                     {/* Checkbox */}
-                    <td className="w-10 px-2 py-3 text-center">
+                    <td className="w-10 px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -532,30 +682,34 @@ export default function EnquiriesListTab({
                     </td>
                     {/* Name & Contact */}
                     <td className="px-3 py-3 w-[27%]">
-                      <div className="flex items-center space-x-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#00d4ff] to-[#8b5cf6] flex items-center justify-center font-extrabold text-white text-[11px] shadow-md shrink-0">
-                          {enq.name
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')
-                            .slice(0, 2)}
-                        </div>
-                        <div className="min-w-0 flex-1 space-y-0.5">
-                          <div className="font-extrabold text-white text-xs truncate" title={enq.name}>
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center space-x-1.5 flex-wrap gap-y-0.5">
+                          <span className="font-extrabold text-white text-xs truncate group-hover:text-[#00d4ff] transition-colors" title={enq.name}>
                             {enq.name}
+                          </span>
+                          {(enq.estimated_budget || 0) >= 200000 ? (
+                            <span className="inline-flex items-center text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs">
+                              <Gem className="w-2.5 h-2.5 text-amber-400 mr-1" />
+                              <span>VIP</span>
+                            </span>
+                          ) : (enq.estimated_budget || 0) >= 100000 || enq.status === 'proposal' ? (
+                            <span className="inline-flex items-center text-[9px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-xs">
+                              <Flame className="w-2.5 h-2.5 text-rose-400 mr-1" />
+                              <span>Hot Lead</span>
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="text-[10px] font-mono space-y-0.5">
+                          <div className="flex items-center space-x-1 text-[#00d4ff] font-semibold truncate">
+                            <Mail className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{enq.email}</span>
                           </div>
-                          <div className="text-[10px] font-mono space-y-0.5">
-                            <div className="flex items-center space-x-1 text-[#00d4ff] font-semibold truncate">
-                              <Mail className="w-3 h-3 shrink-0" />
-                              <span className="truncate">{enq.email}</span>
+                          {enq.phone && (
+                            <div className="flex items-center space-x-1 text-slate-800 dark:text-slate-200 font-extrabold truncate">
+                              <Phone className="w-3 h-3 shrink-0 text-[#8b5cf6]" />
+                              <span className="truncate">{enq.phone}</span>
                             </div>
-                            {enq.phone && (
-                              <div className="flex items-center space-x-1 text-slate-800 dark:text-slate-200 font-extrabold truncate">
-                                <Phone className="w-3 h-3 shrink-0 text-[#8b5cf6]" />
-                                <span className="truncate">{enq.phone}</span>
-                              </div>
-                            )}
-                          </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -595,7 +749,7 @@ export default function EnquiriesListTab({
                     </td>
 
                     {/* Status Selector */}
-                    <td className="px-3 py-3 w-[15%]">
+                    <td className="px-3 py-3 w-[15%]" onClick={(e) => e.stopPropagation()}>
                       <select
                         value={enq.status}
                         onChange={(e) => onUpdateStatus(enq.id, e.target.value as EnquiryStatus)}
@@ -623,8 +777,28 @@ export default function EnquiriesListTab({
                     </td>
 
                     {/* Actions */}
-                    <td className="px-3 py-3 w-[11%] text-right">
+                    <td className="px-3 py-3 w-[15%] text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end space-x-1">
+                        {/* 1-Click WhatsApp Quick Quote & Proposal */}
+                        <button
+                          onClick={() => handleSendWhatsAppQuote(enq)}
+                          title="Send 1-Click WhatsApp Quote & Proposal Link"
+                          className="p-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-xs transition-all shadow-xs"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* View Live Client Proposal */}
+                        <Link
+                          href={`/proposal/${enq.id}`}
+                          target="_blank"
+                          title="Open Live Interactive Client Proposal"
+                          className="p-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/30 text-sky-400 border border-sky-500/30 text-xs transition-all shadow-xs inline-flex items-center"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </Link>
+
+                        {/* PDF Proposal */}
                         <button
                           onClick={() => handleRunPdfLambda(enq)}
                           disabled={Boolean(activeLambdaTask)}
@@ -634,6 +808,7 @@ export default function EnquiriesListTab({
                           {isPdfRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
                         </button>
 
+                        {/* Email Campaign */}
                         <button
                           onClick={() => handleRunEmailLambda(enq)}
                           disabled={Boolean(activeLambdaTask)}
@@ -643,8 +818,20 @@ export default function EnquiriesListTab({
                           {isEmailRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
                         </button>
 
+                        {/* Delete */}
                         <button
-                          onClick={() => onDeleteEnquiry(enq.id)}
+                          onClick={() => {
+                            setConfirmModal({
+                              isOpen: true,
+                              title: 'Delete Enquiry',
+                              message: `Are you sure you want to delete the enquiry for "${enq.name}"? This action cannot be undone.`,
+                              confirmText: 'Delete',
+                              onConfirm: () => {
+                                onDeleteEnquiry(enq.id);
+                                setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+                              },
+                            });
+                          }}
                           title="Delete Enquiry"
                           className="p-1.5 rounded-lg bg-[#12121a] hover:bg-rose-500/20 text-rose-400 border border-white/10 hover:border-rose-500/40 text-xs transition-all"
                         >
@@ -917,6 +1104,301 @@ export default function EnquiriesListTab({
           </div>
         </div>
       )}
+
+      {/* Edit Enquiry Modal */}
+      {isEditModalOpen && editingEnquiry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-2xl bg-white dark:bg-[#12121a] text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl animate-scaleUp max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-200 dark:border-white/10 pb-4">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2.5">
+                  <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">Edit Lead Details</h3>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-400 border border-sky-500/30 uppercase">
+                    {editFormData.status}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Update client contact, event scope, budget, and sales pipeline stage.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditingEnquiry(null);
+                }}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Quick Actions Strip inside Edit Modal */}
+            <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-[#0a0a0f] border border-slate-200 dark:border-white/5 text-xs">
+              <span className="font-bold text-slate-500 dark:text-slate-400 text-[11px] mr-1">Quick Actions:</span>
+              
+              <button
+                type="button"
+                onClick={() => handleSendWhatsAppQuote(editingEnquiry)}
+                className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30 flex items-center space-x-1.5 transition-all shadow-xs"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>WhatsApp Quote</span>
+              </button>
+
+              <Link
+                href={`/proposal/${editingEnquiry.id}`}
+                target="_blank"
+                className="px-3 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-600 dark:text-sky-400 font-bold border border-sky-500/30 flex items-center space-x-1.5 transition-all shadow-xs"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Live Proposal</span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => handleRunPdfLambda(editingEnquiry)}
+                className="px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-600 dark:text-purple-400 font-bold border border-purple-500/30 flex items-center space-x-1.5 transition-all shadow-xs"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>PDF Proposal</span>
+              </button>
+            </div>
+
+            {/* Edit Form */}
+            <form onSubmit={handleEditSubmit} className="space-y-4 text-xs">
+              {/* Row 1: Name & Phone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    Client Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-[#0a0a0f] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    Contact / Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.phone || editFormData.contact}
+                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value, contact: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-[#0a0a0f] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Email & Venue */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={editFormData.email}
+                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-[#0a0a0f] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    Venue / Shoot Location
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.venue}
+                    onChange={(e) => setEditFormData({ ...editFormData, venue: e.target.value })}
+                    placeholder="e.g. Taj Lake Palace, Udaipur"
+                    className="w-full bg-slate-50 dark:bg-[#0a0a0f] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+              </div>
+
+              {/* Row 3: Event Name & Event Type */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    Event Title / Description
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.event_name}
+                    onChange={(e) => setEditFormData({ ...editFormData, event_name: e.target.value })}
+                    placeholder="e.g. Wedding & Sangeet"
+                    className="w-full bg-slate-50 dark:bg-[#0a0a0f] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    Event Type
+                  </label>
+                  <select
+                    value={editFormData.event_type}
+                    onChange={(e) => setEditFormData({ ...editFormData, event_type: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-[#0a0a0f] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 cursor-pointer"
+                  >
+                    <option value="wedding">Wedding Shoot</option>
+                    <option value="pre-wedding">Pre-Wedding / Engagement</option>
+                    <option value="reception">Reception / Gala</option>
+                    <option value="corporate">Corporate Shoot</option>
+                    <option value="commercial">Fashion / Commercial</option>
+                    <option value="birthday">Birthday / Private Party</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 4: Event Date & Estimated Budget */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    Event Date
+                  </label>
+                  <input
+                    type="date"
+                    value={editFormData.event_date}
+                    onChange={(e) => setEditFormData({ ...editFormData, event_date: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-[#0a0a0f] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    Estimated Budget (₹ / $)
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.budget}
+                    onChange={(e) => setEditFormData({ ...editFormData, budget: e.target.value })}
+                    placeholder="e.g. 200000"
+                    className="w-full bg-slate-50 dark:bg-[#0a0a0f] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white font-mono font-bold focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+              </div>
+
+              {/* Row 5: Source & Pipeline Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    Lead Source
+                  </label>
+                  <select
+                    value={editFormData.source}
+                    onChange={(e) => setEditFormData({ ...editFormData, source: e.target.value as EnquirySource })}
+                    className="w-full bg-slate-50 dark:bg-[#0a0a0f] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 cursor-pointer"
+                  >
+                    <option value="Instagram">Instagram</option>
+                    <option value="Website">Website</option>
+                    <option value="Landing Page">Landing Page</option>
+                    <option value="Referral">Referral</option>
+                    <option value="Google Ads">Google Ads</option>
+                    <option value="Inbound API">Inbound API</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                    Sales Status Pipeline
+                  </label>
+                  <select
+                    value={editFormData.status}
+                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as EnquiryStatus })}
+                    className="w-full bg-slate-50 dark:bg-[#0a0a0f] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 cursor-pointer font-bold"
+                  >
+                    <option value="new">New (Fresh Lead)</option>
+                    <option value="contacted">Contacted (WhatsApp/Call)</option>
+                    <option value="qualified">Qualified (Date & Budget Match)</option>
+                    <option value="proposal">Proposal (Quote Sent)</option>
+                    <option value="booked">Booked (Deposit Paid)</option>
+                    <option value="unqualified">Unqualified</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 6: Notes */}
+              <div>
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block mb-1.5">
+                  Client Requirements / Production Notes
+                </label>
+                <textarea
+                  rows={3}
+                  value={editFormData.notes}
+                  onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                  placeholder="Special client requests, drone permits, extra coverage hours, etc."
+                  className="w-full bg-slate-50 dark:bg-[#0a0a0f] border border-slate-300 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+                />
+              </div>
+
+              {/* Modal Footer */}
+              <div className="pt-4 flex items-center justify-between border-t border-slate-200 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (editingEnquiry) {
+                      const idToDelete = editingEnquiry.id;
+                      setIsEditModalOpen(false);
+                      setEditingEnquiry(null);
+                      setConfirmModal({
+                        isOpen: true,
+                        title: 'Delete Enquiry',
+                        message: `Are you sure you want to delete the enquiry for "${editFormData.name}"? This action cannot be undone.`,
+                        confirmText: 'Delete',
+                        onConfirm: () => {
+                          onDeleteEnquiry(idToDelete);
+                          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+                        },
+                      });
+                    }
+                  }}
+                  className="px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 flex items-center space-x-1.5 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete Enquiry</span>
+                </button>
+
+                <div className="flex items-center space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditModalOpen(false);
+                      setEditingEnquiry(null);
+                    }}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-pixeva-primary px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-sky-500/25"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText || 'Delete'}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }
