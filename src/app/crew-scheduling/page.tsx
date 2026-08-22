@@ -94,7 +94,20 @@ const MONTHS = [
 const CREW_STORAGE_KEY = 'pixeva_scheduled_events';
 
 export default function CrewSchedulingPage() {
-  const [events, setEvents] = useState<ScheduledEvent[]>(INITIAL_EVENTS);
+  const [events, setEvents] = useState<ScheduledEvent[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(CREW_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch {}
+    }
+    return INITIAL_EVENTS;
+  });
   const [currentMonthIndex, setCurrentMonthIndex] = useState(7); // August 2026
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);

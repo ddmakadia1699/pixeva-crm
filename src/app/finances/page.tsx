@@ -100,8 +100,30 @@ const FINANCES_STORAGE_KEY = 'pixeva_finances';
 const TRANSACTIONS_STORAGE_KEY = 'pixeva_transactions';
 
 export default function FinancesPage() {
-  const [projectFinances, setProjectFinances] = useState<ProjectFinanceItem[]>(INITIAL_PROJECT_FINANCES);
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [projectFinances, setProjectFinances] = useState<ProjectFinanceItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedFin = localStorage.getItem(FINANCES_STORAGE_KEY);
+        if (savedFin) {
+          const parsed = JSON.parse(savedFin);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch {}
+    }
+    return INITIAL_PROJECT_FINANCES;
+  });
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedTx = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
+        if (savedTx) {
+          const parsedTx = JSON.parse(savedTx);
+          if (Array.isArray(parsedTx) && parsedTx.length > 0) return parsedTx;
+        }
+      } catch {}
+    }
+    return INITIAL_TRANSACTIONS;
+  });
 
   // Load from localStorage on mount
   useEffect(() => {

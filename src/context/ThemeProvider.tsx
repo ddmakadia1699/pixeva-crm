@@ -13,18 +13,14 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark');
+  const [theme, setThemeState] = useState<Theme>('light');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Read theme from localStorage or system preference on mount
-    const savedTheme = localStorage.getItem('pixeva_theme') as Theme | null;
-    if (savedTheme === 'light' || savedTheme === 'dark') {
-      setThemeState(savedTheme);
-      applyTheme(savedTheme);
-    } else {
-      applyTheme('dark');
-    }
+    // Read theme from localStorage, defaulting to 'light'
+    const savedTheme = (localStorage.getItem('pixeva_theme') as Theme | null) || 'light';
+    setThemeState(savedTheme);
+    applyTheme(savedTheme);
     setMounted(true);
   }, []);
 
