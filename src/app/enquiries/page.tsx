@@ -82,7 +82,7 @@ export default function EnquiriesPage() {
     } catch {}
     setIsHydrated(true);
 
-    // 2. Background sync with AWS API Gateway if available
+    // 2. Background sync with AWS API Gateway if available (merge new leads without overwriting local edits)
     async function syncFromCloud() {
       try {
         const res = await fetch(`${AWS_API_GATEWAY}/enquiries`);
@@ -108,7 +108,11 @@ export default function EnquiriesPage() {
             .filter((item: Enquiry) => !deletedSet.has(item.id));
 
           if (mapped.length > 0) {
-            updateEnquiries(mapped);
+            updateEnquiries((current) => {
+              const currentMap = new Map(current.map((item) => [item.id, item]));
+              const toAppend = mapped.filter((item) => !currentMap.has(item.id));
+              return toAppend.length > 0 ? [...current, ...toAppend] : current;
+            });
           }
         }
       } catch (e) {

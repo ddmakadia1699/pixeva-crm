@@ -247,18 +247,19 @@ export default function EnquiriesListTab({
   // Open Edit Modal
   const handleOpenEdit = (enq: Enquiry) => {
     setEditingEnquiry(enq);
+    const statusVal = enq.status ? (enq.status.toLowerCase() as EnquiryStatus) : 'new';
     setEditFormData({
-      name: enq.name,
+      name: enq.name || '',
       contact: enq.contact || enq.phone || '',
-      email: enq.email,
-      phone: enq.phone || '',
+      email: enq.email || '',
+      phone: enq.phone || enq.contact || '',
       event_name: enq.event_name || '',
       event_type: enq.event_type || 'wedding',
       event_date: enq.event_date || enq.received_on || new Date().toISOString().slice(0, 10),
       venue: enq.venue || '',
       budget: enq.estimated_budget ? String(enq.estimated_budget) : (enq.budget || '200000'),
       source: (enq.source as EnquirySource) || 'Instagram',
-      status: (enq.status as EnquiryStatus) || 'New',
+      status: statusVal,
       notes: enq.notes || enq.event_details || '',
     });
     setIsEditModalOpen(true);
