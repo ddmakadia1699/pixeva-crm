@@ -406,7 +406,7 @@ export default function LandingPageTab() {
 
               {/* Interactive Estimate Calculator on Public Page */}
               {showCalculator && (
-                <div className="p-5 rounded-2xl bg-gradient-to-b from-[#131b2e] to-[#0a0f1d] border border-sky-400/40 text-xs space-y-3 shadow-xl">
+                <div className="p-5 rounded-2xl bg-gradient-to-b from-[#131b2e] to-[#0a0f1d] border border-sky-400/40 text-xs space-y-3.5 shadow-xl">
                   <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
                     <div>
                       <span className="font-extrabold text-white text-xs uppercase tracking-wider">
@@ -419,22 +419,32 @@ export default function LandingPageTab() {
                     </span>
                   </div>
 
+                  {/* Multi-Currency Demo Badge */}
+                  <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-[10px] font-bold text-slate-300">
+                    <span className="text-[#a0a0b0] shrink-0">Supported Currencies:</span>
+                    <span className="px-2 py-0.5 rounded-lg bg-white/10 text-white shrink-0">🇮🇳 INR (₹)</span>
+                    <span className="px-2 py-0.5 rounded-lg bg-white/10 text-white shrink-0">🇺🇸 USD ($)</span>
+                    <span className="px-2 py-0.5 rounded-lg bg-white/10 text-white shrink-0">🇦🇪 AED</span>
+                    <span className="px-2 py-0.5 rounded-lg bg-white/10 text-white shrink-0">🇬🇧 GBP (£)</span>
+                    <span className="px-2 py-0.5 rounded-lg bg-white/10 text-white shrink-0">🇪🇺 EUR (€)</span>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
                     <label className="flex items-center space-x-2 p-2 rounded-xl bg-white/5 border border-white/5 hover:border-white/20 cursor-pointer">
                       <input type="checkbox" defaultChecked className="rounded text-[#00d4ff] bg-[#12121a] border-white/20 focus:ring-0" />
-                      <span className="text-white">Candid Photo (+₹15k)</span>
+                      <span className="text-white">Candid Photo (+₹15,000 / +$180)</span>
                     </label>
                     <label className="flex items-center space-x-2 p-2 rounded-xl bg-white/5 border border-white/5 hover:border-white/20 cursor-pointer">
                       <input type="checkbox" defaultChecked className="rounded text-[#00d4ff] bg-[#12121a] border-white/20 focus:ring-0" />
-                      <span className="text-white">4K Drone (+₹12k)</span>
+                      <span className="text-white">4K Drone (+₹12,000 / +$144)</span>
                     </label>
                     <label className="flex items-center space-x-2 p-2 rounded-xl bg-white/5 border border-white/5 hover:border-white/20 cursor-pointer">
                       <input type="checkbox" defaultChecked className="rounded text-[#00d4ff] bg-[#12121a] border-white/20 focus:ring-0" />
-                      <span className="text-white">Canvera Album (+₹15k)</span>
+                      <span className="text-white">Canvera Album (+₹15,000 / +$180)</span>
                     </label>
                     <label className="flex items-center space-x-2 p-2 rounded-xl bg-white/5 border border-white/5 hover:border-white/20 cursor-pointer">
                       <input type="checkbox" className="rounded text-[#00d4ff] bg-[#12121a] border-white/20 focus:ring-0" />
-                      <span className="text-white">LED Screen (+₹35k)</span>
+                      <span className="text-white">LED Screen (+₹35,000 / +$420)</span>
                     </label>
                   </div>
                 </div>

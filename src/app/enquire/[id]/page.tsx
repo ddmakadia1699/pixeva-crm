@@ -21,12 +21,33 @@ import {
   Video,
   BookOpen,
   MonitorPlay,
-  HeartHandshake
+  HeartHandshake,
+  Globe2,
+  ChevronDown
 } from 'lucide-react';
 
 const AWS_API_GATEWAY = process.env.NEXT_PUBLIC_AWS_API_GATEWAY_URL || 'https://zvt3ypue5l.execute-api.us-east-1.amazonaws.com';
 const ENQUIRIES_STORAGE_KEY = 'pixeva_enquiries';
 const LANDING_STORAGE_KEY = 'pixeva_landing_page_config';
+
+interface CurrencyOption {
+  code: string;
+  symbol: string;
+  name: string;
+  flag: string;
+  rateFromINR: number;
+}
+
+const GLOBAL_CURRENCIES: CurrencyOption[] = [
+  { code: 'INR', symbol: '₹', name: 'Indian Rupee', flag: '🇮🇳', rateFromINR: 1 },
+  { code: 'USD', symbol: '$', name: 'US Dollar', flag: '🇺🇸', rateFromINR: 0.012 },
+  { code: 'AED', symbol: 'AED ', name: 'UAE Dirham', flag: '🇦🇪', rateFromINR: 0.044 },
+  { code: 'GBP', symbol: '£', name: 'British Pound', flag: '🇬🇧', rateFromINR: 0.0095 },
+  { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', rateFromINR: 0.011 },
+  { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar', flag: '🇨🇦', rateFromINR: 0.016 },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', flag: '🇦🇺', rateFromINR: 0.018 },
+  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar', flag: '🇸🇬', rateFromINR: 0.016 },
+];
 
 interface ServiceAddon {
   id: string;
@@ -37,6 +58,9 @@ interface ServiceAddon {
 }
 
 export default function PublicEnquiryPage({ params }: { params: { id: string } }) {
+  // Selected International Currency (Default: INR)
+  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyOption>(GLOBAL_CURRENCIES[0]);
+
   // Landing Page Configuration State
   const [coverPhoto, setCoverPhoto] = useState<string>(
     'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1920&q=80'
@@ -50,7 +74,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
   const [showCalculator, setShowCalculator] = useState(true);
   const [basePrice, setBasePrice] = useState(50000);
 
-  // Addons for Estimate Calculator
+  // Addons for Estimate Calculator (Prices in Base INR)
   const [addons, setAddons] = useState<ServiceAddon[]>([
     { id: 'candid', label: 'Candid & Traditional Photography (Full Day)', icon: '📸', price: 25000, selected: true },
     { id: 'cinema', label: '4K Cinematic Master Film & Teaser Reel', icon: '🎬', price: 35000, selected: true },
@@ -98,8 +122,17 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
     }
   }, []);
 
+  // Format amount dynamically according to selected currency
+  const formatMoney = (inrAmount: number) => {
+    if (selectedCurrency.code === 'INR') {
+      return `₹${inrAmount.toLocaleString('en-IN')}`;
+    }
+    const converted = Math.round(inrAmount * selectedCurrency.rateFromINR);
+    return `${selectedCurrency.symbol}${converted.toLocaleString('en-US')}`;
+  };
+
   // Calculate live estimate
-  const totalEstimate = basePrice + addons.filter((a) => a.selected).reduce((sum, a) => sum + a.price, 0);
+  const totalInrEstimate = basePrice + addons.filter((a) => a.selected).reduce((sum, a) => sum + a.price, 0);
 
   const toggleAddon = (id: string) => {
     setAddons((prev) =>
@@ -118,6 +151,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
     const fullName = `${firstName} ${lastName}`.trim();
     const tempId = `enq-${Date.now()}`;
     const formattedDate = eventDate || new Date(Date.now() + 86400000 * 30).toISOString().split('T')[0];
+    const localizedBudget = `${formatMoney(totalInrEstimate)} ${selectedCurrency.code !== 'INR' ? selectedCurrency.code : ''}`.trim();
 
     const newEnquiry = {
       id: tempId,
@@ -129,11 +163,11 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
       event_type: eventType,
       event_date: formattedDate,
       venue: venue || 'Venue TBA',
-      estimated_budget: totalEstimate,
-      budget: `₹${totalEstimate.toLocaleString('en-IN')}`,
+      estimated_budget: totalInrEstimate,
+      budget: localizedBudget,
       source: source || 'Landing Page',
       status: 'new',
-      notes: `${notes ? notes + ' | ' : ''}Guests: ${guests} | Addons: ${addons.filter((a) => a.selected).map((a) => a.label.split('(')[0].trim()).join(', ')}`,
+      notes: `Currency: ${selectedCurrency.name} (${selectedCurrency.code}) | ${notes ? notes + ' | ' : ''}Guests: ${guests} | Addons: ${addons.filter((a) => a.selected).map((a) => a.label.split('(')[0].trim()).join(', ')}`,
       created_at: new Date().toISOString(),
     };
 
@@ -169,7 +203,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
   const handleOpenWhatsAppChat = () => {
     const rawNum = phone.replace(/[^0-9]/g, '');
     const cleanPhone = rawNum.length === 10 ? `91${rawNum}` : rawNum;
-    const msg = `Hi Pixeva Studio! 👋 I just submitted an enquiry on your official portal for our ${eventType} on ${eventDate || 'an upcoming date'}.\n\nLooking forward to hearing from you!`;
+    const msg = `Hi Pixeva Studio! 👋 I just submitted an enquiry on your portal for our ${eventType} on ${eventDate || 'an upcoming date'}.\n\nEstimated Package: ${formatMoney(totalInrEstimate)} ${selectedCurrency.code}.\n\nLooking forward to speaking with you!`;
     const url = `https://wa.me/918904832762?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
   };
@@ -263,9 +297,16 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
               </div>
               <div className="flex justify-between pt-1">
                 <span className="text-slate-500 font-medium">Ballpark Estimate:</span>
-                <span className="font-mono font-black text-emerald-600 text-sm">
-                  ₹{totalEstimate.toLocaleString('en-IN')}
-                </span>
+                <div className="text-right">
+                  <span className="font-mono font-black text-emerald-600 text-sm">
+                    {formatMoney(totalInrEstimate)} {selectedCurrency.code}
+                  </span>
+                  {selectedCurrency.code !== 'INR' && (
+                    <span className="block text-[10px] text-slate-400 font-mono">
+                      ≈ ₹{totalInrEstimate.toLocaleString('en-IN')} INR
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -291,7 +332,9 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
             {/* Live Estimate Calculator */}
             {showCalculator && (
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                
+                {/* Header & Global Currency Switcher */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
                   <div className="flex items-center space-x-3">
                     <div className="p-2.5 rounded-2xl bg-sky-100 text-sky-600">
                       <Calculator className="w-5 h-5" />
@@ -306,16 +349,63 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                     </div>
                   </div>
 
-                  <div className="text-right sm:border-l sm:border-slate-200 sm:pl-6">
+                  {/* Prominent Estimated Price Box */}
+                  <div className="text-left sm:text-right sm:border-l sm:border-slate-200 sm:pl-6">
                     <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                       Estimated Package
                     </span>
                     <span className="font-mono text-2xl font-black text-sky-600">
-                      ₹{totalEstimate.toLocaleString('en-IN')}
+                      {formatMoney(totalInrEstimate)}
                     </span>
+                    {selectedCurrency.code !== 'INR' && (
+                      <span className="block text-[10px] text-slate-400 font-mono">
+                        ≈ ₹{totalInrEstimate.toLocaleString('en-IN')} INR
+                      </span>
+                    )}
                   </div>
                 </div>
 
+                {/* Intelligent Multi-Currency Selector Bar */}
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Globe2 className="w-4 h-4 text-sky-600" />
+                      <span className="text-xs font-bold text-slate-900">
+                        Select Your Country & Currency:
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 font-mono">
+                      {selectedCurrency.code} • Live Rates
+                    </span>
+                  </div>
+
+                  {/* Horizontal Scrollable Currency Pills */}
+                  <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
+                    {GLOBAL_CURRENCIES.map((curr) => {
+                      const isSelected = selectedCurrency.code === curr.code;
+                      return (
+                        <button
+                          key={curr.code}
+                          type="button"
+                          onClick={() => setSelectedCurrency(curr)}
+                          className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                            isSelected
+                              ? 'bg-sky-600 text-white shadow-md shadow-sky-500/20 ring-2 ring-sky-500/30'
+                              : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span className="text-sm">{curr.flag}</span>
+                          <span>{curr.code}</span>
+                          <span className={isSelected ? 'text-sky-200' : 'text-slate-400 font-mono font-normal'}>
+                            ({curr.symbol.trim()})
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Deliverables Add-on Grid (All Prices in Selected Currency) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {addons.map((addon) => (
                     <div
@@ -332,7 +422,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                         <div>
                           <p className="text-xs font-bold text-slate-900 leading-snug">{addon.label}</p>
                           <span className="font-mono text-[11px] font-extrabold text-sky-600">
-                            +₹{addon.price.toLocaleString('en-IN')}
+                            +{formatMoney(addon.price)}
                           </span>
                         </div>
                       </div>
@@ -393,7 +483,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                    WhatsApp Number <span className="text-rose-500">*</span>
+                    WhatsApp / Phone Number <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
                     <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -402,7 +492,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                       required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+91 98765 43210"
+                      placeholder="+1 (555) 000-0000 or +91 98765 43210"
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-medium font-mono"
                     />
                   </div>
@@ -419,7 +509,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="priya@gmail.com"
+                      placeholder="client@domain.com"
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-medium font-mono"
                     />
                   </div>
@@ -430,7 +520,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                    Event Type
+                    Event / Shoot Type
                   </label>
                   <select
                     value={eventType}
@@ -474,7 +564,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                         type="text"
                         value={venue}
                         onChange={(e) => setVenue(e.target.value)}
-                        placeholder="e.g. Taj Lake Palace, Udaipur"
+                        placeholder="e.g. Taj Lake Palace, Udaipur / Dubai Marina"
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 font-medium"
                       />
                     </div>
@@ -532,7 +622,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                   rows={3}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Tell us about key rituals, drone permits, surprise performances, or custom color grade preferences..."
+                  placeholder="Tell us about key rituals, international travel, drone permits, surprise performances, or custom color grade preferences..."
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 font-medium"
                 />
               </div>
@@ -544,7 +634,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                   disabled={isSubmitting}
                   className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-extrabold text-sm shadow-xl shadow-sky-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer disabled:opacity-50"
                 >
-                  <span>{isSubmitting ? 'Securing Your Booking File...' : 'Submit Enquiry & Request Date Hold'}</span>
+                  <span>{isSubmitting ? 'Securing Your Booking File...' : `Submit Enquiry (${formatMoney(totalInrEstimate)})`}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
