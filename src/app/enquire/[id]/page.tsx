@@ -22,7 +22,7 @@ import {
   BookOpen,
   MonitorPlay,
   HeartHandshake,
-  Globe2,
+  Globe,
   ChevronDown
 } from 'lucide-react';
 
@@ -35,30 +35,30 @@ interface CurrencyOption {
   symbol: string;
   name: string;
   flag: string;
-  rateFromINR: number;
+  rateFromUSD: number; // Conversion rate from base USD (1 USD = rate)
 }
 
 const GLOBAL_CURRENCIES: CurrencyOption[] = [
-  { code: 'INR', symbol: '₹', name: 'Indian Rupee', flag: '🇮🇳', rateFromINR: 1 },
-  { code: 'USD', symbol: '$', name: 'US Dollar', flag: '🇺🇸', rateFromINR: 0.012 },
-  { code: 'AED', symbol: 'AED ', name: 'UAE Dirham', flag: '🇦🇪', rateFromINR: 0.044 },
-  { code: 'GBP', symbol: '£', name: 'British Pound', flag: '🇬🇧', rateFromINR: 0.0095 },
-  { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', rateFromINR: 0.011 },
-  { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar', flag: '🇨🇦', rateFromINR: 0.016 },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', flag: '🇦🇺', rateFromINR: 0.018 },
-  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar', flag: '🇸🇬', rateFromINR: 0.016 },
+  { code: 'USD', symbol: '$', name: 'US Dollar', flag: '🇺🇸', rateFromUSD: 1 },
+  { code: 'INR', symbol: '₹', name: 'Indian Rupee', flag: '🇮🇳', rateFromUSD: 83.5 },
+  { code: 'AED', symbol: 'AED ', name: 'UAE Dirham', flag: '🇦🇪', rateFromUSD: 3.67 },
+  { code: 'GBP', symbol: '£', name: 'British Pound', flag: '🇬🇧', rateFromUSD: 0.79 },
+  { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', rateFromUSD: 0.92 },
+  { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar', flag: '🇨🇦', rateFromUSD: 1.36 },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', flag: '🇦🇺', rateFromUSD: 1.52 },
+  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar', flag: '🇸🇬', rateFromUSD: 1.34 },
 ];
 
 interface ServiceAddon {
   id: string;
   label: string;
   icon: string;
-  price: number;
+  usdPrice: number;
   selected: boolean;
 }
 
 export default function PublicEnquiryPage({ params }: { params: { id: string } }) {
-  // Selected International Currency (Default: INR)
+  // Default to USD for global audience
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyOption>(GLOBAL_CURRENCIES[0]);
 
   // Landing Page Configuration State
@@ -66,22 +66,22 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
     'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1920&q=80'
   );
   const [headline, setHeadline] = useState("Let's capture your story");
-  const [subtitle, setSubtitle] = useState("Fill in your details and we'll get back to you within 24 hours.");
+  const [subtitle, setSubtitle] = useState("Fill in your details and our production team will get back to you within 24 hours.");
   const [showLocation, setShowLocation] = useState(true);
   const [showGuests, setShowGuests] = useState(true);
   const [showBudget, setShowBudget] = useState(true);
   const [showSource, setShowSource] = useState(true);
   const [showCalculator, setShowCalculator] = useState(true);
-  const [basePrice, setBasePrice] = useState(50000);
+  const [basePriceUSD, setBasePriceUSD] = useState(600); // Standard base package
 
-  // Addons for Estimate Calculator (Prices in Base INR)
+  // Addons for Estimate Calculator (in USD)
   const [addons, setAddons] = useState<ServiceAddon[]>([
-    { id: 'candid', label: 'Candid & Traditional Photography (Full Day)', icon: '📸', price: 25000, selected: true },
-    { id: 'cinema', label: '4K Cinematic Master Film & Teaser Reel', icon: '🎬', price: 35000, selected: true },
-    { id: 'drone', label: 'Licensed Aerial Drone Cinematography', icon: '🚁', price: 15000, selected: true },
-    { id: 'album', label: 'Premium Canvera Hardcover Photo Album (40 Sheets)', icon: '📖', price: 18000, selected: false },
-    { id: 'prewed', label: 'Pre-Wedding / Couple Concept Shoot', icon: '✨', price: 30000, selected: false },
-    { id: 'led', label: 'Live LED Wall Screen Display (8x12 ft)', icon: '🖥️', price: 35000, selected: false },
+    { id: 'candid', label: 'Candid & Master Photography (Full Day)', icon: '📸', usdPrice: 300, selected: true },
+    { id: 'cinema', label: '4K Cinematic Highlight Film & Teaser Reel', icon: '🎬', usdPrice: 420, selected: true },
+    { id: 'drone', label: 'Licensed Aerial Drone Cinematography', icon: '🚁', usdPrice: 180, selected: true },
+    { id: 'album', label: 'Luxury Hardcover Flush-Mount Album (40 Pages)', icon: '📖', usdPrice: 220, selected: false },
+    { id: 'prewed', label: 'Pre-Wedding / Couple Concept Session', icon: '✨', usdPrice: 360, selected: false },
+    { id: 'led', label: 'Live LED Video Wall Display (8x12 ft)', icon: '🖥️', usdPrice: 420, selected: false },
   ]);
 
   // Form State
@@ -92,7 +92,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
   const [eventType, setEventType] = useState('wedding');
   const [eventDate, setEventDate] = useState('');
   const [venue, setVenue] = useState('');
-  const [guests, setGuests] = useState('300 - 500');
+  const [guests, setGuests] = useState('100 - 300');
   const [source, setSource] = useState('Website');
   const [notes, setNotes] = useState('');
 
@@ -115,7 +115,6 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
         if (config.showBudget !== undefined) setShowBudget(config.showBudget);
         if (config.showSource !== undefined) setShowSource(config.showSource);
         if (config.showCalculator !== undefined) setShowCalculator(config.showCalculator);
-        if (config.startingPrice) setBasePrice(Number(config.startingPrice) || 50000);
       }
     } catch (e) {
       console.error('Error loading landing page config:', e);
@@ -123,16 +122,16 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
   }, []);
 
   // Format amount dynamically according to selected currency
-  const formatMoney = (inrAmount: number) => {
+  const formatMoney = (usdAmount: number) => {
+    const converted = Math.round(usdAmount * selectedCurrency.rateFromUSD);
     if (selectedCurrency.code === 'INR') {
-      return `₹${inrAmount.toLocaleString('en-IN')}`;
+      return `₹${converted.toLocaleString('en-IN')}`;
     }
-    const converted = Math.round(inrAmount * selectedCurrency.rateFromINR);
     return `${selectedCurrency.symbol}${converted.toLocaleString('en-US')}`;
   };
 
-  // Calculate live estimate
-  const totalInrEstimate = basePrice + addons.filter((a) => a.selected).reduce((sum, a) => sum + a.price, 0);
+  // Calculate live estimate in USD
+  const totalUsdEstimate = basePriceUSD + addons.filter((a) => a.selected).reduce((sum, a) => sum + a.usdPrice, 0);
 
   const toggleAddon = (id: string) => {
     setAddons((prev) =>
@@ -151,7 +150,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
     const fullName = `${firstName} ${lastName}`.trim();
     const tempId = `enq-${Date.now()}`;
     const formattedDate = eventDate || new Date(Date.now() + 86400000 * 30).toISOString().split('T')[0];
-    const localizedBudget = `${formatMoney(totalInrEstimate)} ${selectedCurrency.code !== 'INR' ? selectedCurrency.code : ''}`.trim();
+    const formattedPrice = formatMoney(totalUsdEstimate);
 
     const newEnquiry = {
       id: tempId,
@@ -163,11 +162,11 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
       event_type: eventType,
       event_date: formattedDate,
       venue: venue || 'Venue TBA',
-      estimated_budget: totalInrEstimate,
-      budget: localizedBudget,
+      estimated_budget: totalUsdEstimate * 83.5, // Normalized INR
+      budget: formattedPrice,
       source: source || 'Landing Page',
       status: 'new',
-      notes: `Currency: ${selectedCurrency.name} (${selectedCurrency.code}) | ${notes ? notes + ' | ' : ''}Guests: ${guests} | Addons: ${addons.filter((a) => a.selected).map((a) => a.label.split('(')[0].trim()).join(', ')}`,
+      notes: `Currency: ${selectedCurrency.code} (${formattedPrice}) | ${notes ? notes + ' | ' : ''}Guests: ${guests} | Addons: ${addons.filter((a) => a.selected).map((a) => a.label.split('(')[0].trim()).join(', ')}`,
       created_at: new Date().toISOString(),
     };
 
@@ -203,16 +202,16 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
   const handleOpenWhatsAppChat = () => {
     const rawNum = phone.replace(/[^0-9]/g, '');
     const cleanPhone = rawNum.length === 10 ? `91${rawNum}` : rawNum;
-    const msg = `Hi Pixeva Studio! 👋 I just submitted an enquiry on your portal for our ${eventType} on ${eventDate || 'an upcoming date'}.\n\nEstimated Package: ${formatMoney(totalInrEstimate)} ${selectedCurrency.code}.\n\nLooking forward to speaking with you!`;
+    const msg = `Hi Pixeva Studio! 👋 I just submitted an enquiry on your portal for our ${eventType} on ${eventDate || 'an upcoming date'}.\n\nEstimated Package: ${formatMoney(totalUsdEstimate)} (${selectedCurrency.code}).\n\nLooking forward to speaking with you!`;
     const url = `https://wa.me/918904832762?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased selection:bg-sky-500 selection:text-white">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-sky-500 selection:text-white">
       {/* Top Studio Brand Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs px-4 sm:px-8 py-3.5">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-sky-500/20 text-white">
               <Camera className="w-5 h-5" />
@@ -229,23 +228,43 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
           </div>
 
           <div className="flex items-center space-x-3">
+            {/* Sleek Currency Selector Pill in Header */}
+            <div className="relative">
+              <select
+                value={selectedCurrency.code}
+                onChange={(e) => {
+                  const found = GLOBAL_CURRENCIES.find((c) => c.code === e.target.value);
+                  if (found) setSelectedCurrency(found);
+                }}
+                className="appearance-none bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer transition-colors shadow-2xs"
+                title="Select Currency"
+              >
+                {GLOBAL_CURRENCIES.map((curr) => (
+                  <option key={curr.code} value={curr.code}>
+                    {curr.flag} {curr.code} ({curr.symbol.trim()})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+
             <a
               href="https://wa.me/918904832762"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center space-x-2 text-xs font-bold px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors shadow-xs"
+              className="flex items-center space-x-1.5 text-xs font-bold px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors shadow-2xs"
             >
               <MessageCircle className="w-4 h-4 text-emerald-600" />
-              <span className="hidden sm:inline">WhatsApp Studio</span>
+              <span className="hidden sm:inline">WhatsApp</span>
             </a>
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
-        {/* Hero Cover Card */}
-        <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200/80 bg-slate-900 aspect-[21/9] sm:aspect-[16/7] group">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-8">
+        {/* Hero Lookbook Card */}
+        <div className="relative rounded-3xl overflow-hidden shadow-xl border border-slate-200/80 bg-slate-900 aspect-[21/9] sm:aspect-[16/7] group">
           <img
             src={coverPhoto}
             alt="Studio Lookbook Cover"
@@ -254,12 +273,12 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent flex flex-col justify-end p-6 sm:p-10 text-white">
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-bold w-fit mb-3">
               <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-              <span>Official 2026-2027 Bookings Open</span>
+              <span>Official 2026-2027 Calendar Open</span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white max-w-2xl leading-tight">
               {headline}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-200 max-w-xl mt-2 font-medium">
+            <p className="text-xs sm:text-sm text-slate-200 max-w-xl mt-1.5 font-medium">
               {subtitle}
             </p>
           </div>
@@ -277,7 +296,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                 Thank You, {firstName}!
               </h2>
               <p className="text-sm text-slate-600 max-w-md mx-auto">
-                Your enquiry has been received by our lead production director. We have created your custom booking file and will reach out via WhatsApp & Email within 24 hours.
+                Your enquiry has been received by our lead director. We have created your custom booking file and will reach out via WhatsApp & Email within 24 hours.
               </p>
             </div>
 
@@ -296,17 +315,10 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                 <span className="font-bold text-slate-900">{eventDate || 'To be confirmed'}</span>
               </div>
               <div className="flex justify-between pt-1">
-                <span className="text-slate-500 font-medium">Ballpark Estimate:</span>
-                <div className="text-right">
-                  <span className="font-mono font-black text-emerald-600 text-sm">
-                    {formatMoney(totalInrEstimate)} {selectedCurrency.code}
-                  </span>
-                  {selectedCurrency.code !== 'INR' && (
-                    <span className="block text-[10px] text-slate-400 font-mono">
-                      ≈ ₹{totalInrEstimate.toLocaleString('en-IN')} INR
-                    </span>
-                  )}
-                </div>
+                <span className="text-slate-500 font-medium">Estimated Package:</span>
+                <span className="font-mono font-black text-emerald-600 text-base">
+                  {formatMoney(totalUsdEstimate)} {selectedCurrency.code}
+                </span>
               </div>
             </div>
 
@@ -331,105 +343,79 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Live Estimate Calculator */}
             {showCalculator && (
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl space-y-6">
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xl space-y-6">
                 
-                {/* Header & Global Currency Switcher */}
+                {/* Header with Integrated Price & Currency */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2.5 rounded-2xl bg-sky-100 text-sky-600">
+                    <div className="p-2.5 rounded-2xl bg-sky-50 text-sky-600 border border-sky-100">
                       <Calculator className="w-5 h-5" />
                     </div>
                     <div>
                       <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                        Live Package Estimate Calculator
+                        Live Estimate Calculator
                       </h2>
                       <p className="text-xs text-slate-500">
-                        Choose your deliverables for an instant transparent ballpark
+                        Choose your deliverables for an instant ballpark
                       </p>
                     </div>
                   </div>
 
-                  {/* Prominent Estimated Price Box */}
-                  <div className="text-left sm:text-right sm:border-l sm:border-slate-200 sm:pl-6">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                      Estimated Package
-                    </span>
-                    <span className="font-mono text-2xl font-black text-sky-600">
-                      {formatMoney(totalInrEstimate)}
-                    </span>
-                    {selectedCurrency.code !== 'INR' && (
-                      <span className="block text-[10px] text-slate-400 font-mono">
-                        ≈ ₹{totalInrEstimate.toLocaleString('en-IN')} INR
+                  {/* Clean Estimated Package Display with Currency Switcher */}
+                  <div className="flex items-center space-x-3 self-start sm:self-auto bg-slate-50 p-2 sm:px-4 sm:py-2.5 rounded-2xl border border-slate-200/80">
+                    <div className="text-left sm:text-right">
+                      <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">
+                        Estimated Total
                       </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Intelligent Multi-Currency Selector Bar */}
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Globe2 className="w-4 h-4 text-sky-600" />
-                      <span className="text-xs font-bold text-slate-900">
-                        Select Your Country & Currency:
+                      <span className="font-mono text-xl sm:text-2xl font-black text-sky-600">
+                        {formatMoney(totalUsdEstimate)}
                       </span>
                     </div>
-                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 font-mono">
-                      {selectedCurrency.code} • Live Rates
-                    </span>
-                  </div>
 
-                  {/* Horizontal Scrollable Currency Pills */}
-                  <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
-                    {GLOBAL_CURRENCIES.map((curr) => {
-                      const isSelected = selectedCurrency.code === curr.code;
-                      return (
-                        <button
-                          key={curr.code}
-                          type="button"
-                          onClick={() => setSelectedCurrency(curr)}
-                          className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                            isSelected
-                              ? 'bg-sky-600 text-white shadow-md shadow-sky-500/20 ring-2 ring-sky-500/30'
-                              : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
-                          }`}
-                        >
-                          <span className="text-sm">{curr.flag}</span>
-                          <span>{curr.code}</span>
-                          <span className={isSelected ? 'text-sky-200' : 'text-slate-400 font-mono font-normal'}>
-                            ({curr.symbol.trim()})
-                          </span>
-                        </button>
-                      );
-                    })}
+                    <div className="border-l border-slate-200 pl-3">
+                      <select
+                        value={selectedCurrency.code}
+                        onChange={(e) => {
+                          const found = GLOBAL_CURRENCIES.find((c) => c.code === e.target.value);
+                          if (found) setSelectedCurrency(found);
+                        }}
+                        className="bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 cursor-pointer shadow-2xs"
+                      >
+                        {GLOBAL_CURRENCIES.map((curr) => (
+                          <option key={curr.code} value={curr.code}>
+                            {curr.flag} {curr.code}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
-                {/* Deliverables Add-on Grid (All Prices in Selected Currency) */}
+                {/* Deliverables Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {addons.map((addon) => (
                     <div
                       key={addon.id}
                       onClick={() => toggleAddon(addon.id)}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${
                         addon.selected
-                          ? 'bg-sky-50/80 border-sky-300 ring-2 ring-sky-500/20 shadow-xs'
-                          : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                          ? 'bg-sky-50/70 border-sky-300 ring-2 ring-sky-500/20 shadow-xs'
+                          : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
                       <div className="flex items-center space-x-3 pr-2">
-                        <span className="text-lg">{addon.icon}</span>
+                        <span className="text-xl group-hover:scale-110 transition-transform">{addon.icon}</span>
                         <div>
                           <p className="text-xs font-bold text-slate-900 leading-snug">{addon.label}</p>
-                          <span className="font-mono text-[11px] font-extrabold text-sky-600">
-                            +{formatMoney(addon.price)}
+                          <span className="font-mono text-xs font-extrabold text-sky-600">
+                            +{formatMoney(addon.usdPrice)}
                           </span>
                         </div>
                       </div>
 
                       <div
                         className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all shrink-0 ${
-                          addon.selected ? 'bg-sky-600 border-sky-600 text-white' : 'border-slate-300 bg-white'
+                          addon.selected ? 'bg-sky-600 border-sky-600 text-white shadow-xs' : 'border-slate-300 bg-white'
                         }`}
                       >
                         {addon.selected && <CheckCircle2 className="w-3.5 h-3.5" />}
@@ -441,7 +427,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
             )}
 
             {/* Client & Shoot Details Form */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl space-y-6">
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xl space-y-6">
               <div>
                 <h2 className="text-lg font-black text-slate-900 tracking-tight">
                   Your Contact & Event Details
@@ -462,7 +448,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                     required
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="e.g. Priya"
+                    placeholder="e.g. Eleanor"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-medium"
                   />
                 </div>
@@ -473,7 +459,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    placeholder="e.g. Sharma"
+                    placeholder="e.g. Vance"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-medium"
                   />
                 </div>
@@ -509,7 +495,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="client@domain.com"
+                      placeholder="client@company.com"
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-medium font-mono"
                     />
                   </div>
@@ -527,12 +513,12 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                     onChange={(e) => setEventType(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-sky-500 font-bold cursor-pointer"
                   >
-                    <option value="wedding">💍 Destination Wedding & Sangeet</option>
-                    <option value="pre-wedding">✨ Pre-Wedding Concept Shoot</option>
+                    <option value="wedding">💍 Destination Wedding & Celebrations</option>
+                    <option value="pre-wedding">✨ Pre-Wedding / Couple Concept Session</option>
                     <option value="reception">🥂 Reception & Cocktail Gala</option>
-                    <option value="corporate">💼 Corporate Summit / Annual Meet</option>
+                    <option value="corporate">💼 Corporate Summit & Keynote Meet</option>
                     <option value="commercial">📸 Fashion & Commercial Campaign</option>
-                    <option value="birthday">🎉 Birthday / Private Celebration</option>
+                    <option value="birthday">🎉 Birthday & Private Celebration</option>
                   </select>
                 </div>
 
@@ -564,7 +550,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                         type="text"
                         value={venue}
                         onChange={(e) => setVenue(e.target.value)}
-                        placeholder="e.g. Taj Lake Palace, Udaipur / Dubai Marina"
+                        placeholder="e.g. Paris / Beverly Hills / Dubai"
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 font-medium"
                       />
                     </div>
@@ -605,10 +591,10 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-sky-500 font-medium cursor-pointer"
                   >
                     <option value="Instagram">Instagram Reels / Post</option>
-                    <option value="Friend / Referral">Friend / Family Referral</option>
-                    <option value="Website">Official Website / Portfolio</option>
+                    <option value="Friend / Referral">Friend / Client Referral</option>
+                    <option value="Website">Official Portfolio Website</option>
                     <option value="Google Search">Google Search</option>
-                    <option value="Wedding Planner">Wedding Planner Recommendation</option>
+                    <option value="Wedding Planner">Event Producer Recommendation</option>
                   </select>
                 </div>
               )}
@@ -616,13 +602,13 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
               {/* Row 6: Requirements / Notes */}
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                  Vision, Itinerary, or Special Requests
+                  Vision, Itinerary, or Creative Notes
                 </label>
                 <textarea
                   rows={3}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Tell us about key rituals, international travel, drone permits, surprise performances, or custom color grade preferences..."
+                  placeholder="Tell us about special moments, timeline details, drone permits, or preferred visual aesthetic..."
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 font-medium"
                 />
               </div>
@@ -634,7 +620,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                   disabled={isSubmitting}
                   className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-extrabold text-sm shadow-xl shadow-sky-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer disabled:opacity-50"
                 >
-                  <span>{isSubmitting ? 'Securing Your Booking File...' : `Submit Enquiry (${formatMoney(totalInrEstimate)})`}</span>
+                  <span>{isSubmitting ? 'Securing Your Booking File...' : `Submit Enquiry (${formatMoney(totalUsdEstimate)})`}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -661,7 +647,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
-        <p>© {new Date().getFullYear()} Pixeva Studio. All rights reserved. • AI-Powered Cinematic & Photography CRM</p>
+        <p>© {new Date().getFullYear()} Pixeva Studio. All rights reserved. • International Cinematic & Photography Portal</p>
       </footer>
     </div>
   );
