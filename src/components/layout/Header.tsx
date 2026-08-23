@@ -18,7 +18,7 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
   const { user, signOut } = useAuth();
   const { isCollapsed, toggleCollapse, toggleMobileOpen } = useSidebar();
 
-  if (pathname === '/login') {
+  if (pathname === '/login' || pathname.startsWith('/enquire') || pathname.startsWith('/proposal')) {
     return null;
   }
 
