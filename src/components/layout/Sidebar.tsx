@@ -250,7 +250,7 @@ export default function Sidebar() {
                   className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-bold text-xs transition-colors cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Sign Out of Pixeva</span>
+                  <span>Sign Out</span>
                 </button>
               </div>
             </div>
