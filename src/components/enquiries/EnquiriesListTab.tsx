@@ -182,10 +182,10 @@ export default function EnquiriesListTab({
     setConfirmModal({
       isOpen: true,
       title: 'Delete Selected Enquiries',
-      message: `Are you sure you want to delete ${selectedIds.length} selected enquiry item(s)? This action permanently purges these leads from cloud storage.`,
+      message: `Are you sure you want to delete ${selectedIds.length} selected enquiry item(s)? This action cannot be undone.`,
       confirmText: `Delete (${selectedIds.length})`,
-      itemName: `${selectedIds.length} Client Enquiries`,
-      itemType: 'Batch Leads Selection',
+      itemName: `${selectedIds.length} Selected Enquiries`,
+      itemType: 'Batch Leads',
       onConfirm: () => {
         if (onDeleteBatchEnquiries) {
           onDeleteBatchEnquiries(selectedIds);
@@ -202,10 +202,10 @@ export default function EnquiriesListTab({
     setConfirmModal({
       isOpen: true,
       title: 'Delete All Enquiries',
-      message: 'Are you sure you want to delete all enquiries from the list? This action will permanently remove all leads from Supabase and cannot be undone.',
+      message: 'Are you sure you want to delete all enquiries? This action cannot be undone.',
       confirmText: 'Delete All',
       itemName: `${enquiries.length} Total Enquiries`,
-      itemType: 'Entire Leads Database',
+      itemType: 'All Leads',
       onConfirm: () => {
         if (onClearAllEnquiries) {
           onClearAllEnquiries();
@@ -1109,7 +1109,7 @@ export default function EnquiriesListTab({
                             setConfirmModal({
                               isOpen: true,
                               title: 'Delete Enquiry',
-                              message: `Are you sure you want to delete the enquiry for "${enq.name}"? This action permanently removes this client record.`,
+                              message: `Are you sure you want to delete the enquiry for "${enq.name}"? This action cannot be undone.`,
                               confirmText: 'Delete Lead',
                               itemName: enq.name,
                               itemType: `${enq.event_type || 'Event'} Enquiry`,
