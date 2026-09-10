@@ -17,7 +17,6 @@ import {
 import { useTheme } from '@/context/ThemeProvider';
 import { useAuth } from '@/context/AuthContext';
 import { useSidebar } from '@/context/SidebarContext';
-import { useCurrency } from '@/context/CurrencyContext';
 import { usePathname } from 'next/navigation';
 
 interface HeaderProps {
@@ -29,29 +28,23 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { isCollapsed, toggleCollapse, toggleMobileOpen } = useSidebar();
-  const { currencies, currencyCode, currency, setCurrencyCode } = useCurrency();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
-  const currencyMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
       }
-      if (currencyMenuRef.current && !currencyMenuRef.current.contains(event.target as Node)) {
-        setIsCurrencyOpen(false);
-      }
     }
-    if (isProfileOpen || isCurrencyOpen) {
+    if (isProfileOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isProfileOpen, isCurrencyOpen]);
+  }, [isProfileOpen]);
 
   if (pathname === '/login' || pathname.startsWith('/enquire') || pathname.startsWith('/proposal')) {
     return null;
@@ -105,77 +98,6 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
             <span>New Lead</span>
           </button>
         )}
-
-        {/* Currency Switcher Dropdown */}
-        <div className="relative" ref={currencyMenuRef}>
-          <button
-            type="button"
-            onClick={() => setIsCurrencyOpen((prev) => !prev)}
-            title="Active Studio Currency (Click to switch)"
-            className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-100/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 hover:bg-slate-200/80 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
-          >
-            <span className="text-sm leading-none">{currency.flag}</span>
-            <span className="font-mono">{currency.code}</span>
-            <span className="text-slate-400 font-bold">{currency.symbol.trim()}</span>
-            <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isCurrencyOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {isCurrencyOpen && (
-            <div className="absolute right-0 mt-2 w-64 rounded-xl bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-slate-800 shadow-xl py-1.5 z-50 animate-fadeIn">
-              <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Studio Currency LOV</p>
-                  <p className="text-xs font-semibold text-slate-900 dark:text-white">Select Active Currency</p>
-                </div>
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400 font-bold">
-                  Dynamic
-                </span>
-              </div>
-
-              <div className="max-h-60 overflow-y-auto py-1">
-                {currencies.map((c) => {
-                  const isSelected = c.code === currencyCode;
-                  return (
-                    <button
-                      key={c.code}
-                      type="button"
-                      onClick={() => {
-                        setCurrencyCode(c.code);
-                        setIsCurrencyOpen(false);
-                      }}
-                      className={`w-full px-3 py-2 text-left flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer ${
-                        isSelected ? 'bg-blue-50/70 dark:bg-blue-500/10 font-bold text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2 truncate">
-                        <span className="text-base shrink-0">{c.flag}</span>
-                        <div className="truncate">
-                          <span className="font-semibold">{c.code}</span>
-                          <span className="text-slate-400 text-[11px] ml-1.5 truncate">
-                            ({c.symbol.trim()}) {c.name.split('(')[0].trim()}
-                          </span>
-                        </div>
-                      </div>
-                      {isSelected && (
-                        <span className="text-blue-600 dark:text-blue-400 font-bold text-xs ml-2 shrink-0">✓</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="p-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-                <Link
-                  href="/settings?tab=payments"
-                  onClick={() => setIsCurrencyOpen(false)}
-                  className="block text-center text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Configure in Settings →
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* Theme Switcher */}
         <button
