@@ -22,7 +22,14 @@ import {
   RefreshCw,
   Sliders,
   Check,
-  Coins
+  Coins,
+  ArrowRightLeft,
+  Calculator,
+  TrendingUp,
+  RotateCcw,
+  Edit3,
+  ArrowRight,
+  Info
 } from 'lucide-react';
 import IntegrationsStatus from '@/components/system/IntegrationsStatus';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -171,10 +178,29 @@ const DEFAULT_PAYMENT_SPLITS: PaymentSplitItem[] = [
 const DEFAULT_PAYMENT_MODES = ['Cash', 'UPI', 'Bank Transfer', 'Cheque', 'Online'];
 
 export default function SettingsPage() {
-  const { currencies, currencyCode, currency, symbol, setCurrencyCode, formatCurrency } = useCurrency();
+  const { 
+    currencies, 
+    currencyCode, 
+    currency, 
+    symbol, 
+    baseCurrency,
+    exchangeRates,
+    setCurrencyCode, 
+    updateExchangeRate,
+    resetExchangeRates,
+    convertAmount,
+    formatCurrency 
+  } = useCurrency();
   const [activeTab, setActiveTab] = useState<
     'services' | 'packages' | 'payments' | 'contract' | 'documents' | 'team' | 'domain' | 'system'
   >('services');
+
+  // Currency Calculator & Exchange Rates State
+  const [calcAmount, setCalcAmount] = useState<number>(980000);
+  const [calcFrom, setCalcFrom] = useState<string>('INR');
+  const [calcTo, setCalcTo] = useState<string>('AED');
+  const [editingRateCode, setEditingRateCode] = useState<string | null>(null);
+  const [rateInputVal, setRateInputVal] = useState<string>('');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -809,7 +835,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
       {activeTab === 'payments' && (
         <div className="space-y-6 animate-fadeIn">
           {/* SECTION 1: STUDIO CURRENCY & REGIONAL LOV */}
-          <div className="p-5 rounded-xl pixeva-card space-y-4 border-2 border-blue-500/30 dark:border-blue-500/20 bg-gradient-to-br from-white via-white to-blue-50/20 dark:from-[#111827] dark:via-[#111827] dark:to-blue-950/20 shadow-sm">
+          <div className="p-5 rounded-xl pixeva-card space-y-5 border-2 border-blue-500/30 dark:border-blue-500/20 bg-gradient-to-br from-white via-white to-blue-50/20 dark:from-[#111827] dark:via-[#111827] dark:to-blue-950/20 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="space-y-0.5">
                 <div className="flex items-center space-x-2">
@@ -820,23 +846,23 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                     <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
                       <span>Studio Currency & LOV</span>
                       <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">
-                        Dynamic CRM
+                        Multi-Currency Engine
                       </span>
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Select your accounting currency. Automatically formats Dashboard volume, ledger, invoices, and proposals.
+                      Select your accounting currency. All deals, revenue, and invoice amounts automatically convert and calculate in real-time.
                     </p>
                   </div>
                 </div>
               </div>
 
               {/* Active Badge */}
-              <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 self-start sm:self-auto">
-                <span className="text-base">{currency.flag}</span>
+              <div className="inline-flex items-center space-x-2.5 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 self-start sm:self-auto shadow-2xs">
+                <span className="text-xl">{currency.flag}</span>
                 <div className="text-left">
-                  <div className="text-[10px] uppercase font-bold text-slate-400">Active Currency</div>
+                  <div className="text-[10px] uppercase font-bold text-slate-400">Active Display Currency</div>
                   <div className="text-xs font-bold text-slate-900 dark:text-white">
-                    {currency.code} ({currency.symbol})
+                    {currency.code} ({currency.symbol.trim()}) • {currency.name.split('(')[0]}
                   </div>
                 </div>
               </div>
@@ -856,7 +882,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                 >
                   {currencies.map((c) => (
                     <option key={c.code} value={c.code}>
-                      {c.flag} {c.code} — {c.symbol} {c.name} {c.code === 'INR' ? '(Rupees / Lakhs format)' : ''}
+                      {c.flag} {c.code} — {c.symbol.trim()} ({c.name}) {c.code === 'INR' ? '• Base Currency' : `• 1 ${c.code} = ₹${exchangeRates[c.code] || 1}`}
                     </option>
                   ))}
                 </select>
@@ -874,6 +900,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {currencies.map((c) => {
                   const isSelected = c.code === currencyCode;
+                  const rate = exchangeRates[c.code] || 1.0;
                   return (
                     <button
                       key={c.code}
@@ -898,7 +925,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                           )}
                         </div>
                         <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                          {c.code === 'INR' ? 'Indian Rupee (₹)' : c.name}
+                          {c.code === 'INR' ? 'Base Currency (₹)' : `1 ${c.code} = ₹${rate}`}
                         </p>
                       </div>
                     </button>
@@ -907,28 +934,256 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
               </div>
             </div>
 
-            {/* Live Interactive Preview */}
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 rounded-lg p-3">
+            {/* Live Interactive Conversion Preview */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 rounded-xl p-3.5 space-y-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                 <div className="space-y-0.5">
-                  <span className="font-semibold text-slate-700 dark:text-slate-200">
-                    Live CRM Formatting Preview:
+                  <span className="font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
+                    <TrendingUp className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Real-Time Converted Amount Preview (Base: INR):</span>
                   </span>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    All numbers in Dashboard, Finances, and Invoices automatically adapt to {currency.name}.
+                    When you switch to <strong className="text-slate-700 dark:text-slate-200">{currency.code}</strong>, actual monetary values are converted using live exchange rates.
                   </p>
                 </div>
-                <div className="flex items-center space-x-3 text-xs font-mono">
-                  <div className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700">
-                    <span className="text-[10px] text-slate-400 block">Advance (20%)</span>
+                <div className="flex items-center space-x-3 text-xs font-mono shrink-0">
+                  <div className="bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+                    <span className="text-[10px] text-slate-400 block font-sans">Advance (₹2,00,000)</span>
                     <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(200000)}</span>
                   </div>
-                  <div className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700">
-                    <span className="text-[10px] text-slate-400 block">Total Volume</span>
+                  <div className="bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+                    <span className="text-[10px] text-slate-400 block font-sans">Deal Volume (₹9,80,000)</span>
                     <span className="font-bold text-blue-600 dark:text-blue-400">{formatCurrency(980000)}</span>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* SECTION 2: INTERACTIVE CURRENCY CALCULATOR */}
+          <div className="p-5 rounded-xl pixeva-card space-y-4 border border-slate-200/80 dark:border-slate-800">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center space-x-2">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <Calculator className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Multi-Currency Converter Tool</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Instantly test and verify conversions between any international currencies.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+              {/* Input Amount */}
+              <div className="md:col-span-4 space-y-1">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
+                  Amount
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    value={calcAmount}
+                    onChange={(e) => setCalcAmount(Number(e.target.value) || 0)}
+                    placeholder="Enter amount..."
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* From Currency */}
+              <div className="md:col-span-3 space-y-1">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
+                  From
+                </label>
+                <select
+                  value={calcFrom}
+                  onChange={(e) => setCalcFrom(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                >
+                  {currencies.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.flag} {c.code} ({c.symbol.trim()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Swap Button */}
+              <div className="md:col-span-1 flex justify-center pt-5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const temp = calcFrom;
+                    setCalcFrom(calcTo);
+                    setCalcTo(temp);
+                  }}
+                  title="Swap currencies"
+                  className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 hover:bg-slate-200/80 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+                >
+                  <ArrowRightLeft className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* To Currency */}
+              <div className="md:col-span-4 space-y-1">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
+                  To
+                </label>
+                <select
+                  value={calcTo}
+                  onChange={(e) => setCalcTo(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                >
+                  {currencies.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.flag} {c.code} ({c.symbol.trim()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Converted Calculation Result Card */}
+            {(() => {
+              const convertedValue = convertAmount(calcAmount, calcFrom, calcTo);
+              const fromCurrencyObj = currencies.find(c => c.code === calcFrom) || currencies[0];
+              const toCurrencyObj = currencies.find(c => c.code === calcTo) || currencies[0];
+              const rate = convertAmount(1, calcFrom, calcTo);
+              return (
+                <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/60 dark:border-blue-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                      Conversion Result:
+                    </div>
+                    <div className="text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-center space-x-2">
+                      <span>{fromCurrencyObj.flag} {fromCurrencyObj.symbol.trim()}{calcAmount.toLocaleString()} {calcFrom}</span>
+                      <ArrowRight className="w-4 h-4 text-blue-500 shrink-0" />
+                      <span className="text-blue-600 dark:text-blue-400 font-mono">
+                        {toCurrencyObj.flag} {formatCurrency(calcAmount, calcTo, calcFrom)} {calcTo}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right sm:self-auto self-start bg-white/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-slate-800 text-[11px] font-mono">
+                    <span className="text-slate-400 block text-[10px]">Exchange Ratio</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300">
+                      1 {calcFrom} = {rate < 1 ? rate.toFixed(4) : rate.toFixed(2)} {calcTo}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* SECTION 3: EXCHANGE RATES MATRIX & EDITING */}
+          <div className="p-5 rounded-xl pixeva-card space-y-4 border border-slate-200/80 dark:border-slate-800">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                  <span>Exchange Rates Matrix (Base: INR ₹)</span>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                    Configurable
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Current valuation of 1 unit of foreign currency in Indian Rupees (INR).
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={resetExchangeRates}
+                className="btn-pixeva-secondary flex items-center space-x-1.5 text-xs self-start sm:self-auto"
+                title="Reset all rates to standard baseline"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Reset to Defaults</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {currencies.filter(c => c.code !== 'INR').map((c) => {
+                const currentRate = exchangeRates[c.code] || 1.0;
+                const isEditing = editingRateCode === c.code;
+
+                return (
+                  <div
+                    key={c.code}
+                    className="p-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between space-y-2 text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-base">{c.flag}</span>
+                        <span className="font-bold text-slate-900 dark:text-white">{c.code}</span>
+                      </div>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold">
+                        1 {c.code}
+                      </span>
+                    </div>
+
+                    {isEditing ? (
+                      <div className="flex items-center space-x-1.5">
+                        <div className="relative flex-1">
+                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-slate-400">₹</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={rateInputVal}
+                            onChange={(e) => setRateInputVal(e.target.value)}
+                            className="w-full bg-white dark:bg-slate-800 border border-blue-500 rounded-lg pl-6 pr-2 py-1 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none"
+                            autoFocus
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = parseFloat(rateInputVal);
+                            if (!isNaN(val) && val > 0) {
+                              updateExchangeRate(c.code, val);
+                            }
+                            setEditingRateCode(null);
+                          }}
+                          className="px-2 py-1 rounded bg-blue-600 text-white font-bold hover:bg-blue-700 text-xs"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingRateCode(null)}
+                          className="px-2 py-1 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-mono font-black text-sm text-slate-900 dark:text-white">
+                            ₹{currentRate.toFixed(2)}
+                          </div>
+                          <p className="text-[10px] text-slate-400">
+                            1 INR ≈ {(1 / currentRate).toFixed(4)} {c.code}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingRateCode(c.code);
+                            setRateInputVal(currentRate.toString());
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                          title="Edit exchange rate"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
