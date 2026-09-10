@@ -4,33 +4,49 @@ const config: Config = {
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  darkMode: "class",
+  darkMode: ["class", '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        pixeva: {
-          bg: "#0a0a0f",
-          card: "#12121a",
-          surface: "#161622",
-          border: "rgba(255, 255, 255, 0.12)",
-          cyan: "#00d4ff",
-          purple: "#8b5cf6",
-          blue: "#3b82f6",
-          emerald: "#10b981",
-          amber: "#f59e0b",
-          muted: "#a0a0b0",
+        canvas: {
+          light: '#f8f9fa',
+          dark: '#0b0f17',
+        },
+        panel: {
+          light: '#ffffff',
+          dark: '#111827',
+        },
+        slate: {
+          850: '#151f30',
+          950: '#090d16',
         },
       },
       fontFamily: {
-        sans: ["Outfit", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "monospace"],
+        sans: [
+          "Plus Jakarta Sans",
+          "Inter",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "sans-serif",
+        ],
+        mono: [
+          "JetBrains Mono",
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "monospace",
+        ],
       },
       boxShadow: {
-        glowCyan: "0 0 25px -3px rgba(0, 212, 255, 0.5)",
-        glowPurple: "0 0 25px -3px rgba(139, 92, 246, 0.5)",
-        glowBlue: "0 0 25px -3px rgba(59, 130, 246, 0.5)",
-        glowEmerald: "0 0 25px -3px rgba(16, 185, 129, 0.5)",
-        pixevaCard: "0 10px 30px -10px rgba(0, 0, 0, 0.7)",
+        'card': '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 3px 1px rgba(0, 0, 0, 0.02)',
+        'card-hover': '0 6px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02)',
+        'dropdown': '0 10px 25px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03)',
+      },
+      borderRadius: {
+        'xl': '0.75rem',
+        '2xl': '0.875rem',
       },
     },
   },

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QrCode, Sparkles, Camera, Users, Share2, ExternalLink, Printer, CheckCircle2, X } from 'lucide-react';
 
 export interface Gallery {
@@ -43,9 +43,25 @@ export const INITIAL_GALLERIES: Gallery[] = [
   },
 ];
 
+import { apiClient } from '@/lib/api/apiClient';
+
 export default function GalleryManager() {
   const [galleries, setGalleries] = useState<Gallery[]>(INITIAL_GALLERIES);
   const [activeQrModal, setActiveQrModal] = useState<Gallery | null>(null);
+
+  useEffect(() => {
+    async function loadGalleries() {
+      try {
+        const cloudData = await apiClient.galleries.list();
+        if (Array.isArray(cloudData) && cloudData.length > 0) {
+          setGalleries(cloudData);
+        }
+      } catch (err) {
+        console.warn('Notice loading galleries via API Gateway:', err);
+      }
+    }
+    loadGalleries();
+  }, []);
 
   return (
     <div className="space-y-6">

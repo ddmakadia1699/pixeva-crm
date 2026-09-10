@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:lambda": "node lambda/local_dev.js",
+    "dev:lambda:py": "python3 lambda/local_dev.py",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

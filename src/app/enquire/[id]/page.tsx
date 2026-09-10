@@ -25,8 +25,8 @@ import {
   Globe,
   ChevronDown
 } from 'lucide-react';
+import { apiClient } from '@/lib/api/apiClient';
 
-const AWS_API_GATEWAY = process.env.NEXT_PUBLIC_AWS_API_GATEWAY_URL || 'https://zvt3ypue5l.execute-api.us-east-1.amazonaws.com';
 const ENQUIRIES_STORAGE_KEY = 'pixeva_enquiries';
 const LANDING_STORAGE_KEY = 'pixeva_landing_page_config';
 
@@ -183,12 +183,11 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
       console.error('Failed to save public enquiry locally:', err);
     }
 
-    // 2. Submit to AWS Lambda backend
+    // 2. Submit to AWS Lambda backend with account scoping
     try {
-      await fetch(`${AWS_API_GATEWAY}/enquiries`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newEnquiry),
+      await apiClient.enquiries.create({
+        ...newEnquiry,
+        account_id: params?.id || 'user_3I2lBpsfTZcxw4L1GpKAMPCc45a',
       });
     } catch (err) {
       console.warn('Cloud trigger offline, stored securely in CRM database.');

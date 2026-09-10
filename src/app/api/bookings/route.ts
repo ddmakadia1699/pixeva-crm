@@ -24,14 +24,20 @@ const lambdaClient = isAWSConfigured
     })
   : null;
 
-async function executeLambdaOrFallback(action: string, payload: any) {
+async function executeLambdaOrFallback(action: string, payload: any, req?: NextRequest) {
   const functionName = 'bookings-service';
+  const accountId = req?.headers?.get('x-account-id') || 'user_3I2lBpsfTZcxw4L1GpKAMPCc45a';
+  const eventPayload = {
+    action,
+    payload: { ...payload, account_id: accountId },
+    headers: { 'x-account-id': accountId },
+  };
 
   if (isAWSConfigured && lambdaClient) {
     try {
       const command = new InvokeCommand({
         FunctionName: functionName,
-        Payload: Buffer.from(JSON.stringify({ action, payload })),
+        Payload: Buffer.from(JSON.stringify(eventPayload)),
       });
 
       const response = await lambdaClient.send(command);
@@ -46,17 +52,30 @@ async function executeLambdaOrFallback(action: string, payload: any) {
   }
 
   // Execute serverless microservice handler directly
-  const res = await bookingsHandler({ action, payload });
+  const res = await bookingsHandler(eventPayload);
   return typeof res.body === 'string' ? JSON.parse(res.body) : res;
 }
 
-export async function GET() {
-  const result = await executeLambdaOrFallback('GET', {});
+export async function GET(req: NextRequest) {
+  const result = await executeLambdaOrFallback('GET', {}, req);
   return NextResponse.json(result);
 }
 
 export async function POST(req: NextRequest) {
   const payload = await req.json();
-  const result = await executeLambdaOrFallback('CREATE', payload);
+  const result = await executeLambdaOrFallback('CREATE', payload, req);
+  return NextResponse.json(result);
+}
+
+export async function PUT(req: NextRequest) {
+  const payload = await req.json();
+  const result = await executeLambdaOrFallback('UPDATE', payload, req);
+  return NextResponse.json(result);
+}
+
+export async function DELETE(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get('id');
+  const result = await executeLambdaOrFallback('DELETE', { id }, req);
   return NextResponse.json(result);
 }

@@ -127,30 +127,30 @@ export default function LandingPageTab() {
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
       {/* 1. Public Enquiry Link Bar */}
-      <div className="pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-4">
-        <label className="text-xs font-semibold text-[#a0a0b0] block mb-2">
-          Your public enquiry link
+      <div className="pixeva-card p-4">
+        <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-2">
+          Your Public Enquiry Link
         </label>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <div className="flex-1 bg-[#0a0a0f] border border-white/10 rounded-xl px-3.5 py-2 text-xs font-mono text-white truncate">
+          <div className="flex-1 bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-lg px-3.5 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 truncate">
             {publicLink}
           </div>
           <div className="flex items-center space-x-2 shrink-0">
             <button
               onClick={handleCopyLink}
-              className="flex items-center space-x-1.5 text-xs font-semibold px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all"
+              className="btn-pixeva-secondary space-x-1.5"
             >
-              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
               <span>{copiedLink ? 'Copied' : 'Copy'}</span>
             </button>
             <a
               href={publicLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center space-x-1.5 text-xs font-semibold px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-all"
+              className="btn-pixeva-secondary space-x-1.5"
             >
               <span>Preview</span>
-              <ExternalLink className="w-3.5 h-3.5 text-[#a0a0b0]" />
+              <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
             </a>
           </div>
         </div>
@@ -159,17 +159,17 @@ export default function LandingPageTab() {
       {/* 2. Main Builder & Preview 2-Column Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* LEFT COLUMN: Controls & Settings */}
-        <div className="lg:col-span-5 space-y-5">
+        <div className="lg:col-span-5 space-y-4">
           {/* Cover Photo */}
-          <div className="pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-5 space-y-3">
+          <div className="pixeva-card p-4.5 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-white block">
-                Cover Photo <span className="text-[#a0a0b0] font-normal">· 16:9 · recommended 1920×1080 · max 1 MB</span>
+              <label className="text-xs font-bold text-slate-900 dark:text-white block">
+                Cover Photo <span className="text-slate-400 font-normal">· 16:9 · max 1 MB</span>
               </label>
               {coverPhoto && (
                 <button
                   onClick={() => setCoverPhoto('')}
-                  className="text-xs text-rose-400 hover:underline"
+                  className="text-xs text-rose-600 dark:text-rose-400 hover:underline font-medium"
                 >
                   Remove
                 </button>
@@ -177,22 +177,22 @@ export default function LandingPageTab() {
             </div>
 
             {coverPhoto ? (
-              <div className="relative rounded-xl overflow-hidden border border-white/10 aspect-video group">
+              <div className="relative rounded-lg overflow-hidden border border-slate-200/80 dark:border-white/10 aspect-video group">
                 <img src={coverPhoto} alt="Cover" className="w-full h-full object-cover" />
-                <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white text-xs font-bold space-x-1.5">
+                <label className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white text-xs font-semibold space-x-1.5">
                   <Upload className="w-4 h-4" />
                   <span>Change Cover Photo</span>
                   <input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleImageUpload} className="hidden" />
                 </label>
               </div>
             ) : (
-              <label className="border-2 border-dashed border-white/15 hover:border-[#00d4ff]/50 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-colors bg-[#0a0a0f]/50 text-center space-y-2 aspect-video">
-                <div className="p-3 rounded-full bg-white/5 text-[#00d4ff]">
-                  <Upload className="w-5 h-5" />
+              <label className="border-2 border-dashed border-slate-200 dark:border-white/15 hover:border-slate-400 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-[#111827]/50 text-center space-y-2 aspect-video">
+                <div className="p-2.5 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300">
+                  <Upload className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-white">Click to upload cover photo</p>
-                  <p className="text-[11px] text-[#a0a0b0]">JPG, PNG, WebP · 16:9, e.g. 1920×1080 · Max 1 MB</p>
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">Click to upload cover photo</p>
+                  <p className="text-[11px] text-slate-400">JPG, PNG, WebP · 16:9 · Max 1 MB</p>
                 </div>
                 <input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleImageUpload} className="hidden" />
               </label>
@@ -200,117 +200,117 @@ export default function LandingPageTab() {
           </div>
 
           {/* Page Text */}
-          <div className="pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-5 space-y-4">
-            <h3 className="text-sm font-bold text-white">Page Text</h3>
+          <div className="pixeva-card p-4.5 space-y-3">
+            <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Page Text</h3>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="font-semibold text-[#a0a0b0] block mb-1">Headline</label>
+                <label className="font-medium text-slate-500 dark:text-slate-400 block mb-1">Headline</label>
                 <input
                   type="text"
                   value={headline}
                   onChange={(e) => setHeadline(e.target.value)}
                   placeholder="Let's capture your story"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-white dark:bg-[#0b0f17] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                 />
               </div>
               <div>
-                <label className="font-semibold text-[#a0a0b0] block mb-1">Subtitle</label>
+                <label className="font-medium text-slate-500 dark:text-slate-400 block mb-1">Subtitle</label>
                 <textarea
                   rows={2}
                   value={subtitle}
                   onChange={(e) => setSubtitle(e.target.value)}
                   placeholder="Fill in your details and we'll get back to you within 24 hours."
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-white dark:bg-[#0b0f17] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                 />
               </div>
             </div>
           </div>
 
           {/* Optional Form Fields */}
-          <div className="pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-5 space-y-3">
+          <div className="pixeva-card p-4.5 space-y-3">
             <div>
-              <h3 className="text-sm font-bold text-white">Optional Form Fields</h3>
-              <p className="text-[11px] text-[#a0a0b0] mt-0.5">
+              <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Optional Form Fields</h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">
                 Name, Contact & Event Details are always included.
               </p>
             </div>
 
-            <div className="space-y-2 pt-1 text-xs">
-              <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#0a0a0f] border border-white/5 hover:border-white/15 cursor-pointer transition-colors">
-                <span className="font-medium text-white">Location / Venue</span>
+            <div className="space-y-1.5 pt-1 text-xs">
+              <label className="flex items-center justify-between p-2 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 cursor-pointer">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Location / Venue</span>
                 <input
                   type="checkbox"
                   checked={showLocation}
                   onChange={(e) => setShowLocation(e.target.checked)}
-                  className="rounded bg-[#12121a] border-white/20 text-[#00d4ff] focus:ring-0 w-4 h-4 cursor-pointer"
+                  className="rounded text-slate-900 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#0a0a0f] border border-white/5 hover:border-white/15 cursor-pointer transition-colors">
-                <span className="font-medium text-white">Number of Guests</span>
+              <label className="flex items-center justify-between p-2 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 cursor-pointer">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Number of Guests</span>
                 <input
                   type="checkbox"
                   checked={showGuests}
                   onChange={(e) => setShowGuests(e.target.checked)}
-                  className="rounded bg-[#12121a] border-white/20 text-[#00d4ff] focus:ring-0 w-4 h-4 cursor-pointer"
+                  className="rounded text-slate-900 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#0a0a0f] border border-white/5 hover:border-white/15 cursor-pointer transition-colors">
-                <span className="font-medium text-white">Budget</span>
+              <label className="flex items-center justify-between p-2 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 cursor-pointer">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Budget</span>
                 <input
                   type="checkbox"
                   checked={showBudget}
                   onChange={(e) => setShowBudget(e.target.checked)}
-                  className="rounded bg-[#12121a] border-white/20 text-[#00d4ff] focus:ring-0 w-4 h-4 cursor-pointer"
+                  className="rounded text-slate-900 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#0a0a0f] border border-white/5 hover:border-white/15 cursor-pointer transition-colors">
-                <span className="font-medium text-white">How did you hear about us?</span>
+              <label className="flex items-center justify-between p-2 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 cursor-pointer">
+                <span className="font-medium text-slate-700 dark:text-slate-300">How did you hear about us?</span>
                 <input
                   type="checkbox"
                   checked={showSource}
                   onChange={(e) => setShowSource(e.target.checked)}
-                  className="rounded bg-[#12121a] border-white/20 text-[#00d4ff] focus:ring-0 w-4 h-4 cursor-pointer"
+                  className="rounded text-slate-900 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
                 />
               </label>
 
-              <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#0a0a0f] border border-white/5 hover:border-white/15 cursor-pointer transition-colors">
-                <span className="font-medium text-white">Social Links</span>
+              <label className="flex items-center justify-between p-2 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 cursor-pointer">
+                <span className="font-medium text-slate-700 dark:text-slate-300">Social Links</span>
                 <input
                   type="checkbox"
                   checked={showSocialLinks}
                   onChange={(e) => setShowSocialLinks(e.target.checked)}
-                  className="rounded bg-[#12121a] border-white/20 text-[#00d4ff] focus:ring-0 w-4 h-4 cursor-pointer"
+                  className="rounded text-slate-900 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
                 />
               </label>
             </div>
           </div>
 
           {/* Estimate Calculator */}
-          <div className="pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-5 space-y-4">
+          <div className="pixeva-card p-4.5 space-y-3">
             <div>
-              <h3 className="text-sm font-bold text-white">Estimate Calculator</h3>
-              <p className="text-[11px] text-[#a0a0b0] mt-1">
-                Let clients get an instant ballpark estimate on your public page — before they submit an enquiry for an accurate quote.
+              <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Estimate Calculator</h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Let clients get an instant ballpark estimate before submitting.
               </p>
             </div>
 
-            <label className="flex items-center justify-between p-2.5 rounded-xl bg-[#0a0a0f] border border-white/5 hover:border-white/15 cursor-pointer transition-colors text-xs">
-              <span className="font-medium text-white">Show Estimate Calculator on public page</span>
+            <label className="flex items-center justify-between p-2 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 cursor-pointer text-xs">
+              <span className="font-medium text-slate-700 dark:text-slate-300">Show Calculator on public page</span>
               <input
                 type="checkbox"
                 checked={showCalculator}
                 onChange={(e) => setShowCalculator(e.target.checked)}
-                className="rounded bg-[#12121a] border-white/20 text-[#00d4ff] focus:ring-0 w-4 h-4 cursor-pointer"
+                className="rounded text-slate-900 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
               />
             </label>
 
             {showCalculator && (
-              <div className="space-y-4 pt-2 border-t border-white/10 text-xs animate-fadeIn">
+              <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-white/10 text-xs animate-fadeIn">
                 <div>
-                  <label className="font-semibold text-[#a0a0b0] block mb-1">
+                  <label className="font-medium text-slate-500 dark:text-slate-400 block mb-1">
                     Starting Price (base package)
                   </label>
                   <input
@@ -318,43 +318,8 @@ export default function LandingPageTab() {
                     value={startingPrice}
                     onChange={(e) => setStartingPrice(e.target.value)}
                     placeholder="e.g. 50000"
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                    className="w-full bg-white dark:bg-[#0b0f17] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="font-semibold text-white block">Connected Studio Services</label>
-                    <Link
-                      href="/settings"
-                      className="text-[11px] text-[#00d4ff] hover:underline font-semibold"
-                    >
-                      Edit in Settings →
-                    </Link>
-                  </div>
-                  
-                  <div className="space-y-1.5 bg-[#0a0a0f] p-3 rounded-xl border border-white/5 text-[11px]">
-                    <div className="flex items-center justify-between py-1 border-b border-white/5">
-                      <span className="text-white">📸 Candid Photographer</span>
-                      <span className="font-mono text-[#00d4ff] font-bold">₹15,000/day</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-white/5">
-                      <span className="text-white">🎬 Cinematic Cinematographer</span>
-                      <span className="font-mono text-[#00d4ff] font-bold">₹18,000/day</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-white/5">
-                      <span className="text-white">🚁 Aerial Drone Operator</span>
-                      <span className="font-mono text-[#00d4ff] font-bold">₹12,000/day</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1 border-b border-white/5">
-                      <span className="text-white">📖 Canvera Hardcover Album</span>
-                      <span className="font-mono text-[#00d4ff] font-bold">₹15,000</span>
-                    </div>
-                    <div className="flex items-center justify-between py-1">
-                      <span className="text-white">🖥️ LED Screen Display (8x12 ft)</span>
-                      <span className="font-mono text-[#00d4ff] font-bold">₹35,000</span>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
@@ -364,14 +329,14 @@ export default function LandingPageTab() {
           <div className="flex items-center space-x-3">
             <button
               onClick={handleSaveChanges}
-              className="btn-pixeva-primary flex-1 py-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-lg"
+              className="btn-pixeva-primary flex-1 py-2"
             >
-              <Save className="w-4 h-4" />
-              <span>Save Changes</span>
+              <Save className="w-3.5 h-3.5 mr-1.5" />
+              <span>Save Landing Page Configuration</span>
             </button>
             {saveSuccess && (
-              <span className="text-xs font-bold text-emerald-400 flex items-center space-x-1 animate-fadeIn">
-                <Check className="w-4 h-4" />
+              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center space-x-1 animate-fadeIn">
+                <Check className="w-3.5 h-3.5" />
                 <span>Saved!</span>
               </span>
             )}
@@ -380,131 +345,85 @@ export default function LandingPageTab() {
 
         {/* RIGHT COLUMN: Real-Time Preview */}
         <div className="lg:col-span-7 space-y-3 sticky top-20">
-          <span className="text-xs font-bold text-white uppercase tracking-wider block px-1">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block px-1">
             Live Client Preview
           </span>
 
-          <div className="pixeva-card bg-[#0e0e14] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="pixeva-card overflow-hidden">
             {/* Cover Photo */}
             {coverPhoto && (
               <div className="relative w-full aspect-[21/9] sm:aspect-[16/7] overflow-hidden">
                 <img src={coverPhoto} alt="Cover Preview" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0e0e14] via-[#0e0e14]/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0f172a] via-transparent to-transparent" />
               </div>
             )}
 
-            <div className="p-6 sm:p-8 space-y-6">
+            <div className="p-5 sm:p-6 space-y-5">
               {/* Page Title & Subtitle */}
-              <div className="text-center space-y-2">
-                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              <div className="text-center space-y-1.5">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                   {headline || "Let's capture your story"}
                 </h2>
-                <p className="text-xs text-[#a0a0b0] max-w-md mx-auto">
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
                   {subtitle || "Fill in your details and we'll get back to you within 24 hours."}
                 </p>
               </div>
 
-              {/* Interactive Estimate Calculator on Public Page */}
-              {showCalculator && (
-                <div className="p-5 rounded-2xl bg-gradient-to-b from-[#131b2e] to-[#0a0f1d] border border-sky-400/40 text-xs space-y-3.5 shadow-xl">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-                    <div>
-                      <span className="font-extrabold text-white text-xs uppercase tracking-wider">
-                        ✨ Live Estimate Calculator
-                      </span>
-                      <p className="text-[10px] text-[#a0a0b0]">Select deliverables to customize your package ballpark</p>
-                    </div>
-                    <span className="font-mono text-base font-black text-[#00d4ff]">
-                      ₹{Number(startingPrice || 50000).toLocaleString('en-IN')}
-                    </span>
-                  </div>
-
-                  {/* Multi-Currency Demo Badge */}
-                  <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 text-[10px] font-bold text-slate-300">
-                    <span className="text-[#a0a0b0] shrink-0">Supported Currencies:</span>
-                    <span className="px-2 py-0.5 rounded-lg bg-white/10 text-white shrink-0">🇮🇳 INR (₹)</span>
-                    <span className="px-2 py-0.5 rounded-lg bg-white/10 text-white shrink-0">🇺🇸 USD ($)</span>
-                    <span className="px-2 py-0.5 rounded-lg bg-white/10 text-white shrink-0">🇦🇪 AED</span>
-                    <span className="px-2 py-0.5 rounded-lg bg-white/10 text-white shrink-0">🇬🇧 GBP (£)</span>
-                    <span className="px-2 py-0.5 rounded-lg bg-white/10 text-white shrink-0">🇪🇺 EUR (€)</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
-                    <label className="flex items-center space-x-2 p-2 rounded-xl bg-white/5 border border-white/5 hover:border-white/20 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="rounded text-[#00d4ff] bg-[#12121a] border-white/20 focus:ring-0" />
-                      <span className="text-white">Candid Photo (+₹15,000 / +$180)</span>
-                    </label>
-                    <label className="flex items-center space-x-2 p-2 rounded-xl bg-white/5 border border-white/5 hover:border-white/20 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="rounded text-[#00d4ff] bg-[#12121a] border-white/20 focus:ring-0" />
-                      <span className="text-white">4K Drone (+₹12,000 / +$144)</span>
-                    </label>
-                    <label className="flex items-center space-x-2 p-2 rounded-xl bg-white/5 border border-white/5 hover:border-white/20 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="rounded text-[#00d4ff] bg-[#12121a] border-white/20 focus:ring-0" />
-                      <span className="text-white">Canvera Album (+₹15,000 / +$180)</span>
-                    </label>
-                    <label className="flex items-center space-x-2 p-2 rounded-xl bg-white/5 border border-white/5 hover:border-white/20 cursor-pointer">
-                      <input type="checkbox" className="rounded text-[#00d4ff] bg-[#12121a] border-white/20 focus:ring-0" />
-                      <span className="text-white">LED Screen (+₹35,000 / +$420)</span>
-                    </label>
-                  </div>
-                </div>
-              )}
-
               {/* Enquiry Form */}
               {previewSubmitted ? (
-                <div className="p-8 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-2 animate-fadeIn">
-                  <Check className="w-10 h-10 text-emerald-400 mx-auto" />
-                  <h3 className="text-sm font-bold text-white">Thank you for submitting!</h3>
-                  <p className="text-xs text-[#a0a0b0]">We will get back to you shortly.</p>
+                <div className="p-6 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-center space-y-1.5 animate-fadeIn">
+                  <Check className="w-8 h-8 text-emerald-600 dark:text-emerald-400 mx-auto" />
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white">Thank you for submitting!</h3>
+                  <p className="text-[11px] text-slate-500">We will get back to you shortly.</p>
                 </div>
               ) : (
-                <form onSubmit={handlePreviewSubmit} className="space-y-4 text-xs">
+                <form onSubmit={handlePreviewSubmit} className="space-y-3.5 text-xs">
                   {/* Name */}
                   <div>
-                    <label className="font-semibold text-[#a0a0b0] block mb-1">Name</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <label className="font-medium text-slate-500 dark:text-slate-400 block mb-1">Name</label>
+                    <div className="grid grid-cols-2 gap-2.5">
                       <input
                         type="text"
                         placeholder="First Name"
-                        className="w-full bg-[#12121a] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                        className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                       />
                       <input
                         type="text"
                         placeholder="Last Name"
-                        className="w-full bg-[#12121a] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                        className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                       />
                     </div>
                   </div>
 
                   {/* Contact */}
                   <div>
-                    <label className="font-semibold text-[#a0a0b0] block mb-1">Contact</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <label className="font-medium text-slate-500 dark:text-slate-400 block mb-1">Contact</label>
+                    <div className="grid grid-cols-2 gap-2.5">
                       <input
                         type="email"
                         placeholder="Email Address"
-                        className="w-full bg-[#12121a] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                        className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                       />
                       <input
                         type="tel"
                         placeholder="Phone Number"
-                        className="w-full bg-[#12121a] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                        className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                       />
                     </div>
                   </div>
 
                   {/* Event Details */}
                   <div>
-                    <label className="font-semibold text-[#a0a0b0] block mb-1">Event Details</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <label className="font-medium text-slate-500 dark:text-slate-400 block mb-1">Event Details</label>
+                    <div className="grid grid-cols-2 gap-2.5">
                       <input
                         type="text"
                         placeholder="Event Type (e.g. Wedding)"
-                        className="w-full bg-[#12121a] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                        className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                       />
                       <input
                         type="date"
-                        className="w-full bg-[#12121a] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                        className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                       />
                     </div>
                   </div>
@@ -512,23 +431,11 @@ export default function LandingPageTab() {
                   {/* Optional: Location / Venue */}
                   {showLocation && (
                     <div>
-                      <label className="font-semibold text-[#a0a0b0] block mb-1">Location / Venue</label>
+                      <label className="font-medium text-slate-500 dark:text-slate-400 block mb-1">Location / Venue</label>
                       <input
                         type="text"
                         placeholder="Location or Venue"
-                        className="w-full bg-[#12121a] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
-                      />
-                    </div>
-                  )}
-
-                  {/* Optional: Number of Guests */}
-                  {showGuests && (
-                    <div>
-                      <label className="font-semibold text-[#a0a0b0] block mb-1">Number of Guests</label>
-                      <input
-                        type="text"
-                        placeholder="Expected number of guests"
-                        className="w-full bg-[#12121a] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                        className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                       />
                     </div>
                   )}
@@ -536,37 +443,11 @@ export default function LandingPageTab() {
                   {/* Optional: Budget */}
                   {showBudget && (
                     <div>
-                      <label className="font-semibold text-[#a0a0b0] block mb-1">Budget</label>
+                      <label className="font-medium text-slate-500 dark:text-slate-400 block mb-1">Budget</label>
                       <input
                         type="text"
                         placeholder="Estimated Budget"
-                        className="w-full bg-[#12121a] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
-                      />
-                    </div>
-                  )}
-
-                  {/* Optional: Source */}
-                  {showSource && (
-                    <div>
-                      <label className="font-semibold text-[#a0a0b0] block mb-1">Source</label>
-                      <select className="w-full bg-[#12121a] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]">
-                        <option value="">How did you hear about us?</option>
-                        <option value="Instagram">Instagram</option>
-                        <option value="Referral">Friend / Referral</option>
-                        <option value="Website">Website</option>
-                        <option value="Google">Google Search</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Optional: Social Links */}
-                  {showSocialLinks && (
-                    <div>
-                      <label className="font-semibold text-[#a0a0b0] block mb-1">Social Links</label>
-                      <input
-                        type="text"
-                        placeholder="Instagram / Social Handle"
-                        className="w-full bg-[#12121a] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                        className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                       />
                     </div>
                   )}
@@ -574,25 +455,25 @@ export default function LandingPageTab() {
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    className="btn-pixeva-primary w-full py-3 rounded-xl font-bold text-xs shadow-lg transition-transform hover:scale-[1.01]"
+                    className="btn-pixeva-primary w-full py-2.5 mt-2"
                   >
-                    Submit
+                    Submit Enquiry
                   </button>
                 </form>
               )}
 
               {/* Public Footer */}
-              <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-[#a0a0b0]">
+              <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-[11px] text-slate-400">
                 <a
                   href="https://wa.me/918904832762"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-white flex items-center space-x-1"
+                  className="hover:text-slate-700 dark:hover:text-white flex items-center space-x-1"
                 >
-                  <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                  <MessageCircle className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                   <span>Get Help</span>
                 </a>
-                <span className="hover:text-white cursor-pointer">Feedback</span>
+                <span>Powered by Pixeva CRM</span>
               </div>
             </div>
           </div>

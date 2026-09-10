@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
 import FeedbackModal from '@/components/enquiries/FeedbackModal';
+import ConfirmModal from '@/components/ui/ConfirmModal';
 import {
   Search,
   FileUp,
   Download,
   Calendar,
-  Briefcase,
   User,
   CheckCircle2,
   ListFilter,
@@ -18,11 +17,8 @@ import {
   FileText,
   Loader2,
   ChevronDown,
-  RefreshCw,
   Image as ImageIcon,
-  Film,
   Sliders,
-  ExternalLink,
   UserPlus
 } from 'lucide-react';
 
@@ -205,6 +201,23 @@ export default function PostProductionPage() {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
+  // Confirm Modal
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    itemName?: string;
+    itemType?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Delete',
+    onConfirm: () => {},
+  });
+
   // Selection Handlers
   const handleToggleSelectAll = () => {
     if (selectedIds.length === filteredDeliverables.length && filteredDeliverables.length > 0) {
@@ -224,15 +237,36 @@ export default function PostProductionPage() {
 
   const handleDeleteSelected = () => {
     if (selectedIds.length === 0) return;
-    if (window.confirm(`Delete ${selectedIds.length} selected deliverables?`)) {
-      setDeliverables(deliverables.filter((d) => !selectedIds.includes(d.id)));
-      setSelectedIds([]);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Selected Deliverables',
+      message: `Are you sure you want to delete ${selectedIds.length} selected production deliverable(s)? This action permanently removes them.`,
+      confirmText: `Delete (${selectedIds.length})`,
+      itemName: `${selectedIds.length} Post-Production Deliverables`,
+      itemType: 'Batch Deliverables',
+      onConfirm: () => {
+        setDeliverables((prev) => prev.filter((d) => !selectedIds.includes(d.id)));
+        setSelectedIds([]);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   const handleDeleteSingle = (id: string) => {
-    setDeliverables(deliverables.filter((d) => d.id !== id));
-    setSelectedIds(selectedIds.filter((i) => i !== id));
+    const item = deliverables.find((d) => d.id === id);
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Deliverable',
+      message: 'Are you sure you want to delete this deliverable spec? This action cannot be undone.',
+      confirmText: 'Delete Deliverable',
+      itemName: item?.specs_title || item?.project_name || 'Deliverable',
+      itemType: `${item?.project_type || 'Shoot'} Deliverable`,
+      onConfirm: () => {
+        setDeliverables((prev) => prev.filter((d) => d.id !== id));
+        setSelectedIds((prev) => prev.filter((i) => i !== id));
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      },
+    });
   };
 
   // Status Change
@@ -359,10 +393,10 @@ export default function PostProductionPage() {
       {/* Top Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-1">
             Post Production
           </h1>
-          <p className="text-sm text-[#a0a0b0]">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             All deliverables across active projects
           </p>
         </div>
@@ -371,7 +405,7 @@ export default function PostProductionPage() {
           {selectedIds.length > 0 && (
             <button
               onClick={handleDeleteSelected}
-              className="flex items-center space-x-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 transition-all animate-fadeIn"
+              className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-all animate-fadeIn"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Delete Selected ({selectedIds.length})</span>
@@ -380,26 +414,26 @@ export default function PostProductionPage() {
 
           <button
             onClick={() => setIsStatusListOpen(true)}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all"
+            className="btn-pixeva-secondary flex items-center space-x-1.5"
           >
-            <ListFilter className="w-3.5 h-3.5 text-[#00d4ff]" />
+            <ListFilter className="w-3.5 h-3.5 text-slate-500" />
             <span>Status List</span>
           </button>
 
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all"
+            className="btn-pixeva-secondary flex items-center space-x-1.5"
           >
-            <FileUp className="w-3.5 h-3.5 text-[#00d4ff]" />
+            <FileUp className="w-3.5 h-3.5 text-slate-500" />
             <span>Import CSV</span>
           </button>
 
           <button
             onClick={handleExportCsv}
             disabled={filteredDeliverables.length === 0}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all disabled:opacity-40"
+            className="btn-pixeva-secondary flex items-center space-x-1.5 disabled:opacity-40"
           >
-            <Download className="w-3.5 h-3.5 text-[#8b5cf6]" />
+            <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Export CSV</span>
           </button>
         </div>
@@ -407,38 +441,38 @@ export default function PostProductionPage() {
 
       {/* KPI Metrics Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
-          <p className="text-2xl font-extrabold text-white mb-1">{totalCount}</p>
-          <p className="text-xs text-[#a0a0b0] font-semibold">Total Deliverables</p>
+        <div className="pixeva-card rounded-xl p-4">
+          <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-0.5">{totalCount}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Deliverables</p>
         </div>
 
-        <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
-          <p className="text-2xl font-extrabold text-[#00d4ff] mb-1">{inProgressCount}</p>
-          <p className="text-xs text-[#a0a0b0] font-semibold">In Progress</p>
+        <div className="pixeva-card rounded-xl p-4">
+          <p className="text-2xl font-bold tracking-tight text-slate-700 dark:text-slate-300 mb-0.5">{inProgressCount}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">In Progress</p>
         </div>
 
-        <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
-          <p className="text-2xl font-extrabold text-amber-400 mb-1">{reviewCount}</p>
-          <p className="text-xs text-[#a0a0b0] font-semibold">For Review</p>
+        <div className="pixeva-card rounded-xl p-4">
+          <p className="text-2xl font-bold tracking-tight text-amber-600 dark:text-amber-400 mb-0.5">{reviewCount}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">For Review</p>
         </div>
 
-        <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
-          <p className="text-2xl font-extrabold text-emerald-400 mb-1">{doneCount}</p>
-          <p className="text-xs text-[#a0a0b0] font-semibold">Done</p>
+        <div className="pixeva-card rounded-xl p-4">
+          <p className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 mb-0.5">{doneCount}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Done</p>
         </div>
       </div>
 
       {/* Search & Multi-Dropdown Filter Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-[#12121a]/90 p-4 rounded-2xl border border-white/10">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pixeva-card p-3 rounded-xl">
         {/* Search Input */}
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-[#a0a0b0] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search project or deliverable…"
-            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+            className="w-full bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
           />
         </div>
 
@@ -449,7 +483,7 @@ export default function PostProductionPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+              className="bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-xs font-medium rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-7 appearance-none"
             >
               <option value="all">All Statuses</option>
               <option value="Not Started">Not Started</option>
@@ -457,7 +491,7 @@ export default function PostProductionPage() {
               <option value="For Review">For Review</option>
               <option value="Done">Done</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {/* Member Filter */}
@@ -465,7 +499,7 @@ export default function PostProductionPage() {
             <select
               value={memberFilter}
               onChange={(e) => setMemberFilter(e.target.value)}
-              className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+              className="bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-xs font-medium rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-7 appearance-none"
             >
               <option value="all">All Members</option>
               <option value="unassigned">Unassigned</option>
@@ -473,7 +507,7 @@ export default function PostProductionPage() {
               <option value="Rohan Verma">Rohan Verma</option>
               <option value="Alex Rivers">Alex Rivers</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {/* Project Filter */}
@@ -481,14 +515,14 @@ export default function PostProductionPage() {
             <select
               value={projectFilter}
               onChange={(e) => setProjectFilter(e.target.value)}
-              className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+              className="bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-xs font-medium rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-7 appearance-none"
             >
               <option value="all">All Projects</option>
               <option value="Bride & Groom (Demo)">Bride & Groom (Demo)</option>
               <option value="Vance Corporate Annual Gala">Vance Corporate Annual Gala</option>
               <option value="BioTech Global Summit 2026">BioTech Global Summit 2026</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {/* Type Filter */}
@@ -496,14 +530,14 @@ export default function PostProductionPage() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+              className="bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-xs font-medium rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-7 appearance-none"
             >
               <option value="all">All Types</option>
               <option value="photos">Photos</option>
               <option value="video">Video</option>
               <option value="reel">Reel</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {/* Sort By */}
@@ -511,193 +545,177 @@ export default function PostProductionPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+              className="bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-xs font-medium rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-7 appearance-none"
             >
               <option value="date_added">By Date Added</option>
               <option value="project">By Project</option>
               <option value="shoot_date">By Shoot Date</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
       </div>
 
       {/* Deliverables Data Table */}
-      <div className="pixeva-card rounded-2xl border border-white/10 overflow-x-auto shadow-card w-full">
-        <table className="w-full text-left text-xs text-[#a0a0b0] min-w-[920px]">
-          <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+      <div className="pixeva-card rounded-xl overflow-x-auto w-full">
+        <table className="w-full text-left text-xs min-w-[920px]">
+          <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200/80 text-[10px]">
             <tr>
               <th className="w-10 px-3 py-3 text-center">
                 <input
                   type="checkbox"
                   checked={selectedIds.length > 0 && selectedIds.length === filteredDeliverables.length}
                   onChange={handleToggleSelectAll}
-                  className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
+                  className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
                 />
               </th>
-              <th className="w-[25%] min-w-[180px] px-3 py-3">Project & Type</th>
-              <th className="w-[25%] min-w-[180px] px-3 py-3">Specs</th>
-              <th className="w-[18%] min-w-[140px] px-3 py-3">Assigned To</th>
-              <th className="w-[16%] min-w-[120px] px-3 py-3">Status</th>
-              <th className="w-[14%] min-w-[110px] px-3 py-3 text-right">Actions</th>
+              <th className="w-[25%] px-3 py-3">Project & Type</th>
+              <th className="w-[25%] px-3 py-3">Specs</th>
+              <th className="w-[18%] px-3 py-3">Assigned To</th>
+              <th className="w-[16%] px-3 py-3">Status</th>
+              <th className="w-[14%] px-3 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
-              {filteredDeliverables.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="text-center py-12">
-                    <div className="max-w-xs mx-auto space-y-3">
-                      <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mx-auto text-[#a0a0b0]">
-                        <Sliders className="w-6 h-6" />
-                      </div>
-                      <p className="text-sm font-semibold text-white">No deliverables found.</p>
-                      <p className="text-xs text-[#a0a0b0]">
-                        Try resetting your search query or dropdown filter selections.
-                      </p>
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            {filteredDeliverables.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-12">
+                  <div className="max-w-xs mx-auto space-y-2">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                      <Sliders className="w-5 h-5" />
                     </div>
-                  </td>
-                </tr>
-              ) : (
-                filteredDeliverables.map((item) => {
-                  const isSelected = selectedIds.includes(item.id);
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">No deliverables found.</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Try resetting your search query or dropdown filter selections.
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              filteredDeliverables.map((item) => {
+                const isSelected = selectedIds.includes(item.id);
 
-                  return (
-                    <tr
-                      key={item.id}
-                      className={`hover:bg-white/5 transition-colors group ${
-                        isSelected ? 'bg-[#00d4ff]/5' : ''
-                      }`}
-                    >
-                      {/* Checkbox */}
-                      <td className="w-10 px-4 py-4">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleSelect(item.id)}
-                          className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
-                        />
-                      </td>
+                return (
+                  <tr
+                    key={item.id}
+                    className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors ${
+                      isSelected ? 'bg-slate-50 dark:bg-slate-800/60' : ''
+                    }`}
+                  >
+                    {/* Checkbox */}
+                    <td className="w-10 px-4 py-3.5 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleToggleSelect(item.id)}
+                        className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
+                      />
+                    </td>
 
-                      {/* Project */}
-                      <td className="px-5 py-4">
-                        <div>
-                          <div className="font-bold text-white text-sm">{item.project_name}</div>
-                          <div className="text-[11px] text-[#a0a0b0] mt-0.5">{item.project_type}</div>
-                        </div>
-                      </td>
+                    {/* Project */}
+                    <td className="px-4 py-3.5">
+                      <div>
+                        <div className="font-semibold text-slate-900 dark:text-white text-xs">{item.project_name}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">{item.project_type}</div>
+                      </div>
+                    </td>
 
-                      {/* Type / Shoot Info */}
-                      <td className="px-5 py-4">
-                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs font-medium text-white">
-                          <Calendar className="w-3 h-3 text-[#00d4ff]" />
-                          <span>{item.shoot_date}</span>
+                    {/* Specs */}
+                    <td className="px-4 py-3.5">
+                      <div>
+                        <div className="font-medium text-slate-900 dark:text-white text-xs">{item.specs_title}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400">{item.specs_subtitle}</div>
+                      </div>
+                    </td>
+
+                    {/* Assigned To */}
+                    <td className="px-4 py-3.5">
+                      {item.assigned_to ? (
+                        <span className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium">
+                          <User className="w-3 h-3" />
+                          <span>{item.assigned_to}</span>
                         </span>
-                      </td>
-
-                      {/* Specs */}
-                      <td className="px-5 py-4">
-                        <div>
-                          <div className="font-bold text-white text-xs">{item.specs_title}</div>
-                          <div className="text-[11px] text-[#a0a0b0] mt-0.5">{item.specs_subtitle}</div>
-                        </div>
-                      </td>
-
-                      {/* Assigned To */}
-                      <td className="px-5 py-4">
-                        {item.assigned_to ? (
-                          <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-[#8b5cf6]/20 border border-[#8b5cf6]/40 text-[#8b5cf6] text-xs font-bold">
-                            <User className="w-3 h-3" />
-                            <span>{item.assigned_to}</span>
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => setAssigningItem(item)}
-                            className="px-3 py-1 rounded-lg bg-[#12121a] hover:bg-[#00d4ff]/20 text-[#00d4ff] border border-white/10 hover:border-[#00d4ff]/40 text-xs font-semibold transition-all inline-flex items-center space-x-1"
-                          >
-                            <UserPlus className="w-3 h-3" />
-                            <span>Assign</span>
-                          </button>
-                        )}
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-5 py-4">
-                        <select
-                          value={item.status}
-                          onChange={(e) => handleUpdateStatus(item.id, e.target.value as DeliverableStatus)}
-                          className={`border text-xs font-bold rounded-lg px-2.5 py-1 focus:outline-none cursor-pointer ${
-                            item.status === 'Not Started'
-                              ? 'bg-white/5 text-[#a0a0b0] border-white/10'
-                              : item.status === 'In Progress'
-                              ? 'bg-blue-500/20 text-blue-400 border-blue-500/40'
-                              : item.status === 'For Review'
-                              ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-                              : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                          }`}
-                        >
-                          <option value="Not Started" className="bg-[#12121a] text-white">Not Started</option>
-                          <option value="In Progress" className="bg-[#12121a] text-white">In Progress</option>
-                          <option value="For Review" className="bg-[#12121a] text-white">For Review</option>
-                          <option value="Done" className="bg-[#12121a] text-white">Done</option>
-                        </select>
-                      </td>
-
-                      {/* Gallery */}
-                      <td className="px-5 py-4">
-                        {item.gallery ? (
-                          <a
-                            href={item.gallery}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs text-[#00d4ff] hover:underline flex items-center space-x-1 font-semibold"
-                          >
-                            <ImageIcon className="w-3 h-3" />
-                            <span>View Gallery</span>
-                          </a>
-                        ) : (
-                          <button
-                            onClick={() => handleOpenGalleryModal(item)}
-                            className="text-xs text-[#00d4ff] hover:underline font-semibold flex items-center space-x-1"
-                          >
-                            <Plus className="w-3 h-3" />
-                            <span>Add gallery</span>
-                          </button>
-                        )}
-                      </td>
-
-                      {/* Client Access */}
-                      <td className="px-5 py-4 font-mono text-white/60 text-xs">
-                        {item.client_access}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-5 py-4 text-right">
+                      ) : (
                         <button
-                          onClick={() => handleDeleteSingle(item.id)}
-                          title="Delete Deliverable"
-                          className="p-1.5 rounded-lg bg-[#12121a] hover:bg-rose-500/20 text-rose-400 border border-white/10 hover:border-rose-500/40 text-xs transition-all inline-flex items-center"
+                          onClick={() => setAssigningItem(item)}
+                          className="px-2.5 py-1 rounded-md bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 hover:text-slate-900 text-xs font-medium transition-all inline-flex items-center space-x-1"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <UserPlus className="w-3 h-3" />
+                          <span>Assign</span>
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                      )}
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-4 py-3.5">
+                      <select
+                        value={item.status}
+                        onChange={(e) => handleUpdateStatus(item.id, e.target.value as DeliverableStatus)}
+                        className={`border text-[11px] font-semibold rounded-md px-2 py-1 focus:outline-none cursor-pointer ${
+                          item.status === 'Not Started'
+                            ? 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-400'
+                            : item.status === 'In Progress'
+                            ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400'
+                            : item.status === 'For Review'
+                            ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400'
+                        }`}
+                      >
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="For Review">For Review</option>
+                        <option value="Done">Done</option>
+                      </select>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-4 py-3.5 text-right space-x-2">
+                      {item.gallery ? (
+                        <a
+                          href={item.gallery}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-slate-700 dark:text-slate-300 hover:underline font-semibold inline-flex items-center space-x-1"
+                        >
+                          <ImageIcon className="w-3 h-3" />
+                          <span>Gallery</span>
+                        </a>
+                      ) : (
+                        <button
+                          onClick={() => handleOpenGalleryModal(item)}
+                          className="text-xs text-slate-500 hover:text-slate-900 font-medium inline-flex items-center space-x-1"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Add link</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleDeleteSingle(item.id)}
+                        title="Delete Deliverable"
+                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 transition-colors inline-flex items-center"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* Assign Member Modal */}
       {assigningItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-extrabold text-white text-base">Assign Team Member</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md pixeva-card bg-white dark:bg-[#0f172a] rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">Assign Team Member</h3>
               <button
                 type="button"
                 onClick={() => setAssigningItem(null)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -705,40 +723,40 @@ export default function PostProductionPage() {
 
             <form onSubmit={handleAssignSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="font-semibold text-white block mb-1">Deliverable</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Deliverable</label>
                 <input
                   type="text"
                   readOnly
                   value={`${assigningItem.specs_title} (${assigningItem.project_name})`}
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-[#a0a0b0]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-500"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-white block mb-1">Select Member</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Select Member</label>
                 <select
                   value={memberInput}
                   onChange={(e) => setMemberInput(e.target.value)}
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                 >
-                  <option value="Dhruvi Patel" className="bg-[#12121a]">Dhruvi Patel</option>
-                  <option value="Rohan Verma" className="bg-[#12121a]">Rohan Verma</option>
-                  <option value="Alex Rivers" className="bg-[#12121a]">Alex Rivers</option>
-                  <option value="Unassigned" className="bg-[#12121a]">Unassigned</option>
+                  <option value="Dhruvi Patel">Dhruvi Patel</option>
+                  <option value="Rohan Verma">Rohan Verma</option>
+                  <option value="Alex Rivers">Alex Rivers</option>
+                  <option value="Unassigned">Unassigned</option>
                 </select>
               </div>
 
-              <div className="pt-3 flex justify-end space-x-3 border-t border-white/10">
+              <div className="pt-3 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setAssigningItem(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#a0a0b0] hover:bg-white/5"
+                  className="btn-pixeva-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-pixeva-primary px-5 py-2 rounded-xl text-xs font-bold"
+                  className="btn-pixeva-primary"
                 >
                   Assign Member
                 </button>
@@ -750,21 +768,20 @@ export default function PostProductionPage() {
 
       {/* Add Gallery Modal */}
       {galleryItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-sm pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl relative">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-extrabold text-white text-base">Add Gallery</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-sm pixeva-card bg-white dark:bg-[#0f172a] rounded-2xl p-6 space-y-4 shadow-xl relative">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">Add Gallery</h3>
               <button
                 type="button"
                 onClick={() => setGalleryItem(null)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleGallerySubmit} className="space-y-3.5 text-xs">
-              {/* Field 1: Gallery Link */}
               <div>
                 <input
                   type="text"
@@ -772,48 +789,45 @@ export default function PostProductionPage() {
                   value={galleryUrl}
                   onChange={(e) => setGalleryUrl(e.target.value)}
                   placeholder="Gallery link…"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
-              {/* Field 2: Password (optional) */}
               <div>
                 <input
                   type="password"
                   value={galleryPassword}
                   onChange={(e) => setGalleryPassword(e.target.value)}
                   placeholder="Password (optional)"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
-              {/* Field 3: Date Picker */}
               <div>
                 <div className="relative">
                   <input
                     type="date"
                     value={galleryDate}
                     onChange={(e) => setGalleryDate(e.target.value)}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff] [color-scheme:dark]"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl pl-9 pr-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                   />
-                  <Calendar className="w-4 h-4 text-[#00d4ff] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="pt-3 flex justify-end space-x-3 border-t border-white/10">
+              <div className="pt-3 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setGalleryItem(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#a0a0b0] hover:text-white hover:bg-white/5 transition-colors"
+                  className="btn-pixeva-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-pixeva-primary px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-[#00d4ff]/20"
+                  className="btn-pixeva-primary"
                 >
-                  Save
+                  Save Link
                 </button>
               </div>
             </form>
@@ -823,35 +837,35 @@ export default function PostProductionPage() {
 
       {/* Status List Modal */}
       {isStatusListOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-extrabold text-white text-base">Status Breakdown List</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md pixeva-card bg-white dark:bg-[#0f172a] rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">Status Breakdown</h3>
               <button
                 type="button"
                 onClick={() => setIsStatusListOpen(false)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-xs">
-              <div className="flex justify-between items-center p-3 bg-[#0a0a0f] rounded-xl border border-white/10">
-                <span className="text-[#a0a0b0]">Not Started</span>
-                <span className="font-bold text-white">{deliverables.filter((d) => d.status === 'Not Started').length}</span>
+            <div className="space-y-2.5 text-xs">
+              <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-800">
+                <span className="text-slate-600 dark:text-slate-400">Not Started</span>
+                <span className="font-bold text-slate-900 dark:text-white">{deliverables.filter((d) => d.status === 'Not Started').length}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-[#0a0a0f] rounded-xl border border-white/10">
-                <span className="text-[#00d4ff]">In Progress</span>
-                <span className="font-bold text-[#00d4ff]">{inProgressCount}</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-800">
+                <span className="text-blue-700 dark:text-blue-400">In Progress</span>
+                <span className="font-bold text-blue-700 dark:text-blue-400">{inProgressCount}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-[#0a0a0f] rounded-xl border border-white/10">
-                <span className="text-amber-400">For Review</span>
-                <span className="font-bold text-amber-400">{reviewCount}</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-800">
+                <span className="text-amber-700 dark:text-amber-400">For Review</span>
+                <span className="font-bold text-amber-700 dark:text-amber-400">{reviewCount}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-[#0a0a0f] rounded-xl border border-white/10">
-                <span className="text-emerald-400">Done</span>
-                <span className="font-bold text-emerald-400">{doneCount}</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-800">
+                <span className="text-emerald-700 dark:text-emerald-400">Done</span>
+                <span className="font-bold text-emerald-700 dark:text-emerald-400">{doneCount}</span>
               </div>
             </div>
 
@@ -859,7 +873,7 @@ export default function PostProductionPage() {
               <button
                 type="button"
                 onClick={() => setIsStatusListOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-white/10 hover:bg-white/20"
+                className="btn-pixeva-secondary"
               >
                 Close
               </button>
@@ -870,29 +884,29 @@ export default function PostProductionPage() {
 
       {/* CSV Import Modal */}
       {isImportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md pixeva-card bg-white dark:bg-[#0f172a] rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
-                <FileUp className="w-5 h-5 text-[#8b5cf6]" />
-                <h3 className="font-extrabold text-white text-base">Import CSV Deliverables</h3>
+                <FileUp className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+                <h3 className="font-bold text-slate-900 dark:text-white text-base">Import CSV Deliverables</h3>
               </div>
               <button
                 onClick={() => setIsImportModalOpen(false)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-4 text-xs">
-              <p className="text-[#a0a0b0]">
-                Upload a CSV file containing columns for <strong className="text-white">Project Name, Type, Shoot Info, Deliverable Title, Specs</strong>.
+              <p className="text-slate-500 dark:text-slate-400">
+                Upload a CSV file containing columns for <strong className="text-slate-900 dark:text-white">Project Name, Type, Shoot Info, Deliverable Title, Specs</strong>.
               </p>
 
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-white/20 hover:border-[#00d4ff] rounded-2xl p-6 text-center cursor-pointer transition-colors bg-[#0a0a0f]"
+                className="border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-slate-400 rounded-xl p-6 text-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-slate-900/50"
               >
                 <input
                   ref={fileInputRef}
@@ -907,30 +921,30 @@ export default function PostProductionPage() {
                 />
 
                 {importedCount !== null ? (
-                  <div className="space-y-2 text-emerald-400 animate-fadeIn">
+                  <div className="space-y-2 text-emerald-600 animate-fadeIn">
                     <CheckCircle2 className="w-8 h-8 mx-auto" />
                     <p className="font-bold text-sm">Successfully Imported {importedCount} Deliverables!</p>
                   </div>
                 ) : csvFile ? (
-                  <div className="space-y-1 text-white">
-                    <FileText className="w-8 h-8 text-[#00d4ff] mx-auto" />
+                  <div className="space-y-1 text-slate-900 dark:text-white">
+                    <FileText className="w-8 h-8 text-slate-500 mx-auto" />
                     <p className="font-bold text-xs">{csvFile.name}</p>
-                    <p className="text-[10px] text-[#a0a0b0]">{(csvFile.size / 1024).toFixed(1)} KB</p>
+                    <p className="text-[10px] text-slate-400">{(csvFile.size / 1024).toFixed(1)} KB</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <FileUp className="w-8 h-8 text-[#a0a0b0] mx-auto" />
-                    <p className="text-xs font-semibold text-white">Click or drag CSV file to upload</p>
-                    <p className="text-[10px] text-[#a0a0b0]">Supports standard exported CSV formats</p>
+                  <div className="space-y-1">
+                    <FileUp className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Click or drag CSV file to upload</p>
+                    <p className="text-[10px] text-slate-400">Supports standard exported CSV formats</p>
                   </div>
                 )}
               </div>
 
-              <div className="pt-2 flex justify-end space-x-2 border-t border-white/10">
+              <div className="pt-2 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsImportModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#a0a0b0] hover:bg-white/5"
+                  className="btn-pixeva-secondary"
                 >
                   Cancel
                 </button>
@@ -938,7 +952,7 @@ export default function PostProductionPage() {
                   type="button"
                   disabled={!csvFile || isParsingCsv}
                   onClick={handleProcessCsv}
-                  className="btn-pixeva-primary px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 disabled:opacity-50"
+                  className="btn-pixeva-primary flex items-center space-x-2 disabled:opacity-50"
                 >
                   {isParsingCsv && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Import Deliverables</span>
@@ -948,6 +962,18 @@ export default function PostProductionPage() {
           </div>
         </div>
       )}
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText || 'Delete'}
+        itemName={confirmModal.itemName}
+        itemType={confirmModal.itemType}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
 
       {/* Feedback Modal */}
       <FeedbackModal />

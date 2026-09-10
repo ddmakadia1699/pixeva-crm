@@ -5,7 +5,8 @@
 exports.handler = async (event) => {
   console.log('Received Batch Email event:', JSON.stringify(event, null, 2));
 
-  const { campaignName, recipients, templateId } = event;
+  const payload = typeof event.body === 'string' ? JSON.parse(event.body || '{}') : (event.body || event);
+  const { campaignName, recipients, templateId } = payload;
 
   const totalSent = recipients ? recipients.length : 12;
 

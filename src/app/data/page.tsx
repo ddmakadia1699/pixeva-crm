@@ -13,10 +13,6 @@ import {
   Edit2,
   Check,
   Calendar,
-  Layers,
-  Sparkles,
-  Info,
-  ChevronDown
 } from 'lucide-react';
 import { ShotDataEntry, RoleType } from '@/lib/supabase/types';
 
@@ -346,23 +342,23 @@ export default function DataPage() {
     reader.readAsText(csvFile);
   };
 
-  // Role Initial Badge Helper
+  // Role Initial Badge Helper (soft muted colors)
   const getRoleBadge = (role: RoleType) => {
     switch (role) {
       case 'Candid':
-        return { initial: 'C', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40' };
+        return { initial: 'C', color: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700' };
       case 'Traditional':
-        return { initial: 'T', color: 'bg-purple-500/20 text-purple-400 border-purple-500/40' };
+        return { initial: 'T', color: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700' };
       case 'Cinema':
-        return { initial: 'C', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/40' };
+        return { initial: 'C', color: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700' };
       case 'Video':
-        return { initial: 'V', color: 'bg-amber-500/20 text-amber-400 border-amber-500/40' };
+        return { initial: 'V', color: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700' };
       case 'Drone':
-        return { initial: 'D', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' };
+        return { initial: 'D', color: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700' };
       case 'Audio':
       case 'Other':
       default:
-        return { initial: 'A', color: 'bg-rose-500/20 text-rose-400 border-rose-500/40' };
+        return { initial: 'A', color: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700' };
     }
   };
 
@@ -371,18 +367,18 @@ export default function DataPage() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-1 flex items-center space-x-3">
-            <span>Data</span>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-1">
+            Data
           </h1>
-          <p className="text-sm text-[#a0a0b0]">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Track where shot data for each crew member is stored across all events
           </p>
         </div>
 
         {/* Counter Badge & Actions */}
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-[#00d4ff]/10 text-[#00d4ff] border border-[#00d4ff]/30 text-xs font-bold shadow-sm">
-            <CheckCircle2 className="w-3.5 h-3.5" />
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 text-xs font-semibold">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
             <span>
               {recordedCount}/{totalCount} recorded
             </span>
@@ -390,24 +386,24 @@ export default function DataPage() {
 
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all"
+            className="btn-pixeva-secondary flex items-center space-x-1.5"
           >
-            <FileUp className="w-3.5 h-3.5 text-[#00d4ff]" />
+            <FileUp className="w-3.5 h-3.5 text-slate-500" />
             <span>Import CSV</span>
           </button>
 
           <button
             onClick={handleExportCsv}
             disabled={entries.length === 0}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all disabled:opacity-40"
+            className="btn-pixeva-secondary flex items-center space-x-1.5 disabled:opacity-40"
           >
-            <Download className="w-3.5 h-3.5 text-[#8b5cf6]" />
+            <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Export CSV</span>
           </button>
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="btn-pixeva-primary px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-lg shadow-[#00d4ff]/20"
+            className="btn-pixeva-primary flex items-center space-x-1.5"
           >
             <Plus className="w-4 h-4" />
             <span>Add Record</span>
@@ -416,147 +412,147 @@ export default function DataPage() {
       </div>
 
       {/* Toolbar - Search input */}
-      <div className="bg-[#12121a]/90 p-4 rounded-2xl border border-white/10 flex items-center justify-between gap-4">
+      <div className="pixeva-card p-3 rounded-xl flex items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-[#a0a0b0] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search project…"
-            className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+            placeholder="Search project or event…"
+            className="w-full bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
           />
         </div>
 
-        <div className="text-xs text-[#a0a0b0]">
-          Showing <span className="text-white font-bold">{filteredEntries.length}</span> entries across{' '}
-          <span className="text-white font-bold">{Object.keys(groupedEvents).length}</span> events
+        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+          Showing <span className="text-slate-900 dark:text-white font-semibold">{filteredEntries.length}</span> entries across{' '}
+          <span className="text-slate-900 dark:text-white font-semibold">{Object.keys(groupedEvents).length}</span> events
         </div>
       </div>
 
       {/* Grouped Events Data Tables */}
       {Object.keys(groupedEvents).length === 0 ? (
-        <div className="pixeva-card rounded-2xl border border-white/10 p-12 text-center space-y-4 shadow-card">
-          <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-4xl">
-            💾
+        <div className="pixeva-card rounded-xl p-12 text-center space-y-3">
+          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+            <HardDrive className="w-5 h-5" />
           </div>
           <div className="space-y-1 max-w-sm mx-auto">
-            <h3 className="text-lg font-bold text-white tracking-tight">No data records found</h3>
-            <p className="text-xs text-[#a0a0b0]">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">No data records found</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Try searching with another project name or add a new record.
             </p>
           </div>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="btn-pixeva-primary px-5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center space-x-2 shadow-lg shadow-[#00d4ff]/20"
+            className="btn-pixeva-primary inline-flex items-center space-x-1.5 mt-2"
           >
             <Plus className="w-4 h-4" />
             <span>Add Record</span>
           </button>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {Object.values(groupedEvents).map((group) => (
             <div
               key={`${group.event_name}-${group.event_date}`}
-              className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full space-y-0"
+              className="pixeva-card rounded-xl overflow-hidden w-full"
             >
               {/* Event Header Banner */}
-              <div className="bg-[#0a0a0f] px-5 py-3.5 border-b border-white/10 flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <h2 className="text-base font-extrabold text-white tracking-tight">
+              <div className="bg-slate-50 dark:bg-slate-900/80 px-4 py-3 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+                <div className="flex items-center space-x-2.5">
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
                     {group.event_name}
                   </h2>
-                  <span className="text-xs font-medium text-[#a0a0b0] bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full flex items-center space-x-1">
-                    <Calendar className="w-3 h-3 text-[#00d4ff]" />
+                  <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 px-2 py-0.5 rounded-md flex items-center space-x-1">
+                    <Calendar className="w-3 h-3 text-slate-400" />
                     <span>{group.event_date}</span>
                   </span>
                 </div>
 
-                <div className="text-xs text-[#a0a0b0] font-semibold">
+                <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                   {group.items.length} crew members
                 </div>
               </div>
 
               {/* Event Crew Table */}
-              <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
-                <thead className="bg-[#12121a] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+              <table className="w-full text-left text-xs table-fixed">
+                <thead className="bg-white dark:bg-slate-900/40 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-100 dark:border-slate-800 text-[10px]">
                   <tr>
-                    <th className="w-[45%] px-5 py-3">Crew Member</th>
-                    <th className="w-[30%] px-5 py-3">Storage Location</th>
-                    <th className="w-[15%] px-5 py-3">Remark</th>
-                    <th className="w-[10%] px-5 py-3 text-right">Actions</th>
+                    <th className="w-[45%] px-4 py-2.5">Crew Member</th>
+                    <th className="w-[30%] px-4 py-2.5">Storage Location</th>
+                    <th className="w-[15%] px-4 py-2.5">Remark</th>
+                    <th className="w-[10%] px-4 py-2.5 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {group.items.map((item) => {
                     const badge = getRoleBadge(item.role_type);
                     const isEditing = editingId === item.id;
 
                     return (
-                      <tr key={item.id} className="hover:bg-white/5 transition-colors group">
+                      <tr key={item.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors group">
                         {/* Crew Member Column */}
-                        <td className="px-5 py-3.5">
-                          <div className="flex items-center space-x-3">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center space-x-2.5">
                             <span
-                              className={`w-7 h-7 rounded-lg border font-bold text-xs flex items-center justify-center shrink-0 ${badge.color}`}
+                              className={`w-6 h-6 rounded-md border font-semibold text-[11px] flex items-center justify-center shrink-0 ${badge.color}`}
                             >
                               {badge.initial}
                             </span>
-                            <span className="font-semibold text-white text-xs truncate">
+                            <span className="font-semibold text-slate-900 dark:text-white text-xs truncate">
                               {item.crew_member}
                             </span>
                           </div>
                         </td>
 
                         {/* Storage Location Column */}
-                        <td className="px-5 py-3.5">
+                        <td className="px-4 py-3">
                           {isEditing ? (
                             <select
                               value={editStorage}
                               onChange={(e) => setEditStorage(e.target.value)}
-                              className="bg-[#0a0a0f] border border-[#00d4ff] text-white text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none w-full max-w-[180px]"
+                              className="bg-white dark:bg-slate-900 border border-slate-300 text-slate-900 dark:text-white text-xs font-semibold rounded-md px-2 py-1 focus:outline-none w-full max-w-[160px]"
                             >
                               {STORAGE_OPTIONS.map((opt) => (
-                                <option key={opt} value={opt} className="bg-[#0a0a0f]">
+                                <option key={opt} value={opt}>
                                   {opt}
                                 </option>
                               ))}
                             </select>
                           ) : (
-                            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-white font-mono text-xs font-bold">
-                              <HardDrive className="w-3 h-3 text-[#00d4ff]" />
+                            <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-xs font-medium">
+                              <HardDrive className="w-3 h-3 text-slate-400" />
                               <span>{item.storage_location}</span>
                             </span>
                           )}
                         </td>
 
                         {/* Remark Column */}
-                        <td className="px-5 py-3.5">
+                        <td className="px-4 py-3">
                           {isEditing ? (
                             <input
                               type="text"
                               value={editRemark}
                               onChange={(e) => setEditRemark(e.target.value)}
                               placeholder="e.g. 2 cards"
-                              className="bg-[#0a0a0f] border border-[#00d4ff] text-white text-xs rounded-lg px-2.5 py-1.5 focus:outline-none w-full max-w-[140px]"
+                              className="bg-white dark:bg-slate-900 border border-slate-300 text-slate-900 dark:text-white text-xs rounded-md px-2 py-1 focus:outline-none w-full max-w-[130px]"
                             />
                           ) : (
-                            <span className="text-[#a0a0b0] font-medium text-xs">
+                            <span className="text-slate-500 dark:text-slate-400 font-medium text-xs">
                               {item.remark || '—'}
                             </span>
                           )}
                         </td>
 
                         {/* Actions Column */}
-                        <td className="px-5 py-3.5 text-right">
-                          <div className="flex items-center justify-end space-x-1.5">
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end space-x-1">
                             {isEditing ? (
                               <button
                                 type="button"
                                 onClick={() => handleSaveEdit(item.id)}
                                 title="Save changes"
-                                className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/40 text-xs transition-all"
+                                className="p-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs transition-all"
                               >
                                 <Check className="w-3.5 h-3.5" />
                               </button>
@@ -565,7 +561,7 @@ export default function DataPage() {
                                 type="button"
                                 onClick={() => handleStartEditing(item)}
                                 title="Edit storage or remark"
-                                className="p-1.5 rounded-lg bg-[#12121a] hover:bg-white/10 text-[#a0a0b0] hover:text-white border border-white/10 text-xs transition-all opacity-80 group-hover:opacity-100"
+                                className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
@@ -575,7 +571,7 @@ export default function DataPage() {
                               type="button"
                               onClick={() => handleDeleteEntry(item.id)}
                               title="Delete record"
-                              className="p-1.5 rounded-lg bg-[#12121a] hover:bg-rose-500/20 text-rose-400 border border-white/10 hover:border-rose-500/40 text-xs transition-all"
+                              className="p-1 rounded-md text-slate-400 hover:text-rose-600 transition-all"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -593,14 +589,14 @@ export default function DataPage() {
 
       {/* Add New Record Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-extrabold text-white text-base">Add Shot Data Record</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md pixeva-card bg-white dark:bg-[#0f172a] rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">Add Shot Data Record</h3>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -608,48 +604,48 @@ export default function DataPage() {
 
             <form onSubmit={handleAddSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block text-[#a0a0b0] font-semibold mb-1">Event Name</label>
+                <label className="block text-slate-700 dark:text-slate-200 font-semibold mb-1">Event Name</label>
                 <input
                   type="text"
                   required
                   value={formData.event_name}
                   onChange={(e) => setFormData({ ...formData, event_name: e.target.value })}
                   placeholder="e.g. Reception"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
               <div>
-                <label className="block text-[#a0a0b0] font-semibold mb-1">Event Date</label>
+                <label className="block text-slate-700 dark:text-slate-200 font-semibold mb-1">Event Date</label>
                 <input
                   type="text"
                   required
                   value={formData.event_date}
                   onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
                   placeholder="e.g. 30 Dec 2026"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
               <div>
-                <label className="block text-[#a0a0b0] font-semibold mb-1">Crew Member</label>
+                <label className="block text-slate-700 dark:text-slate-200 font-semibold mb-1">Crew Member</label>
                 <input
                   type="text"
                   required
                   value={formData.crew_member}
                   onChange={(e) => setFormData({ ...formData, crew_member: e.target.value })}
                   placeholder="e.g. Candid Photographers #1"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[#a0a0b0] font-semibold mb-1">Role Type</label>
+                  <label className="block text-slate-700 dark:text-slate-200 font-semibold mb-1">Role Type</label>
                   <select
                     value={formData.role_type}
                     onChange={(e) => setFormData({ ...formData, role_type: e.target.value as RoleType })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                   >
                     <option value="Candid">Candid</option>
                     <option value="Traditional">Traditional</option>
@@ -662,14 +658,14 @@ export default function DataPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#a0a0b0] font-semibold mb-1">Storage Location</label>
+                  <label className="block text-slate-700 dark:text-slate-200 font-semibold mb-1">Storage Location</label>
                   <select
                     value={formData.storage_location}
                     onChange={(e) => setFormData({ ...formData, storage_location: e.target.value })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                   >
                     {STORAGE_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt} className="bg-[#0a0a0f]">
+                      <option key={opt} value={opt}>
                         {opt}
                       </option>
                     ))}
@@ -678,27 +674,27 @@ export default function DataPage() {
               </div>
 
               <div>
-                <label className="block text-[#a0a0b0] font-semibold mb-1">Remark (Optional)</label>
+                <label className="block text-slate-700 dark:text-slate-200 font-semibold mb-1">Remark (Optional)</label>
                 <input
                   type="text"
                   value={formData.remark}
                   onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
                   placeholder="e.g. 2 cards"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
-              <div className="pt-2 flex justify-end space-x-2">
+              <div className="pt-2 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-[#0a0a0f] hover:bg-white/5 text-[#a0a0b0] hover:text-white font-semibold transition-colors"
+                  className="btn-pixeva-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-pixeva-primary px-5 py-2 rounded-xl text-xs font-bold"
+                  className="btn-pixeva-primary"
                 >
                   Add Record
                 </button>
@@ -710,14 +706,14 @@ export default function DataPage() {
 
       {/* Import CSV Modal */}
       {isImportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-extrabold text-white text-base">Import Shot Data CSV</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md pixeva-card bg-white dark:bg-[#0f172a] rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">Import Shot Data CSV</h3>
               <button
                 type="button"
                 onClick={() => setIsImportModalOpen(false)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -725,13 +721,13 @@ export default function DataPage() {
 
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-white/20 hover:border-[#00d4ff] rounded-2xl p-6 text-center cursor-pointer transition-colors space-y-2 bg-[#0a0a0f]"
+              className="border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-slate-400 rounded-xl p-6 text-center cursor-pointer transition-colors space-y-1 bg-slate-50/50 dark:bg-slate-900/50"
             >
-              <FileUp className="w-8 h-8 text-[#00d4ff] mx-auto" />
-              <p className="text-xs font-bold text-white">
+              <FileUp className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 {csvFile ? csvFile.name : 'Click to upload or drag & drop CSV'}
               </p>
-              <p className="text-[11px] text-[#a0a0b0]">Supports columns: Event, Date, Crew Member, Role, Storage, Remark</p>
+              <p className="text-[10px] text-slate-400">Supports columns: Event, Date, Crew Member, Role, Storage, Remark</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -742,16 +738,16 @@ export default function DataPage() {
             </div>
 
             {importedCount !== null && (
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-400 font-bold text-center">
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-700 font-semibold text-center">
                 ✓ Successfully imported {importedCount} records!
               </div>
             )}
 
-            <div className="flex justify-end space-x-2 pt-2">
+            <div className="flex justify-end space-x-2 pt-2 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setIsImportModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#0a0a0f] hover:bg-white/5 text-[#a0a0b0] hover:text-white font-semibold text-xs transition-colors"
+                className="btn-pixeva-secondary"
               >
                 Cancel
               </button>
@@ -759,7 +755,7 @@ export default function DataPage() {
                 type="button"
                 disabled={!csvFile || isParsingCsv}
                 onClick={handleProcessCsv}
-                className="btn-pixeva-primary px-5 py-2 rounded-xl text-xs font-bold disabled:opacity-50"
+                className="btn-pixeva-primary disabled:opacity-50"
               >
                 {isParsingCsv ? 'Parsing...' : 'Import Data'}
               </button>

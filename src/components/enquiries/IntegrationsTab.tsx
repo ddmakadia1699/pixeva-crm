@@ -248,18 +248,18 @@ export default function IntegrationsTab() {
   return (
     <div className="space-y-6 max-w-5xl animate-fadeIn">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-sky-500/10 via-blue-500/10 to-indigo-500/10 border border-sky-500/20 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="pixeva-card p-5 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
-              Studio Integrations
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+              Studio Integrations & Auto-Sync
             </h2>
-            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300">
-              Auto-Pilot
+            <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">
+              Auto-Sync
             </span>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-xl">
-            Import all client rows from Google Sheets, WhatsApp, Instagram, or website forms straight into your Enquiries table.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
+            Import client records from Google Sheets, WhatsApp, Instagram, or embed website forms straight into your Enquiries pipeline.
           </p>
         </div>
 
@@ -267,23 +267,23 @@ export default function IntegrationsTab() {
           href="https://wa.me/918904832762"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center space-x-2 px-4 py-2.5 rounded-2xl bg-white dark:bg-[#161622] border border-slate-200 dark:border-white/10 hover:border-emerald-500/40 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all shadow-xs shrink-0"
+          className="btn-pixeva-secondary space-x-2 shrink-0"
         >
-          <MessageCircle className="w-4 h-4 text-emerald-500" />
-          <span>Need Help Setting Up?</span>
+          <MessageCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          <span>Need Setup Help?</span>
         </a>
       </div>
 
       {/* Sync Success Feedback Banner */}
       {syncSuccessMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/30 text-xs font-bold text-emerald-900 dark:text-emerald-300 flex items-center justify-between shadow-sm animate-fadeIn">
+        <div className="p-3.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-xs font-medium text-emerald-800 dark:text-emerald-300 flex items-center justify-between animate-fadeIn">
           <div className="flex items-center space-x-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>{syncSuccessMsg}</span>
           </div>
           <button
             onClick={() => setSyncSuccessMsg(null)}
-            className="text-xs text-emerald-700 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-200 underline font-bold cursor-pointer"
+            className="text-xs text-emerald-700 hover:text-emerald-900 dark:text-emerald-400 font-semibold underline cursor-pointer"
           >
             Dismiss
           </button>
@@ -291,42 +291,42 @@ export default function IntegrationsTab() {
       )}
 
       {/* Main Grid: Visual Integration Apps */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         
         {/* CARD 1: Google Sheets & Google Forms */}
-        <div className="bg-white dark:bg-[#12121a] rounded-3xl border border-slate-200 dark:border-white/10 p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-5">
-          <div className="space-y-4">
+        <div className="pixeva-card p-5 flex flex-col justify-between space-y-4">
+          <div className="space-y-3.5">
             <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs shrink-0">
-                  <FileSpreadsheet className="w-6 h-6" />
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-slate-200 flex items-center justify-center shrink-0">
+                  <FileSpreadsheet className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                     Google Sheets & Forms
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-[#a0a0b0]">
-                    Imports all 30 rows (Alexandra, Andrew, Anna, etc.) from your Google Sheet
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Imports all 30 rows (Alexandra, Andrew, Anna, etc.)
                   </p>
                 </div>
               </div>
 
-              <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-center space-x-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-500/20 flex items-center space-x-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 <span>Ready</span>
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0a0a0f] border border-slate-200 dark:border-white/5 space-y-3 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-700 dark:text-slate-300">Connected Account:</span>
-                <span className="font-mono text-slate-900 dark:text-slate-200 font-semibold truncate max-w-[200px]">
+            <div className="p-3 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-medium text-slate-500 dark:text-slate-400">Connected Account:</span>
+                <span className="font-mono text-slate-800 dark:text-slate-200 font-semibold truncate max-w-[180px]">
                   dhruvigovani1699@gmail.com
                 </span>
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                <label className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1">
                   Google Sheet Link:
                 </label>
                 <input
@@ -334,26 +334,26 @@ export default function IntegrationsTab() {
                   value={sheetUrl}
                   onChange={(e) => setSheetUrl(e.target.value)}
                   placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit"
-                  className="w-full bg-white dark:bg-[#12121a] border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 font-mono"
+                  className="w-full bg-white dark:bg-[#0b0f17] border border-slate-200/80 dark:border-white/10 rounded-md px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 dark:focus:border-indigo-500 font-mono"
                 />
               </div>
 
-              <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="flex items-center justify-between pt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                 <span>Contains 30 Client Rows</span>
                 <button
                   type="button"
                   onClick={() => setShowPasteBox((prev) => !prev)}
-                  className="text-sky-600 dark:text-sky-400 font-bold hover:underline"
+                  className="text-slate-900 dark:text-white font-semibold hover:underline cursor-pointer"
                 >
-                  {showPasteBox ? 'Hide Paste Box' : 'or Paste Table Data Directly'}
+                  {showPasteBox ? 'Hide Paste Box' : 'or Paste Table Directly'}
                 </button>
               </div>
             </div>
 
             {/* Optional Direct Paste Box */}
             {showPasteBox && (
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0a0a0f] border border-sky-500/30 space-y-3 text-xs animate-fadeIn">
-                <label className="font-bold text-slate-700 dark:text-slate-300 block">
+              <div className="p-3 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 space-y-2 text-xs animate-fadeIn">
+                <label className="font-medium text-slate-700 dark:text-slate-300 block">
                   Copy & Paste table rows from Google Sheet or Excel:
                 </label>
                 <textarea
@@ -361,12 +361,12 @@ export default function IntegrationsTab() {
                   value={pastedData}
                   onChange={(e) => setPastedData(e.target.value)}
                   placeholder="Paste rows here (e.g. Alexandra	Female	4. Senior	CA	English	Drama Club)..."
-                  className="w-full bg-white dark:bg-[#12121a] border border-slate-200 dark:border-white/10 rounded-xl p-3 text-xs text-slate-900 dark:text-white font-mono"
+                  className="w-full bg-white dark:bg-[#0b0f17] border border-slate-200/80 dark:border-white/10 rounded-md p-2.5 text-xs text-slate-900 dark:text-white font-mono focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={handleImportPastedData}
-                  className="px-4 py-2 rounded-xl bg-sky-600 text-white font-bold text-xs hover:bg-sky-500 transition-colors"
+                  className="btn-pixeva-primary"
                 >
                   Import Pasted Rows
                 </button>
@@ -374,166 +374,162 @@ export default function IntegrationsTab() {
             )}
           </div>
 
-          <div className="pt-2 flex items-center space-x-2">
+          <div className="pt-2 flex items-center space-x-2 border-t border-slate-100 dark:border-white/5">
             <button
               onClick={handleImportGoogleLeads}
               disabled={isSyncing}
-              className="flex-1 btn-pixeva-primary py-2.5 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 shadow-sm cursor-pointer disabled:opacity-50"
+              className="flex-1 btn-pixeva-primary"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-              <span>{isSyncing ? 'Importing 30 Rows...' : 'Import All 30 Rows Now'}</span>
+              <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? 'Importing 30 Rows...' : 'Import 30 Rows Now'}</span>
             </button>
 
             <a
               href={sheetUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center space-x-1.5 transition-colors shrink-0"
+              className="btn-pixeva-secondary space-x-1.5 shrink-0"
               title="Open Google Sheet in new tab"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
               <span>Open Sheet</span>
             </a>
           </div>
         </div>
 
         {/* CARD 2: WhatsApp Direct Inquiries */}
-        <div className="bg-white dark:bg-[#12121a] rounded-3xl border border-slate-200 dark:border-white/10 p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-5">
-          <div className="space-y-4">
+        <div className="pixeva-card p-5 flex flex-col justify-between space-y-4">
+          <div className="space-y-3.5">
             <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-xs shrink-0">
-                  <MessageCircle className="w-6 h-6" />
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-slate-200 flex items-center justify-center shrink-0">
+                  <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                     WhatsApp Business
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-[#a0a0b0]">
-                    1-click instant WhatsApp chat & automated quotes
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Direct studio WhatsApp chat & lead capture
                   </p>
                 </div>
               </div>
 
-              <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-center space-x-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-500/20 flex items-center space-x-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 <span>Active</span>
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0a0a0f] border border-slate-200 dark:border-white/5 space-y-2 text-xs">
-              <div className="flex justify-between items-center">
+            <div className="p-3 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 space-y-2 text-xs">
+              <div className="flex justify-between items-center text-[11px]">
                 <span className="text-slate-500 dark:text-slate-400 font-medium">Studio WhatsApp:</span>
                 <span className="font-mono font-bold text-slate-900 dark:text-white">+91 89048 32762</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500 dark:text-slate-400 font-medium">Auto-Welcome Message:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">Enabled</span>
+              <div className="flex justify-between items-center text-[11px]">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Auto-Welcome Protocol:</span>
+                <span className="font-semibold text-emerald-700 dark:text-emerald-400">Enabled</span>
               </div>
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 border-t border-slate-100 dark:border-white/5">
             <a
               href="https://wa.me/918904832762"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center space-x-2 shadow-sm transition-colors"
+              className="w-full btn-pixeva-secondary space-x-2 justify-center"
             >
-              <MessageCircle className="w-4 h-4" />
-              <span>Test WhatsApp Chat</span>
+              <MessageCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Open Studio WhatsApp Chat</span>
             </a>
           </div>
         </div>
 
         {/* CARD 3: Website Form & Embed Code */}
-        <div className="bg-white dark:bg-[#12121a] rounded-3xl border border-slate-200 dark:border-white/10 p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-5">
-          <div className="space-y-4">
+        <div className="pixeva-card p-5 flex flex-col justify-between space-y-4">
+          <div className="space-y-3.5">
             <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center shadow-xs shrink-0">
-                  <Globe className="w-6 h-6" />
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-slate-200 flex items-center justify-center shrink-0">
+                  <Globe className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                    Embed on Your Website
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Embed on Website
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-[#a0a0b0]">
-                    Add your enquiry booking form to WordPress, Wix, Squarespace, or Webflow
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Embed form on WordPress, Squarespace, Wix or Webflow
                   </p>
                 </div>
               </div>
 
-              <span className="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300">
+              <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">
                 Ready
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0a0a0f] border border-slate-200 dark:border-white/5 space-y-2 text-xs">
-              <p className="text-slate-600 dark:text-slate-400">
-                Embed this code onto any page of your portfolio website:
+            <div className="p-3 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 space-y-1.5 text-xs">
+              <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                Embed this responsive iframe on your booking page:
               </p>
-              <div className="p-2.5 rounded-xl bg-slate-900 text-sky-400 font-mono text-[10px] truncate select-all">
+              <div className="p-2 rounded bg-slate-900 text-slate-200 font-mono text-[10px] truncate select-all">
                 &lt;iframe src="http://localhost:3000/enquire/user_3I2lBpsfTZcxw4L1GpKAMPCc45a" width="100%" height="800"&gt;&lt;/iframe&gt;
               </div>
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 border-t border-slate-100 dark:border-white/5">
             <button
               onClick={handleCopyWebsiteCode}
-              className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 text-xs font-bold flex items-center justify-center space-x-2 transition-colors cursor-pointer"
+              className="w-full btn-pixeva-primary space-x-2"
             >
-              {copiedCode ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+              {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedCode ? 'Copied Embed Code!' : 'Copy Embed Code'}</span>
             </button>
           </div>
         </div>
 
-        {/* CARD 4: Instagram Direct Leads */}
-        <div className="bg-white dark:bg-[#12121a] rounded-3xl border border-slate-200 dark:border-white/10 p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-5">
-          <div className="space-y-4">
+        {/* CARD 4: Instagram Inbound */}
+        <div className="pixeva-card p-5 flex flex-col justify-between space-y-4">
+          <div className="space-y-3.5">
             <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shadow-xs shrink-0">
-                  <Instagram className="w-6 h-6" />
+              <div className="flex items-center space-x-3">
+                <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-slate-200 flex items-center justify-center shrink-0">
+                  <Instagram className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                    Instagram Inbound Leads
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Instagram Direct Sync
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-[#a0a0b0]">
-                    Auto-capture booking enquiries from Instagram DMs & comments
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Capture leads from Instagram DMs and bio link
                   </p>
                 </div>
               </div>
 
-              <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full ${
+              <span className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded ${
                 isInstagramConnected 
-                  ? 'bg-emerald-100 text-emerald-700' 
+                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200/60' 
                   : 'bg-slate-100 dark:bg-white/10 text-slate-500'
               }`}>
                 {isInstagramConnected ? 'Connected' : 'Available'}
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0a0a0f] border border-slate-200 dark:border-white/5 space-y-2 text-xs">
-              <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Connect your studio's Instagram business account to send incoming DMs like <em>"Pricing for wedding in Dec?"</em> straight into your CRM.
+            <div className="p-3 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 space-y-1 text-xs">
+              <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
+                Connect your studio's Instagram handle to automatically log inbound inquiries into your CRM.
               </p>
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 border-t border-slate-100 dark:border-white/5">
             <button
               onClick={() => setIsInstagramConnected((prev) => !prev)}
-              className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer ${
-                isInstagramConnected 
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300' 
-                  : 'bg-gradient-to-r from-rose-500 to-purple-600 text-white hover:opacity-90 shadow-xs'
-              }`}
+              className={`w-full ${isInstagramConnected ? 'btn-pixeva-secondary' : 'btn-pixeva-primary'} space-x-2`}
             >
-              <Instagram className="w-4 h-4" />
+              <Instagram className="w-3.5 h-3.5" />
               <span>{isInstagramConnected ? 'Connected (@pixeva_studio)' : 'Connect Instagram Account'}</span>
             </button>
           </div>

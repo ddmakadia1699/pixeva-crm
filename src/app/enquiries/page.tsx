@@ -9,8 +9,8 @@ import IntegrationsTab from '@/components/enquiries/IntegrationsTab';
 import FeedbackModal from '@/components/enquiries/FeedbackModal';
 import { MOCK_ENQUIRIES } from '@/lib/supabase/client';
 import { Enquiry, EnquiryStatus } from '@/lib/supabase/types';
+import { apiClient } from '@/lib/api/apiClient';
 
-const AWS_API_GATEWAY = process.env.NEXT_PUBLIC_AWS_API_GATEWAY_URL || 'https://zvt3ypue5l.execute-api.us-east-1.amazonaws.com';
 const ENQUIRIES_STORAGE_KEY = 'pixeva_enquiries';
 const DELETED_IDS_KEY = 'pixeva_deleted_enquiries';
 
@@ -55,42 +55,15 @@ export default function EnquiriesPage() {
     });
   };
 
-  // 1. On Mount: Load saved enquiries from localStorage first
+  // 1. On Mount: Load via AWS API Gateway scoped to active account ID
   useEffect(() => {
     const deletedSet = getDeletedIds();
-    let initialList: Enquiry[] = [];
 
-    try {
-      const saved = localStorage.getItem(ENQUIRIES_STORAGE_KEY);
-      if (saved) {
-        const parsed: Enquiry[] = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          initialList = parsed.filter((e) => !deletedSet.has(e.id));
-        }
-      }
-    } catch (e) {
-      console.error('Error reading localStorage enquiries:', e);
-    }
-
-    if (initialList.length === 0) {
-      initialList = MOCK_ENQUIRIES.filter((e) => !deletedSet.has(e.id));
-    }
-
-    setEnquiries(initialList);
-    try {
-      localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(initialList));
-    } catch {}
-    setIsHydrated(true);
-
-    // 2. Background sync with AWS API Gateway if available (merge new leads without overwriting local edits)
-    async function syncFromCloud() {
+    async function loadFromCloud() {
       try {
-        const res = await fetch(`${AWS_API_GATEWAY}/enquiries`);
-        if (!res.ok) return;
-
-        const result = await res.json();
-        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
-          const mapped: Enquiry[] = result.data
+        const cloudData = await apiClient.enquiries.list();
+        if (Array.isArray(cloudData) && cloudData.length > 0) {
+          const mapped: Enquiry[] = cloudData
             .map((lead: any) => ({
               id: lead.id,
               name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Client',
@@ -108,19 +81,32 @@ export default function EnquiriesPage() {
             .filter((item: Enquiry) => !deletedSet.has(item.id));
 
           if (mapped.length > 0) {
-            updateEnquiries((current) => {
-              const currentMap = new Map(current.map((item) => [item.id, item]));
-              const toAppend = mapped.filter((item) => !currentMap.has(item.id));
-              return toAppend.length > 0 ? [...current, ...toAppend] : current;
-            });
+            setEnquiries(mapped);
+            try {
+              localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(mapped));
+            } catch {}
+            setIsHydrated(true);
+            return;
           }
         }
       } catch (e) {
-        console.warn('Cloud sync offline, working seamlessly with persistent local storage.');
+        console.warn('API Gateway sync notice, checking local cache:', e);
       }
+
+      // Local storage fallback if offline
+      try {
+        const saved = localStorage.getItem(ENQUIRIES_STORAGE_KEY);
+        if (saved) {
+          const parsed: Enquiry[] = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setEnquiries(parsed.filter((e) => !deletedSet.has(e.id)));
+          }
+        }
+      } catch {}
+      setIsHydrated(true);
     }
 
-    syncFromCloud();
+    loadFromCloud();
   }, []);
 
   // Add Single Enquiry
@@ -135,16 +121,10 @@ export default function EnquiriesPage() {
     updateEnquiries((prev) => [newEnquiry, ...prev]);
 
     try {
-      const res = await fetch(`${AWS_API_GATEWAY}/enquiries`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newEnquiryData),
-      });
-
-      const result = await res.json();
-      if (result.success && result.data?.id) {
+      const created = await apiClient.enquiries.create(newEnquiryData);
+      if (created?.id) {
         updateEnquiries((prev) =>
-          prev.map((item) => (item.id === tempId ? { ...item, id: result.data.id } : item))
+          prev.map((item) => (item.id === tempId ? { ...item, id: created.id } : item))
         );
       }
     } catch (e) {
@@ -167,11 +147,7 @@ export default function EnquiriesPage() {
     updateEnquiries((prev) => prev.map((e) => (e.id === id ? { ...e, status } : e)));
 
     try {
-      await fetch(`${AWS_API_GATEWAY}/enquiries`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status }),
-      });
+      await apiClient.enquiries.update(id, status);
     } catch (e) {
       console.error('Failed to sync status to cloud:', e);
     }
@@ -184,11 +160,7 @@ export default function EnquiriesPage() {
     );
 
     try {
-      await fetch(`${AWS_API_GATEWAY}/enquiries`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedEnquiry),
-      });
+      await apiClient.enquiries.update(updatedEnquiry.id, updatedEnquiry.status);
     } catch (e) {
       console.error('Failed to sync updated enquiry to cloud:', e);
     }
@@ -200,11 +172,7 @@ export default function EnquiriesPage() {
     addDeletedId(id);
 
     try {
-      await fetch(`${AWS_API_GATEWAY}/enquiries?id=${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      });
+      await apiClient.enquiries.delete(id);
     } catch (e) {
       console.error('Failed to delete enquiry in cloud:', e);
     }
@@ -217,11 +185,7 @@ export default function EnquiriesPage() {
     ids.forEach((id) => addDeletedId(id));
 
     try {
-      await fetch(`${AWS_API_GATEWAY}/enquiries`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids }),
-      });
+      await apiClient.enquiries.deleteBatch(ids);
     } catch (e) {
       console.error('Failed to delete batch enquiries in cloud:', e);
     }
@@ -233,11 +197,7 @@ export default function EnquiriesPage() {
     updateEnquiries([]);
 
     try {
-      await fetch(`${AWS_API_GATEWAY}/enquiries`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clearAll: true }),
-      });
+      await apiClient.enquiries.deleteBatch(enquiries.map((e) => e.id));
     } catch (e) {
       console.error('Failed to clear all enquiries in cloud:', e);
     }

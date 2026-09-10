@@ -102,6 +102,20 @@ Resources:
             Method: POST
             ApiId: !Ref PixevaApiGateway
 
+  # 6. Studio Data Microservice (Galleries, Finances, Client Requests)
+  StudioDataServiceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/functions/studio-data-service/dist/
+      Handler: index.handler
+      Events:
+        StudioDataApi:
+          Type: HttpApi
+          Properties:
+            Path: /studio-data
+            Method: ANY
+            ApiId: !Ref PixevaApiGateway
+
 Outputs:
   PixevaApiGatewayUrl:
     Description: Live SAM Amazon API Gateway HTTP Base URL

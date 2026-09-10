@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Project, ProjectStatus, ContractStatus } from '@/lib/supabase/types';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { apiClient } from '@/lib/api/apiClient';
 import {
   Search,
   Plus,
@@ -172,11 +173,11 @@ const PROJECT_COVERS: Record<string, string> = {
 };
 
 const PRODUCTION_STAGES = [
-  { id: 1, label: 'Contract Signed', short: 'Contract', percent: 20, badgeClass: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300' },
-  { id: 2, label: 'Crew Scheduled', short: 'Crew Locked', percent: 40, badgeClass: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300' },
-  { id: 3, label: 'Shoot Completed', short: 'Shoot Done', percent: 60, badgeClass: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' },
-  { id: 4, label: 'Post-Production / Editing', short: 'Post-Prod (85%)', percent: 85, badgeClass: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300' },
-  { id: 5, label: 'Gallery Delivered', short: 'Delivered (100%)', percent: 100, badgeClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' },
+  { id: 1, label: 'Contract Signed', short: 'Contract', percent: 20, badgeClass: 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300' },
+  { id: 2, label: 'Crew Scheduled', short: 'Crew Locked', percent: 40, badgeClass: 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300' },
+  { id: 3, label: 'Shoot Completed', short: 'Shoot Done', percent: 60, badgeClass: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200/50' },
+  { id: 4, label: 'Post-Production / Editing', short: 'Post-Prod (85%)', percent: 85, badgeClass: 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300' },
+  { id: 5, label: 'Gallery Delivered', short: 'Delivered (100%)', percent: 100, badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200/50' },
 ];
 
 function getStageFromCompleteness(completeness: string): number {
@@ -214,23 +215,59 @@ export default function ProjectsPage() {
   // Drawer Panel for Shoot Details
   const [selectedDrawerProject, setSelectedDrawerProject] = useState<ExtendedProject | null>(null);
 
-  // Load from localStorage
+  // Load via AWS API Gateway with account scoping
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('pixeva_projects');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setProjects(parsed);
+    async function loadProjects() {
+      try {
+        const cloudData = await apiClient.projects.list();
+        if (Array.isArray(cloudData) && cloudData.length > 0) {
+          const mapped: ExtendedProject[] = cloudData.map((p: any) => ({
+            id: p.id,
+            name: p.title || p.name || 'Shoot Project',
+            type: p.event_type === 'wedding' ? 'Wedding' : p.event_type === 'corporate' ? 'Corporate' : 'Commercial',
+            client: p.client_name || p.client || 'Client',
+            first_event: p.date ? p.date.split('T')[0] : (p.first_event || new Date().toISOString().split('T')[0]),
+            venue: p.location || p.venue || 'Main Event Ballroom',
+            call_time: p.call_time || '08:00 AM',
+            total_amount: Number(p.price || p.total_amount) || 2500,
+            paid_amount: Number(p.deposit_paid || p.paid_amount) || 1250,
+            payment_status: p.payment_status || (p.deposit_paid >= p.price ? 'Paid' : 'Partial'),
+            status: p.status || 'Active',
+            completeness: p.completeness || 'In Progress (50%)',
+            contract: p.contract_status || p.contract || 'Accepted',
+            assigned_crew: p.assigned_crew || [],
+            deliverables: p.deliverables || [],
+            created_at: p.created_at || new Date().toISOString(),
+          }));
+          setProjects(mapped);
+          try {
+            localStorage.setItem('pixeva_projects', JSON.stringify(mapped));
+          } catch {}
+          setIsLoaded(true);
+          return;
         }
-      } else {
-        localStorage.setItem('pixeva_projects', JSON.stringify(INITIAL_PROJECTS));
+      } catch (err) {
+        console.warn('API Gateway project sync notice, falling back to local cache:', err);
       }
-    } catch (e) {
-      console.error('Error reading pixeva_projects from localStorage', e);
-    } finally {
-      setIsLoaded(true);
+
+      try {
+        const saved = localStorage.getItem('pixeva_projects');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProjects(parsed);
+          }
+        } else {
+          localStorage.setItem('pixeva_projects', JSON.stringify(INITIAL_PROJECTS));
+        }
+      } catch (e) {
+        console.error('Error reading pixeva_projects from localStorage', e);
+      } finally {
+        setIsLoaded(true);
+      }
     }
+
+    loadProjects();
   }, []);
 
   const updateProjects = (updater: ExtendedProject[] | ((prev: ExtendedProject[]) => ExtendedProject[])) => {
@@ -263,6 +300,8 @@ export default function ProjectsPage() {
     message: string;
     confirmText: string;
     isDestructive?: boolean;
+    itemName?: string;
+    itemType?: string;
     onConfirm: () => void;
   }>({
     isOpen: false,
@@ -423,12 +462,23 @@ export default function ProjectsPage() {
           : p
       )
     );
+
+    apiClient.projects.update(editingProject.id, {
+      title: formData.name,
+      event_type: formData.type,
+      client_name: formData.client,
+      location: formData.venue,
+      price: formData.total_amount,
+      deposit_paid: formData.paid_amount,
+      status: formData.status,
+    }).catch((err) => console.warn('Could not sync project update to cloud:', err));
+
     setIsEditModalOpen(false);
     setEditingProject(null);
   };
 
   // Create Project
-  const handleCreateProject = (e: React.FormEvent) => {
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.client) {
       alert('Please fill in Project Name and Client Name');
@@ -444,8 +494,9 @@ export default function ProjectsPage() {
         ? 'Partial'
         : 'Pending';
 
+    const tempId = `proj-${Date.now()}`;
     const newProject: ExtendedProject = {
-      id: `proj-${Date.now()}`,
+      id: tempId,
       name: formData.name,
       type: formData.type,
       client: formData.client,
@@ -471,6 +522,30 @@ export default function ProjectsPage() {
 
     updateProjects((prev) => [newProject, ...prev]);
     setIsAddModalOpen(false);
+
+    try {
+      const created = await apiClient.projects.create({
+        title: formData.name,
+        name: formData.name,
+        event_type: formData.type,
+        client_name: formData.client,
+        date: formData.first_event || new Date().toISOString(),
+        location: formData.venue,
+        call_time: formData.call_time,
+        price: formData.total_amount,
+        deposit_paid: formData.paid_amount,
+        status: formData.status,
+      });
+
+      if (created?.id) {
+        updateProjects((prev) =>
+          prev.map((item) => (item.id === tempId ? { ...item, id: created.id } : item))
+        );
+      }
+    } catch (err) {
+      console.warn('Could not sync created project to cloud:', err);
+    }
+
     setFormData({
       name: '',
       type: 'Wedding',
@@ -492,14 +567,17 @@ export default function ProjectsPage() {
     setConfirmModal({
       isOpen: true,
       title: `Delete "${project.name}"?`,
-      message: 'This will remove the shoot project file and its timeline from your active workspace.',
+      message: 'This will permanently remove the shoot project file, crew assignments, and financial records from your active studio workspace and Supabase database.',
       confirmText: 'Delete Project',
       isDestructive: true,
+      itemName: project.name,
+      itemType: `${project.type} Shoot`,
       onConfirm: () => {
         updateProjects((prev) => prev.filter((p) => p.id !== project.id));
         setSelectedIds((prev) => prev.filter((id) => id !== project.id));
         if (selectedDrawerProject?.id === project.id) setSelectedDrawerProject(null);
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        apiClient.projects.delete(project.id).catch((err) => console.warn('Cloud delete notice:', err));
       },
     });
   };
@@ -510,9 +588,11 @@ export default function ProjectsPage() {
     setConfirmModal({
       isOpen: true,
       title: `Delete ${selectedIds.length} Projects?`,
-      message: 'This action will permanently delete all selected production shoot files.',
+      message: 'This action will permanently purge all selected production shoot files and timelines from cloud storage.',
       confirmText: `Delete ${selectedIds.length} Projects`,
       isDestructive: true,
+      itemName: `${selectedIds.length} Selected Projects`,
+      itemType: 'Batch Production Files',
       onConfirm: () => {
         const idSet = new Set(selectedIds);
         updateProjects((prev) => prev.filter((p) => !idSet.has(p.id)));
@@ -567,104 +647,104 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-6 animate-fadeIn pb-12 relative min-h-[calc(100vh-100px)] max-w-7xl mx-auto">
       {/* Top Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200/70 dark:border-white/10">
         <div>
           <div className="flex items-center space-x-2.5">
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Projects & Production
             </h1>
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 uppercase tracking-wider">
-              {projects.length} Total Shoots
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">
+              {projects.length} Shoots
             </span>
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Manage confirmed shoots, 5-stage production pipelines, crew schedules, and deliverable handoffs.
           </p>
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center space-x-2.5 shrink-0 flex-wrap gap-y-2">
+        <div className="flex items-center space-x-2 shrink-0 flex-wrap gap-y-2">
           {selectedIds.length > 0 && (
             <button
               onClick={handleDeleteSelected}
-              className="flex items-center space-x-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-600 dark:text-rose-400 border border-rose-500/30 transition-all shadow-xs"
+              className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-200/60 dark:border-rose-500/20 transition-all cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Delete Selected ({selectedIds.length})</span>
+              <span>Delete ({selectedIds.length})</span>
             </button>
           )}
 
           <button
             onClick={handleExportCsv}
-            className="flex items-center space-x-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-white dark:bg-[#12121a] hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10 transition-all shadow-xs cursor-pointer"
+            className="btn-pixeva-secondary space-x-1.5"
           >
-            <Download className="w-3.5 h-3.5 text-sky-500" />
+            <Download className="w-3.5 h-3.5 text-slate-400" />
             <span>Export CSV</span>
           </button>
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="btn-pixeva-primary flex items-center space-x-1.5 text-xs font-bold px-4 py-2 rounded-xl shadow-lg shadow-sky-500/25 cursor-pointer"
+            className="btn-pixeva-primary space-x-1.5"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span>New Shoot Project</span>
           </button>
         </div>
       </div>
 
-      {/* Metric Cards KPI Strip (Zero Emojis - Crisp Lucide Icons) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#0e1424] border border-slate-200 dark:border-white/10 shadow-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Shoots</span>
-            <div className="p-1.5 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
-              <Camera className="w-4 h-4" />
+      {/* Metric Cards KPI Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="pixeva-card p-4 space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>Active Shoots</span>
+            <div className="p-1 rounded-md bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300">
+              <Camera className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{activeShootsCount}</p>
-          <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center space-x-1">
+          <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-mono">{activeShootsCount}</p>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center space-x-1">
             <Clock className="w-3 h-3 shrink-0" />
             <span>Active Production Schedule</span>
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#0e1424] border border-slate-200 dark:border-white/10 shadow-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">In Post-Production</span>
-            <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
-              <Film className="w-4 h-4" />
+        <div className="pixeva-card p-4 space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>In Post-Production</span>
+            <div className="p-1 rounded-md bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300">
+              <Film className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{inPostProdCount}</p>
-          <div className="text-[10px] text-purple-600 dark:text-purple-400 font-semibold flex items-center space-x-1">
+          <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-mono">{inPostProdCount}</p>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center space-x-1">
             <Video className="w-3 h-3 shrink-0" />
             <span>Color Grading & Master Cut</span>
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#0e1424] border border-slate-200 dark:border-white/10 shadow-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Signed Contracts</span>
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <ShieldCheck className="w-4 h-4" />
+        <div className="pixeva-card p-4 space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>Signed Contracts</span>
+            <div className="p-1 rounded-md bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300">
+              <ShieldCheck className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{contractsCount}</p>
-          <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center space-x-1">
+          <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-mono">{contractsCount}</p>
+          <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium flex items-center space-x-1">
             <CheckCircle2 className="w-3 h-3 shrink-0" />
-            <span>Retainers & Agreements Locked</span>
+            <span>Agreements Locked</span>
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#0e1424] border border-slate-200 dark:border-white/10 shadow-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Delivered Galleries</span>
-            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <Award className="w-4 h-4" />
+        <div className="pixeva-card p-4 space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+            <span>Delivered Galleries</span>
+            <div className="p-1 rounded-md bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300">
+              <Award className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{deliveredCount}</p>
-          <div className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-1">
+          <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white font-mono">{deliveredCount}</p>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center space-x-1">
             <Sparkles className="w-3 h-3 shrink-0" />
             <span>Archived in Studio Cloud</span>
           </div>
@@ -672,65 +752,65 @@ export default function ProjectsPage() {
       </div>
 
       {/* Filter & 3-Way View Switcher Bar */}
-      <div className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#0e1424] border border-slate-200 dark:border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
+      <div className="pixeva-card p-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Left: Active/Archived Tabs & Search Box */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex items-center p-1 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs">
             <button
               onClick={() => setActiveTab('Active')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
                 activeTab === 'Active'
-                  ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
               }`}
             >
-              Active Shoots ({projects.filter((p) => p.status === 'Active').length})
+              Active ({projects.filter((p) => p.status === 'Active').length})
             </button>
             <button
               onClick={() => setActiveTab('Archived')}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
                 activeTab === 'Archived'
-                  ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
               }`}
             >
               Archived ({projects.filter((p) => p.status === 'Archived').length})
             </button>
           </div>
 
-          <div className="relative min-w-[240px]">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <div className="relative min-w-[220px]">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search shoot, client, venue..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-sky-500"
+              className="w-full pl-8 pr-3 py-1 rounded-md bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-2xs"
             />
           </div>
         </div>
 
         {/* Right: Sort & 3-Way View Switcher (Table | Cards | Kanban) */}
-        <div className="flex items-center space-x-2.5 justify-end">
+        <div className="flex items-center space-x-2 justify-end">
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-slate-200 font-semibold focus:outline-none cursor-pointer"
+            className="px-2.5 py-1 rounded-md bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 text-xs text-slate-700 dark:text-slate-300 font-medium focus:outline-none focus:border-blue-500 cursor-pointer shadow-2xs"
           >
-            <option value="date_earliest" className="bg-white dark:bg-[#12121a]">Shoot Date (Earliest first)</option>
-            <option value="date_latest" className="bg-white dark:bg-[#12121a]">Shoot Date (Latest first)</option>
-            <option value="date_added" className="bg-white dark:bg-[#12121a]">Date Added</option>
+            <option value="date_earliest">Shoot Date (Earliest)</option>
+            <option value="date_latest">Shoot Date (Latest)</option>
+            <option value="date_added">Date Added</option>
           </select>
 
           {/* 3-Way View Switcher */}
-          <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs">
+          <div className="flex items-center p-1 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs space-x-0.5">
             <button
               onClick={() => setViewMode('table')}
               title="Table View"
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
                 viewMode === 'table'
-                  ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
               }`}
             >
               <TableIcon className="w-3.5 h-3.5" />
@@ -740,10 +820,10 @@ export default function ProjectsPage() {
             <button
               onClick={() => setViewMode('cards')}
               title="Cards View"
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
                 viewMode === 'cards'
-                  ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
@@ -752,11 +832,11 @@ export default function ProjectsPage() {
 
             <button
               onClick={() => setViewMode('kanban')}
-              title="Kanban Pipeline Board"
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+              title="Pipeline View"
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
                 viewMode === 'kanban'
-                  ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-xs'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                  ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
               }`}
             >
               <Columns3 className="w-3.5 h-3.5" />
@@ -770,32 +850,32 @@ export default function ProjectsPage() {
       {/* 1. TABLE VIEW (EXECUTIVE & CLEAN)                                         */}
       {/* ========================================================================= */}
       {viewMode === 'table' && (
-        <div className="rounded-3xl bg-white dark:bg-[#0e1424] border border-slate-200 dark:border-white/10 shadow-xs overflow-hidden">
+        <div className="pixeva-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50/75 dark:bg-white/5 font-extrabold text-slate-600 dark:text-slate-300 uppercase tracking-wider text-[10px]">
-                  <th className="w-10 px-3 py-3.5 text-center">
+                <tr className="border-b border-slate-200/80 dark:border-white/10 bg-slate-50/75 dark:bg-[#111827] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px]">
+                  <th className="w-10 px-3 py-3 text-center">
                     <input
                       type="checkbox"
                       checked={selectedIds.length > 0 && selectedIds.length === filteredProjects.length}
                       onChange={handleToggleSelectAll}
-                      className="rounded border-slate-300 dark:border-white/20 bg-transparent text-sky-500 focus:ring-0 cursor-pointer"
+                      className="rounded border-slate-300 dark:border-white/20 bg-transparent text-slate-900 focus:ring-0 cursor-pointer"
                     />
                   </th>
-                  <th className="px-4 py-3.5">Project / Shoot</th>
-                  <th className="px-3 py-3.5">Client & Venue</th>
-                  <th className="px-3 py-3.5">Event Date</th>
-                  <th className="px-4 py-3.5">Production Milestone</th>
-                  <th className="px-3 py-3.5">Assigned Crew</th>
-                  <th className="px-3 py-3.5">Payment</th>
-                  <th className="px-4 py-3.5 text-right">Quick Actions</th>
+                  <th className="px-4 py-3">Project / Shoot</th>
+                  <th className="px-3 py-3">Client & Venue</th>
+                  <th className="px-3 py-3">Event Date</th>
+                  <th className="px-4 py-3">Milestone</th>
+                  <th className="px-3 py-3">Crew</th>
+                  <th className="px-3 py-3">Payment</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                 {filteredProjects.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-12 text-slate-500">
+                    <td colSpan={8} className="text-center py-10 text-slate-400">
                       No shoot projects found. Click "+ New Shoot Project" to create one.
                     </td>
                   </tr>
@@ -811,35 +891,28 @@ export default function ProjectsPage() {
                       <tr
                         key={project.id}
                         onClick={() => setSelectedDrawerProject(project)}
-                        className={`hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors cursor-pointer group ${
-                          isSelected ? 'bg-sky-500/5' : ''
+                        className={`hover:bg-slate-50/75 dark:hover:bg-white/5 transition-colors cursor-pointer group ${
+                          isSelected ? 'bg-slate-50/80 dark:bg-white/5' : ''
                         }`}
                       >
                         {/* Checkbox */}
-                        <td className="px-3 py-3.5 text-center" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-3 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={(e) => handleToggleSelect(project.id, e as any)}
-                            className="rounded border-slate-300 dark:border-white/20 bg-transparent text-sky-500 focus:ring-0 cursor-pointer"
+                            className="rounded border-slate-300 dark:border-white/20 bg-transparent text-slate-900 focus:ring-0 cursor-pointer"
                           />
                         </td>
 
-                        {/* Project Name & Type Icon Pill */}
-                        <td className="px-4 py-3.5">
-                          <div className="space-y-1 min-w-[220px]">
-                            <div className="flex items-center space-x-2">
-                              <span className="inline-flex items-center space-x-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300 shrink-0">
-                                {project.type === 'Wedding' ? (
-                                  <Sparkles className="w-3 h-3 text-sky-600 dark:text-sky-400 shrink-0" />
-                                ) : project.type === 'Corporate' ? (
-                                  <Briefcase className="w-3 h-3 text-sky-600 dark:text-sky-400 shrink-0" />
-                                ) : (
-                                  <Camera className="w-3 h-3 text-sky-600 dark:text-sky-400 shrink-0" />
-                                )}
-                                <span>{project.type}</span>
+                        {/* Project Name & Type */}
+                        <td className="px-4 py-3">
+                          <div className="space-y-0.5 min-w-[200px]">
+                            <div className="flex items-center space-x-1.5">
+                              <span className="inline-flex items-center text-[9px] font-semibold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300 shrink-0">
+                                {project.type}
                               </span>
-                              <span className="font-extrabold text-slate-900 dark:text-white text-xs group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors truncate">
+                              <span className="font-semibold text-slate-900 dark:text-white text-xs truncate">
                                 {project.name}
                               </span>
                             </div>
@@ -847,13 +920,13 @@ export default function ProjectsPage() {
                         </td>
 
                         {/* Client & Venue */}
-                        <td className="px-3 py-3.5">
+                        <td className="px-3 py-3">
                           <div className="space-y-0.5">
-                            <span className="font-semibold text-slate-800 dark:text-slate-200 block">
+                            <span className="font-medium text-slate-800 dark:text-slate-200 block">
                               {project.client}
                             </span>
                             {project.venue && (
-                              <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center space-x-1 truncate max-w-[160px]">
+                              <span className="text-[10px] text-slate-400 flex items-center space-x-1 truncate max-w-[150px]">
                                 <MapPin className="w-2.5 h-2.5 text-slate-400 shrink-0" />
                                 <span>{project.venue}</span>
                               </span>
@@ -862,40 +935,40 @@ export default function ProjectsPage() {
                         </td>
 
                         {/* Event Date & Countdown */}
-                        <td className="px-3 py-3.5">
+                        <td className="px-3 py-3">
                           <div className="space-y-0.5">
-                            <span className="font-bold text-slate-900 dark:text-white block">
+                            <span className="font-medium text-slate-900 dark:text-white block">
                               {project.first_event}
                             </span>
-                            <span className="text-[10px] font-semibold text-sky-600 dark:text-sky-400 block">
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block">
                               {countdown.text}
                             </span>
                           </div>
                         </td>
 
                         {/* 5-Step Milestone Dropdown */}
-                        <td className="px-4 py-3.5" onClick={(e) => e.stopPropagation()}>
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                           <select
                             value={currentStage}
                             onChange={(e) => handleSetStage(project, Number(e.target.value), e)}
-                            className={`text-[11px] font-bold px-3 py-1.5 rounded-xl border border-transparent hover:border-slate-300 dark:hover:border-white/20 focus:outline-none cursor-pointer ${stageObj.badgeClass}`}
+                            className={`text-[11px] font-medium px-2 py-1 rounded-md border border-slate-200/80 dark:border-white/10 focus:outline-none cursor-pointer ${stageObj.badgeClass}`}
                           >
                             {PRODUCTION_STAGES.map((s) => (
-                              <option key={s.id} value={s.id} className="bg-white dark:bg-[#12121a] text-slate-900 dark:text-white">
-                                Stage {s.id}/5: {s.label} ({s.percent}%)
+                              <option key={s.id} value={s.id} className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">
+                                Stage {s.id}: {s.label} ({s.percent}%)
                               </option>
                             ))}
                           </select>
                         </td>
 
-                        {/* Assigned Crew Avatars (No Emojis) */}
-                        <td className="px-3 py-3.5">
-                          <div className="flex items-center -space-x-1.5">
+                        {/* Assigned Crew Avatars */}
+                        <td className="px-3 py-3">
+                          <div className="flex items-center -space-x-1">
                             {crewList.map((c, i) => (
                               <div
                                 key={c.id || i}
                                 title={`${c.role}: ${c.name}`}
-                                className="w-6 h-6 rounded-full bg-slate-800 border-2 border-white dark:border-[#0e1424] text-[9px] font-black text-white flex items-center justify-center shadow-2xs"
+                                className="w-5 h-5 rounded-full bg-slate-800 border border-white dark:border-[#0f172a] text-[8px] font-bold text-white flex items-center justify-center"
                               >
                                 {c.initials}
                               </div>
@@ -904,42 +977,42 @@ export default function ProjectsPage() {
                         </td>
 
                         {/* Payment Balance Status Pill */}
-                        <td className="px-3 py-3.5">
+                        <td className="px-3 py-3">
                           {project.payment_status === 'Paid' ? (
-                            <span className="inline-flex items-center space-x-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/30">
-                              <CheckCircle2 className="w-3 h-3" />
+                            <span className="inline-flex items-center space-x-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200/50">
+                              <CheckCircle2 className="w-2.5 h-2.5" />
                               <span>Paid in Full</span>
                             </span>
                           ) : project.payment_status === 'Partial' ? (
-                            <span className="inline-flex items-center space-x-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 border border-amber-500/30">
-                              <Clock className="w-3 h-3" />
+                            <span className="inline-flex items-center space-x-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200/50">
+                              <Clock className="w-2.5 h-2.5" />
                               <span>Retainer Paid</span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center space-x-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-500/30">
-                              <AlertCircle className="w-3 h-3" />
-                              <span>Invoice Due</span>
+                            <span className="inline-flex items-center space-x-1 text-[10px] font-medium px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-200/50">
+                              <AlertCircle className="w-2.5 h-2.5" />
+                              <span>Due</span>
                             </span>
                           )}
                         </td>
 
                         {/* Quick Actions */}
-                        <td className="px-4 py-3.5 text-right" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-end space-x-1.5">
+                        <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end space-x-1">
                             <button
                               type="button"
                               onClick={(e) => handleSendWhatsAppBriefing(project, e)}
-                              title="Send WhatsApp Call-Sheet to Crew"
-                              className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-500/20 transition-all cursor-pointer"
+                              title="Send WhatsApp Call-Sheet"
+                              className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
                             >
-                              <MessageSquare className="w-3.5 h-3.5" />
+                              <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                             </button>
 
                             <Link
                               href={`/proposal/${project.id}`}
                               target="_blank"
                               title="Open Client Portal"
-                              className="p-1.5 rounded-lg bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400 hover:bg-sky-100 border border-sky-200 dark:border-sky-500/20 transition-all"
+                              className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                             >
                               <ExternalLink className="w-3.5 h-3.5" />
                             </Link>
@@ -948,7 +1021,7 @@ export default function ProjectsPage() {
                               type="button"
                               onClick={() => handleOpenEdit(project)}
                               title="Edit Shoot Details"
-                              className="p-1.5 rounded-lg bg-slate-100 text-slate-700 dark:bg-white/5 dark:text-slate-300 hover:bg-slate-200 transition-all cursor-pointer"
+                              className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors cursor-pointer"
                             >
                               <Edit className="w-3.5 h-3.5" />
                             </button>
@@ -957,7 +1030,7 @@ export default function ProjectsPage() {
                               type="button"
                               onClick={(e) => handleDeleteSingle(project, e)}
                               title="Delete Shoot"
-                              className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 dark:hover:bg-rose-500/10 transition-all cursor-pointer"
+                              className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -977,7 +1050,7 @@ export default function ProjectsPage() {
       {/* 2. VISUAL CARDS VIEW                                                      */}
       {/* ========================================================================= */}
       {viewMode === 'cards' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProjects.map((project) => {
             const currentStage = getStageFromCompleteness(project.completeness);
             const stageObj = PRODUCTION_STAGES[currentStage - 1] || PRODUCTION_STAGES[0];
@@ -990,79 +1063,70 @@ export default function ProjectsPage() {
               <div
                 key={project.id}
                 onClick={() => setSelectedDrawerProject(project)}
-                className={`rounded-3xl bg-white dark:bg-[#0e1424] border transition-all duration-200 cursor-pointer shadow-sm hover:shadow-xl hover:-translate-y-1 overflow-hidden flex flex-col justify-between ${
-                  isSelected
-                    ? 'border-sky-500 ring-2 ring-sky-500/20'
-                    : 'border-slate-200 dark:border-white/10 hover:border-sky-400/50'
+                className={`pixeva-card pixeva-card-hover overflow-hidden flex flex-col justify-between cursor-pointer ${
+                  isSelected ? 'border-slate-800 dark:border-slate-200' : ''
                 }`}
               >
                 {/* Cover Image Banner */}
-                <div className="relative h-40 w-full overflow-hidden bg-slate-900">
+                <div className="relative h-36 w-full overflow-hidden bg-slate-900">
                   <img
                     src={coverImage}
                     alt={project.name}
-                    className="w-full h-full object-cover opacity-85"
+                    className="w-full h-full object-cover opacity-80"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
 
                   {/* Badges on Cover */}
-                  <div className="absolute top-3 inset-x-3 flex items-center justify-between z-10">
-                    <span className="inline-flex items-center space-x-1 text-[10px] font-black uppercase px-2.5 py-1 rounded-lg bg-sky-500 text-white shadow-xs">
-                      {project.type === 'Wedding' ? (
-                        <Sparkles className="w-3 h-3 shrink-0" />
-                      ) : project.type === 'Corporate' ? (
-                        <Briefcase className="w-3 h-3 shrink-0" />
-                      ) : (
-                        <Camera className="w-3 h-3 shrink-0" />
-                      )}
-                      <span>{project.type}</span>
+                  <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between z-10">
+                    <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-slate-900/80 backdrop-blur-xs text-white">
+                      {project.type}
                     </span>
-                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-white border border-white/20">
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-black/60 backdrop-blur-xs text-white">
                       {countdown.text}
                     </span>
                   </div>
 
                   {/* Shoot Title on Banner */}
-                  <div className="absolute bottom-3 inset-x-3 z-10">
-                    <h3 className="font-extrabold text-white text-base leading-tight truncate">
+                  <div className="absolute bottom-2.5 inset-x-2.5 z-10">
+                    <h3 className="font-bold text-white text-sm leading-tight truncate">
                       {project.name}
                     </h3>
-                    <p className="text-xs text-slate-300 truncate mt-0.5">
+                    <p className="text-[11px] text-slate-300 truncate">
                       Client: {project.client}
                     </p>
                   </div>
                 </div>
 
                 {/* Card Body */}
-                <div className="p-5 space-y-4 flex-1 flex flex-col justify-between">
+                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
                   {/* Shoot Date & Venue */}
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center space-x-1.5 text-slate-600 dark:text-slate-300 font-semibold">
-                      <Calendar className="w-3.5 h-3.5 text-sky-500" />
+                  <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+                    <div className="flex items-center space-x-1.5 font-medium">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
                       <span>{project.first_event}</span>
                     </div>
                     {project.venue && (
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center space-x-1 truncate max-w-[130px]">
+                      <span className="text-[10px] text-slate-400 flex items-center space-x-1 truncate max-w-[130px]">
                         <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
                         <span>{project.venue}</span>
                       </span>
                     )}
                   </div>
 
-                  {/* Progress Milestone Slider */}
-                  <div className="space-y-1.5 bg-slate-50 dark:bg-white/5 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
+                  {/* Progress Milestone */}
+                  <div className="space-y-1 bg-slate-50/80 dark:bg-[#111827] p-2.5 rounded-lg border border-slate-200/60 dark:border-white/5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-700 dark:text-slate-200 text-[11px]">
-                        Stage {currentStage}/5: {stageObj.label}
+                      <span className="font-medium text-slate-700 dark:text-slate-300 text-[11px]">
+                        {stageObj.label}
                       </span>
-                      <span className="font-mono font-extrabold text-sky-600 dark:text-sky-400 text-xs">
+                      <span className="font-mono font-semibold text-slate-900 dark:text-white text-xs">
                         {stageObj.percent}%
                       </span>
                     </div>
 
-                    <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
+                    <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-white/10 overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-sky-500 to-blue-600 rounded-full transition-all duration-300"
+                        className="h-full bg-slate-900 dark:bg-slate-200 rounded-full transition-all duration-300"
                         style={{ width: `${stageObj.percent}%` }}
                       />
                     </div>
@@ -1070,33 +1134,33 @@ export default function ProjectsPage() {
 
                   {/* Crew Avatars & Action Buttons */}
                   <div className="pt-2 flex items-center justify-between border-t border-slate-100 dark:border-white/5">
-                    <div className="flex items-center -space-x-1.5">
+                    <div className="flex items-center -space-x-1">
                       {crewList.map((c, i) => (
                         <div
                           key={c.id || i}
                           title={`${c.role}: ${c.name}`}
-                          className="w-6 h-6 rounded-full bg-slate-800 border-2 border-white dark:border-[#0e1424] text-[9px] font-black text-white flex items-center justify-center shadow-2xs"
+                          className="w-5 h-5 rounded-full bg-slate-800 border border-white dark:border-[#0f172a] text-[8px] font-bold text-white flex items-center justify-center"
                         >
                           {c.initials}
                         </div>
                       ))}
                     </div>
 
-                    <div className="flex items-center space-x-1.5" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={(e) => handleSendWhatsAppBriefing(project, e)}
                         title="Send WhatsApp Call-Sheet"
-                        className="p-2 rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 hover:bg-emerald-100 transition-colors"
+                        className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                       >
-                        <MessageSquare className="w-3.5 h-3.5" />
+                        <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
                       </button>
 
                       <Link
                         href={`/proposal/${project.id}`}
                         target="_blank"
                         title="Open Proposal"
-                        className="p-2 rounded-xl bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400 hover:bg-sky-100 transition-colors"
+                        className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
                       </Link>
@@ -1105,7 +1169,7 @@ export default function ProjectsPage() {
                         type="button"
                         onClick={(e) => handleDeleteSingle(project, e)}
                         title="Delete"
-                        className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                        className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -1122,7 +1186,7 @@ export default function ProjectsPage() {
       {/* 3. KANBAN PIPELINE BOARD VIEW                                             */}
       {/* ========================================================================= */}
       {viewMode === 'kanban' && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 overflow-x-auto pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3.5 overflow-x-auto pb-4">
           {PRODUCTION_STAGES.map((stage) => {
             const stageShoots = filteredProjects.filter(
               (p) => getStageFromCompleteness(p.completeness) === stage.id
@@ -1131,44 +1195,43 @@ export default function ProjectsPage() {
             return (
               <div
                 key={stage.id}
-                className="bg-slate-100/75 dark:bg-[#0e1424]/80 p-3.5 rounded-3xl border border-slate-200/80 dark:border-white/10 flex flex-col space-y-3 min-w-[240px]"
+                className="bg-slate-100/70 dark:bg-[#111827]/60 p-3 rounded-xl border border-slate-200/70 dark:border-white/5 flex flex-col space-y-2.5 min-w-[220px]"
               >
                 {/* Column Header */}
-                <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-2.5 px-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-sky-500" />
-                    <h3 className="font-bold text-xs text-slate-900 dark:text-white">
+                <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 pb-2 px-1">
+                  <div className="flex items-center space-x-1.5">
+                    <h3 className="font-semibold text-xs text-slate-900 dark:text-white">
                       {stage.short}
                     </h3>
                   </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-white dark:bg-white/10 text-slate-700 dark:text-slate-300">
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-white dark:bg-white/10 text-slate-600 dark:text-slate-300">
                     {stageShoots.length}
                   </span>
                 </div>
 
                 {/* Column Cards */}
-                <div className="space-y-2.5 flex-1">
+                <div className="space-y-2 flex-1">
                   {stageShoots.length === 0 ? (
-                    <div className="p-4 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 text-center text-[11px] text-slate-400">
-                      No shoots in this stage
+                    <div className="p-3 rounded-lg border border-dashed border-slate-200 dark:border-white/10 text-center text-[11px] text-slate-400">
+                      No shoots in stage
                     </div>
                   ) : (
                     stageShoots.map((project) => (
                       <div
                         key={project.id}
                         onClick={() => setSelectedDrawerProject(project)}
-                        className="p-3.5 rounded-2xl bg-white dark:bg-[#161b2e] border border-slate-200 dark:border-white/10 shadow-xs hover:shadow-md transition-all cursor-pointer space-y-2 group"
+                        className="p-3 rounded-lg bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-white/10 shadow-2xs hover:border-slate-300 dark:hover:border-white/20 transition-all cursor-pointer space-y-1.5 group"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">
+                          <span className="text-[9px] font-semibold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300">
                             {project.type}
                           </span>
-                          <span className="text-[9px] font-semibold text-slate-400">
+                          <span className="text-[9px] text-slate-400">
                             {project.first_event}
                           </span>
                         </div>
 
-                        <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors line-clamp-2 leading-snug">
+                        <h4 className="text-xs font-semibold text-slate-900 dark:text-white group-hover:underline line-clamp-2 leading-snug">
                           {project.name}
                         </h4>
 
@@ -1176,13 +1239,13 @@ export default function ProjectsPage() {
                           {project.client}
                         </p>
 
-                        <div className="pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[10px]">
-                          <span className="text-slate-400">{project.venue || 'Venue TBA'}</span>
+                        <div className="pt-1.5 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[10px]">
+                          <span className="text-slate-400 truncate max-w-[120px]">{project.venue || 'Venue TBA'}</span>
                           <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
                             <button
                               type="button"
                               onClick={(e) => handleSendWhatsAppBriefing(project, e)}
-                              className="p-1 rounded-md text-emerald-600 hover:bg-emerald-50"
+                              className="p-1 rounded hover:bg-slate-100 text-emerald-600"
                             >
                               <MessageSquare className="w-3 h-3" />
                             </button>
@@ -1202,84 +1265,84 @@ export default function ProjectsPage() {
       {/* 4. SLIDE-OVER SHOOT DETAIL DRAWER                                         */}
       {/* ========================================================================= */}
       {selectedDrawerProject && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/60 backdrop-blur-xs animate-fadeIn">
+        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs animate-fadeIn">
           <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-            <div className="w-screen max-w-md bg-white dark:bg-[#101524] border-l border-slate-200 dark:border-white/10 shadow-2xl p-6 sm:p-8 flex flex-col justify-between overflow-y-auto space-y-6">
-              <div className="space-y-6">
+            <div className="w-screen max-w-md bg-white dark:bg-[#0f172a] border-l border-slate-200 dark:border-white/10 shadow-xl p-5 sm:p-6 flex flex-col justify-between overflow-y-auto space-y-5">
+              <div className="space-y-5">
                 {/* Drawer Header */}
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
                   <div className="flex items-center space-x-2">
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">
+                    <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300">
                       {selectedDrawerProject.type}
                     </span>
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-medium text-slate-500">
                       Shoot Overview
                     </span>
                   </div>
                   <button
                     onClick={() => setSelectedDrawerProject(null)}
-                    className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
+                    className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
 
                 {/* Shoot Title & Client */}
-                <div className="space-y-1">
-                  <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-snug">
+                <div className="space-y-0.5">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
                     {selectedDrawerProject.name}
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                    Client: <span className="text-slate-900 dark:text-white font-bold">{selectedDrawerProject.client}</span>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Client: <span className="text-slate-900 dark:text-white font-semibold">{selectedDrawerProject.client}</span>
                   </p>
                 </div>
 
                 {/* Key Details Cards */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Shoot Date</span>
-                    <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-sky-500" />
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="p-3 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 space-y-1">
+                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Shoot Date</span>
+                    <p className="text-xs font-semibold text-slate-900 dark:text-white flex items-center space-x-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
                       <span>{selectedDrawerProject.first_event}</span>
                     </p>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Call Time</span>
-                    <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
-                      <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                  <div className="p-3 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 space-y-1">
+                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Call Time</span>
+                    <p className="text-xs font-semibold text-slate-900 dark:text-white flex items-center space-x-1.5">
+                      <Clock className="w-3.5 h-3.5 text-slate-400" />
                       <span>{selectedDrawerProject.call_time || '08:00 AM'}</span>
                     </p>
                   </div>
                 </div>
 
                 {/* Venue Location */}
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Venue / Destination</span>
-                  <p className="text-xs font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                <div className="p-3 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 space-y-1">
+                  <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Venue / Destination</span>
+                  <p className="text-xs font-semibold text-slate-900 dark:text-white flex items-center space-x-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span>{selectedDrawerProject.venue || 'Main Location TBA'}</span>
                   </p>
                 </div>
 
                 {/* Assigned Production Crew */}
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   <span className="text-xs font-bold text-slate-900 dark:text-white block">
                     Assigned Production Crew
                   </span>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {(selectedDrawerProject.assigned_crew || []).map((crew) => (
                       <div
                         key={crew.id}
-                        className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 flex items-center justify-between"
+                        className="p-2.5 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 flex items-center justify-between"
                       >
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center">
+                        <div className="flex items-center space-x-2.5">
+                          <div className="w-7 h-7 rounded-full bg-slate-800 text-white font-bold text-[10px] flex items-center justify-center">
                             {crew.initials}
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-slate-900 dark:text-white">{crew.name}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{crew.role}</p>
+                            <p className="text-xs font-semibold text-slate-900 dark:text-white">{crew.name}</p>
+                            <p className="text-[10px] text-slate-400">{crew.role}</p>
                           </div>
                         </div>
 
@@ -1287,7 +1350,7 @@ export default function ProjectsPage() {
                           href={`https://wa.me/${crew.phone}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400 hover:bg-emerald-100"
+                          className="p-1 rounded-md text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
                         </a>
@@ -1297,31 +1360,31 @@ export default function ProjectsPage() {
                 </div>
 
                 {/* Deliverables Checklist */}
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   <span className="text-xs font-bold text-slate-900 dark:text-white block">
                     Deliverables Checklist
                   </span>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {(selectedDrawerProject.deliverables || []).map((deliv) => (
                       <div
                         key={deliv.id}
                         onClick={() => handleToggleDeliverable(selectedDrawerProject.id, deliv.id)}
-                        className={`p-3 rounded-xl border flex items-center space-x-3 transition-colors cursor-pointer ${
+                        className={`p-2.5 rounded-lg border flex items-center space-x-2.5 transition-colors cursor-pointer ${
                           deliv.completed
-                            ? 'bg-emerald-50/70 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20 text-slate-900 dark:text-white'
-                            : 'bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5 text-slate-600 dark:text-slate-300'
+                            ? 'bg-emerald-50/60 border-emerald-200/80 dark:bg-emerald-500/10 dark:border-emerald-500/20 text-slate-900 dark:text-white'
+                            : 'bg-slate-50/80 dark:bg-[#111827] border-slate-200/60 dark:border-white/5 text-slate-700 dark:text-slate-300'
                         }`}
                       >
                         <div
-                          className={`w-4 h-4 rounded-md flex items-center justify-center border transition-colors ${
+                          className={`w-3.5 h-3.5 rounded flex items-center justify-center border transition-colors ${
                             deliv.completed
                               ? 'bg-emerald-600 border-emerald-600 text-white'
                               : 'border-slate-300 dark:border-white/20 bg-white dark:bg-transparent'
                           }`}
                         >
-                          {deliv.completed && <Check className="w-3 h-3" />}
+                          {deliv.completed && <Check className="w-2.5 h-2.5" />}
                         </div>
-                        <span className={`text-xs font-medium ${deliv.completed ? 'line-through text-slate-500' : ''}`}>
+                        <span className={`text-xs font-medium ${deliv.completed ? 'line-through text-slate-400' : ''}`}>
                           {deliv.title}
                         </span>
                       </div>
@@ -1331,12 +1394,12 @@ export default function ProjectsPage() {
               </div>
 
               {/* Drawer Bottom Actions */}
-              <div className="pt-4 border-t border-slate-100 dark:border-white/10 space-y-2.5">
+              <div className="pt-3 border-t border-slate-100 dark:border-white/10 space-y-2">
                 <button
                   onClick={(e) => handleSendWhatsAppBriefing(selectedDrawerProject, e)}
-                  className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer"
+                  className="w-full btn-pixeva-primary space-x-2 justify-center py-2"
                 >
-                  <MessageSquare className="w-4 h-4" />
+                  <MessageSquare className="w-3.5 h-3.5" />
                   <span>Send Call-Sheet Briefing to Crew</span>
                 </button>
 
@@ -1344,17 +1407,17 @@ export default function ProjectsPage() {
                   <Link
                     href={`/proposal/${selectedDrawerProject.id}`}
                     target="_blank"
-                    className="py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center justify-center space-x-1.5 transition-colors"
+                    className="btn-pixeva-secondary space-x-1.5 justify-center py-2"
                   >
-                    <ExternalLink className="w-3.5 h-3.5" />
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
                     <span>Client Portal</span>
                   </Link>
 
                   <button
                     onClick={() => handleOpenEdit(selectedDrawerProject)}
-                    className="py-2.5 rounded-xl bg-sky-50 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300 hover:bg-sky-100 text-xs font-bold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+                    className="btn-pixeva-secondary space-x-1.5 justify-center py-2"
                   >
-                    <Edit className="w-3.5 h-3.5" />
+                    <Edit className="w-3.5 h-3.5 text-slate-400" />
                     <span>Edit Shoot</span>
                   </button>
                 </div>
@@ -1368,10 +1431,10 @@ export default function ProjectsPage() {
       {/* CREATE / EDIT PROJECT MODAL                                               */}
       {/* ========================================================================= */}
       {(isAddModalOpen || isEditModalOpen) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-[#12121a] border border-slate-200 dark:border-white/10 p-6 sm:p-8 shadow-2xl space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
-              <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-lg pixeva-card p-6 shadow-xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
+              <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
                 {isEditModalOpen ? 'Edit Shoot Project' : 'Create New Shoot Project'}
               </h2>
               <button
@@ -1379,15 +1442,15 @@ export default function ProjectsPage() {
                   setIsAddModalOpen(false);
                   setIsEditModalOpen(false);
                 }}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5"
+                className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={isEditModalOpen ? handleSaveEdit : handleCreateProject} className="space-y-4">
+            <form onSubmit={isEditModalOpen ? handleSaveEdit : handleCreateProject} className="space-y-3.5 text-xs">
               <div>
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
                   Project / Shoot Name <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -1396,19 +1459,19 @@ export default function ProjectsPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Priya & Rohan's Royal Destination Wedding"
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 font-medium"
+                  className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
                     Event Type
                   </label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 font-medium cursor-pointer"
+                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 cursor-pointer"
                   >
                     <option value="Wedding">Wedding</option>
                     <option value="Corporate">Corporate</option>
@@ -1418,7 +1481,7 @@ export default function ProjectsPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
                     Client Name <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -1427,14 +1490,14 @@ export default function ProjectsPage() {
                     value={formData.client}
                     onChange={(e) => setFormData({ ...formData, client: e.target.value })}
                     placeholder="e.g. Eleanor Vance"
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 font-medium"
+                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
                     Venue / Destination
                   </label>
                   <input
@@ -1442,12 +1505,12 @@ export default function ProjectsPage() {
                     value={formData.venue}
                     onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
                     placeholder="e.g. Taj Lake Palace"
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 font-medium"
+                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
                     Call Time
                   </label>
                   <input
@@ -1455,32 +1518,32 @@ export default function ProjectsPage() {
                     value={formData.call_time}
                     onChange={(e) => setFormData({ ...formData, call_time: e.target.value })}
                     placeholder="08:00 AM"
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 font-medium"
+                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
                     Shoot Date
                   </label>
                   <input
                     type="date"
                     value={formData.first_event}
                     onChange={(e) => setFormData({ ...formData, first_event: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 font-medium"
+                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
                     Production Stage
                   </label>
                   <select
                     value={formData.stage}
                     onChange={(e) => setFormData({ ...formData, stage: Number(e.target.value) })}
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500 font-medium cursor-pointer"
+                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 cursor-pointer"
                   >
                     {PRODUCTION_STAGES.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -1491,21 +1554,21 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end space-x-3 border-t border-slate-100 dark:border-white/10">
+              <div className="pt-3 flex items-center justify-end space-x-2 border-t border-slate-100 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => {
                     setIsAddModalOpen(false);
                     setIsEditModalOpen(false);
                   }}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-xs font-bold text-slate-700 dark:text-slate-300 transition-colors"
+                  className="btn-pixeva-secondary"
                 >
                   Cancel
                 </button>
 
                 <button
                   type="submit"
-                  className="btn-pixeva-primary px-5 py-2.5 text-xs font-extrabold shadow-lg shadow-sky-500/25"
+                  className="btn-pixeva-primary"
                 >
                   {isEditModalOpen ? 'Save Changes' : 'Create Shoot Project'}
                 </button>
@@ -1522,6 +1585,8 @@ export default function ProjectsPage() {
         message={confirmModal.message}
         confirmText={confirmModal.confirmText}
         isDestructive={confirmModal.isDestructive}
+        itemName={confirmModal.itemName}
+        itemType={confirmModal.itemType}
         onConfirm={confirmModal.onConfirm}
         onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
       />

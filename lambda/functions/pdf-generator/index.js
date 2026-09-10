@@ -5,7 +5,8 @@
 exports.handler = async (event) => {
   console.log('Received PDF generation trigger event:', JSON.stringify(event, null, 2));
 
-  const { dealId, clientName, amount, items } = event;
+  const payload = typeof event.body === 'string' ? JSON.parse(event.body || '{}') : (event.body || event);
+  const { dealId, clientName, amount, items } = payload;
 
   // Perform PDF Generation logic (e.g., using PDFKit or Puppeteer)
   const pdfBufferInfo = {

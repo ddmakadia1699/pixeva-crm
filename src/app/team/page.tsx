@@ -6,7 +6,6 @@ import ConfirmModal from '@/components/ui/ConfirmModal';
 import {
   Search,
   Download,
-  Users,
   Plus,
   Trash2,
   X,
@@ -14,13 +13,7 @@ import {
   EyeOff,
   UserPlus,
   Info,
-  Phone,
-  Mail,
-  Briefcase,
-  DollarSign,
   Edit,
-  ShieldAlert,
-  ChevronDown,
   GripVertical,
   ArrowUp,
   ArrowDown
@@ -80,7 +73,6 @@ const INITIAL_MEMBERS: TeamMember[] = [
 
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>(INITIAL_MEMBERS);
-  const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -98,8 +90,6 @@ export default function TeamPage() {
       }
     } catch (e) {
       console.error('Error reading team members from localStorage:', e);
-    } finally {
-      setIsLoaded(true);
     }
   }, []);
 
@@ -118,7 +108,6 @@ export default function TeamPage() {
   };
   const [activeTab, setActiveTab] = useState<'Roster' | 'Freelancer Priority'>('Roster');
   const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBannerVisible, setIsBannerVisible] = useState(true);
 
@@ -139,23 +128,18 @@ export default function TeamPage() {
 
   // Metrics
   const totalCount = members.length;
-  const inHouseCount = members.filter((m) => m.type === 'In House').length;
-  const freelancerCount = members.filter((m) => m.type === 'Freelancer').length;
 
   // Filter Logic
   const filteredMembers = members.filter((m) => {
     if (activeTab === 'Freelancer Priority' && m.type !== 'Freelancer') return false;
 
     const query = searchTerm.toLowerCase();
-    const matchesSearch =
+    return (
       m.name.toLowerCase().includes(query) ||
       m.role.toLowerCase().includes(query) ||
       m.email.toLowerCase().includes(query) ||
-      m.phone.includes(query);
-
-    const matchesType = typeFilter === 'all' || m.type === typeFilter;
-
-    return matchesSearch && matchesType;
+      m.phone.includes(query)
+    );
   });
 
   // Selection Handlers
@@ -180,6 +164,8 @@ export default function TeamPage() {
     title: string;
     message: string;
     confirmText?: string;
+    itemName?: string;
+    itemType?: string;
     onConfirm: () => void;
   }>({
     isOpen: false,
@@ -194,8 +180,10 @@ export default function TeamPage() {
     setConfirmModal({
       isOpen: true,
       title: 'Delete Selected Team Members',
-      message: `Are you sure you want to delete ${selectedIds.length} selected team member(s)? This action cannot be undone.`,
+      message: `Are you sure you want to delete ${selectedIds.length} selected team member(s)? This action permanently removes them and their linked shoot schedules.`,
       confirmText: `Delete (${selectedIds.length})`,
+      itemName: `${selectedIds.length} Team Members`,
+      itemType: 'Batch Studio Crew',
       onConfirm: () => {
         updateMembers(members.filter((m) => !selectedIds.includes(m.id)));
         setSelectedIds([]);
@@ -210,8 +198,10 @@ export default function TeamPage() {
     setConfirmModal({
       isOpen: true,
       title: 'Delete Team Member',
-      message: `Are you sure you want to delete ${name}? All linked assignments and contact data will be removed.`,
-      confirmText: 'Delete',
+      message: `Are you sure you want to delete ${name}? All linked assignments, access credentials, and contact data will be purged.`,
+      confirmText: 'Delete Member',
+      itemName: member?.name || 'Team Member',
+      itemType: member?.role || 'Studio Staff',
       onConfirm: () => {
         updateMembers(members.filter((m) => m.id !== id));
         setSelectedIds(selectedIds.filter((i) => i !== id));
@@ -315,10 +305,10 @@ export default function TeamPage() {
       {/* Top Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-1">
             Team
           </h1>
-          <p className="text-sm text-[#a0a0b0]">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Your studio’s crew, roles and freelancer bench
           </p>
         </div>
@@ -327,7 +317,7 @@ export default function TeamPage() {
           {selectedIds.length > 0 && (
             <button
               onClick={handleDeleteSelected}
-              className="flex items-center space-x-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/40 transition-all animate-fadeIn"
+              className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-all animate-fadeIn"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Delete Selected ({selectedIds.length})</span>
@@ -337,15 +327,15 @@ export default function TeamPage() {
           <button
             onClick={handleExportCsv}
             disabled={filteredMembers.length === 0}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all disabled:opacity-40"
+            className="btn-pixeva-secondary flex items-center space-x-1.5 disabled:opacity-40"
           >
-            <Download className="w-3.5 h-3.5 text-[#8b5cf6]" />
+            <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Export CSV</span>
           </button>
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="btn-pixeva-primary px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-lg shadow-[#00d4ff]/20"
+            className="btn-pixeva-primary flex items-center space-x-1.5"
           >
             <Plus className="w-4 h-4" />
             <span>Add Member</span>
@@ -354,18 +344,18 @@ export default function TeamPage() {
       </div>
 
       {/* Roster & Freelancer Tabs + Counter Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-[#12121a]/90 p-4 rounded-2xl border border-white/10">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pixeva-card p-3 rounded-xl">
         <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-1 bg-[#0a0a0f] p-1 rounded-xl border border-white/10">
+          <div className="flex items-center space-x-1 bg-slate-100/90 dark:bg-white/5 p-1 rounded-lg border border-slate-200/80 dark:border-white/10">
             <button
               onClick={() => {
                 setActiveTab('Roster');
                 setSelectedIds([]);
               }}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
                 activeTab === 'Roster'
-                  ? 'bg-[#00d4ff] text-black shadow-md shadow-[#00d4ff]/20'
-                  : 'text-[#a0a0b0] hover:text-white hover:bg-white/5'
+                  ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
               }`}
             >
               Roster
@@ -376,17 +366,17 @@ export default function TeamPage() {
                 setActiveTab('Freelancer Priority');
                 setSelectedIds([]);
               }}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
                 activeTab === 'Freelancer Priority'
-                  ? 'bg-[#8b5cf6] text-white shadow-md shadow-[#8b5cf6]/20'
-                  : 'text-[#a0a0b0] hover:text-white hover:bg-white/5'
+                  ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
               }`}
             >
               Freelancer Priority
             </button>
           </div>
 
-          <span className="text-xs font-bold text-[#a0a0b0] hidden md:inline-block">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 hidden md:inline-block">
             {totalCount} {totalCount === 1 ? 'member' : 'members'} in your studio
           </span>
         </div>
@@ -394,13 +384,13 @@ export default function TeamPage() {
         {/* Search Input */}
         <div className="flex flex-1 sm:max-w-xs items-center space-x-2">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-[#a0a0b0] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search team members…"
-              className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+              className="w-full bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
             />
           </div>
         </div>
@@ -408,16 +398,16 @@ export default function TeamPage() {
 
       {/* Info Callout Banners */}
       {activeTab === 'Roster' && isBannerVisible && (
-        <div className="bg-[#12121a] border border-[#00d4ff]/30 rounded-2xl p-4 flex items-start justify-between gap-3 animate-fadeIn">
-          <div className="flex items-start space-x-3 text-xs text-[#a0a0b0] leading-relaxed">
-            <Info className="w-5 h-5 text-[#00d4ff] shrink-0 mt-0.5" />
+        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800 flex items-start justify-between gap-3 animate-fadeIn">
+          <div className="flex items-start space-x-2.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
             <p>
-              Click the <strong className="text-white">eye icon</strong> next to a member’s contact number to control whether clients can see it on their Client Portal — open means visible, crossed-out means hidden.
+              Click the <strong className="text-slate-900 dark:text-white">eye icon</strong> next to a member’s contact number to control whether clients can see it on their Client Portal — open means visible, crossed-out means hidden.
             </p>
           </div>
           <button
             onClick={() => setIsBannerVisible(false)}
-            className="text-[#a0a0b0] hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+            className="text-slate-400 hover:text-slate-600 p-1 rounded-md transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -425,10 +415,10 @@ export default function TeamPage() {
       )}
 
       {activeTab === 'Freelancer Priority' && (
-        <div className="bg-[#12121a] border border-[#8b5cf6]/30 rounded-2xl p-4 flex items-start space-x-3 text-xs text-[#a0a0b0] leading-relaxed animate-fadeIn">
-          <Info className="w-5 h-5 text-[#8b5cf6] shrink-0 mt-0.5" />
+        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800 flex items-start space-x-2.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed animate-fadeIn">
+          <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
           <p>
-            Drag to set the order freelancers get called when a project needs a booking — <strong className="text-white">#1 is asked first</strong>. If they’re unavailable, the next priority is asked next.
+            Drag to set the order freelancers get called when a project needs a booking — <strong className="text-slate-900 dark:text-white">#1 is asked first</strong>. If they’re unavailable, the next priority is asked next.
           </p>
         </div>
       )}
@@ -436,152 +426,146 @@ export default function TeamPage() {
       {/* Main Content Views */}
       {activeTab === 'Roster' ? (
         filteredMembers.length === 0 ? (
-          <div className="pixeva-card rounded-2xl border border-white/10 p-12 text-center space-y-4 shadow-card">
-            <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-4xl">
-              👥
+          <div className="pixeva-card rounded-xl p-12 text-center space-y-3">
+            <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+              <UserPlus className="w-5 h-5" />
             </div>
             <div className="space-y-1 max-w-sm mx-auto">
-              <h3 className="text-lg font-bold text-white tracking-tight">No team members yet</h3>
-              <p className="text-xs text-[#a0a0b0]">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">No team members yet</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Add your first team member to get started.
               </p>
             </div>
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="btn-pixeva-primary px-5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center space-x-2 shadow-lg shadow-[#00d4ff]/20"
+              className="btn-pixeva-primary inline-flex items-center space-x-1.5 mt-2"
             >
               <UserPlus className="w-4 h-4" />
               <span>Add Member</span>
             </button>
           </div>
         ) : (
-          <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card w-full">
-            <table className="w-full text-left text-xs text-[#a0a0b0] table-fixed">
-              <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+          <div className="pixeva-card rounded-xl overflow-x-auto w-full">
+            <table className="w-full text-left text-xs min-w-[850px]">
+              <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200/80 text-[10px]">
                 <tr>
-                  <th className="w-10 px-2 py-3 text-center">
+                  <th className="w-10 px-3 py-3 text-center">
                     <input
                       type="checkbox"
                       checked={selectedIds.length > 0 && selectedIds.length === filteredMembers.length}
                       onChange={handleToggleSelectAll}
-                      className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
+                      className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
                     />
                   </th>
-                  <th className="w-[30%] px-3 py-3">Member Name</th>
-                  <th className="w-[20%] px-3 py-3">Role</th>
-                  <th className="w-[15%] px-3 py-3">Type</th>
-                  <th className="w-[20%] px-3 py-3">Contact Number</th>
-                  <th className="w-[15%] px-3 py-3">Day Rate</th>
-                  <th className="w-[10%] px-3 py-3 text-right">Actions</th>
+                  <th className="w-[30%] px-4 py-3">Member Name</th>
+                  <th className="w-[20%] px-4 py-3">Role</th>
+                  <th className="w-[15%] px-4 py-3">Type</th>
+                  <th className="w-[20%] px-4 py-3">Contact Number</th>
+                  <th className="w-[15%] px-4 py-3">Day Rate</th>
+                  <th className="w-[12%] px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-                <tbody className="divide-y divide-white/5">
-                  {filteredMembers.map((m) => {
-                    const isSelected = selectedIds.includes(m.id);
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {filteredMembers.map((m) => {
+                  const isSelected = selectedIds.includes(m.id);
 
-                    return (
-                      <tr
-                        key={m.id}
-                        className={`hover:bg-white/5 transition-colors group ${
-                          isSelected ? 'bg-[#00d4ff]/5' : ''
-                        }`}
-                      >
-                        {/* Checkbox */}
-                        <td className="w-10 px-4 py-4">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => handleToggleSelect(m.id)}
-                            className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
-                          />
-                        </td>
+                  return (
+                    <tr
+                      key={m.id}
+                      className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors ${
+                        isSelected ? 'bg-slate-50 dark:bg-slate-800/60' : ''
+                      }`}
+                    >
+                      {/* Checkbox */}
+                      <td className="w-10 px-4 py-3.5 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelect(m.id)}
+                          className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
+                        />
+                      </td>
 
-                        {/* Name & Email */}
-                        <td className="px-5 py-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00d4ff]/20 to-[#8b5cf6]/20 border border-white/10 flex items-center justify-center font-bold text-white text-xs">
-                              {m.name.charAt(0)}
-                            </div>
-                            <div>
-                              <div className="font-bold text-white text-sm">{m.name}</div>
-                              {m.email && (
-                                <div className="text-[11px] text-[#a0a0b0] mt-0.5">{m.email}</div>
-                              )}
-                            </div>
+                      {/* Name & Email */}
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center space-x-2.5">
+                          <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-slate-700 dark:text-slate-200 text-xs">
+                            {m.name.charAt(0)}
                           </div>
-                        </td>
+                          <div>
+                            <div className="font-semibold text-slate-900 dark:text-white text-xs">{m.name}</div>
+                            {m.email && (
+                              <div className="text-[11px] text-slate-500 dark:text-slate-400">{m.email}</div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
 
-                        {/* Role */}
-                        <td className="px-5 py-4">
-                          <span className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs font-semibold text-white">
-                            {m.role}
-                          </span>
-                        </td>
+                      {/* Role */}
+                      <td className="px-4 py-3.5">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-medium">
+                          {m.role}
+                        </span>
+                      </td>
 
-                        {/* Member Type */}
-                        <td className="px-5 py-4">
-                          <span
-                            className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                              m.type === 'In House'
-                                ? 'bg-[#00d4ff]/20 text-[#00d4ff] border-[#00d4ff]/40'
-                                : 'bg-[#8b5cf6]/20 text-[#8b5cf6] border-[#8b5cf6]/40'
+                      {/* Member Type */}
+                      <td className="px-4 py-3.5">
+                        <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          {m.type}
+                        </span>
+                      </td>
+
+                      {/* Contact Number & Visibility Toggle */}
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="font-mono text-slate-600 dark:text-slate-300 text-xs">{m.phone || '—'}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePhoneVisibility(m.id)}
+                            title={m.is_phone_visible ? 'Visible on Client Portal' : 'Hidden on Client Portal'}
+                            className={`p-1 rounded-md transition-colors ${
+                              m.is_phone_visible
+                                ? 'text-slate-600 hover:text-slate-900'
+                                : 'text-slate-300 hover:text-slate-500'
                             }`}
                           >
-                            {m.type}
-                          </span>
-                        </td>
-
-                        {/* Contact Number & Visibility Toggle */}
-                        <td className="px-5 py-4">
-                          <div className="flex items-center space-x-2">
-                            <span className="font-mono text-white text-xs">{m.phone || '—'}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleTogglePhoneVisibility(m.id)}
-                              title={m.is_phone_visible ? 'Visible on Client Portal' : 'Hidden on Client Portal'}
-                              className={`p-1 rounded-lg transition-colors ${
-                                m.is_phone_visible
-                                  ? 'text-[#00d4ff] hover:bg-[#00d4ff]/10'
-                                  : 'text-rose-400 hover:bg-rose-500/10'
-                              }`}
-                            >
-                              {m.is_phone_visible ? (
-                                <Eye className="w-4 h-4" />
-                              ) : (
-                                <EyeOff className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
-                        </td>
-
-                        {/* Day Rate */}
-                        <td className="px-5 py-4 font-mono text-white text-xs">
-                          {m.day_rate ? `₹${m.day_rate}/day` : '—'}
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-5 py-4 text-right space-x-2">
-                          <button
-                            onClick={() => setEditingMember(m)}
-                            className="px-3 py-1.5 rounded-lg bg-[#12121a] hover:bg-white/10 text-white border border-white/10 text-xs font-semibold transition-all inline-flex items-center space-x-1"
-                          >
-                            <Edit className="w-3.5 h-3.5 text-[#00d4ff]" />
-                            <span>Edit</span>
+                            {m.is_phone_visible ? (
+                              <Eye className="w-3.5 h-3.5" />
+                            ) : (
+                              <EyeOff className="w-3.5 h-3.5" />
+                            )}
                           </button>
+                        </div>
+                      </td>
 
-                          <button
-                            onClick={() => handleDeleteSingle(m.id)}
-                            title="Delete Member"
-                            className="p-1.5 rounded-lg bg-[#12121a] hover:bg-rose-500/20 text-rose-400 border border-white/10 hover:border-rose-500/40 text-xs transition-all inline-flex items-center"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                      {/* Day Rate */}
+                      <td className="px-4 py-3.5 font-mono text-slate-900 dark:text-white text-xs font-semibold">
+                        {m.day_rate ? `${m.day_rate}/day` : '—'}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-4 py-3.5 text-right space-x-1.5">
+                        <button
+                          onClick={() => setEditingMember(m)}
+                          className="px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium transition-all inline-flex items-center space-x-1"
+                        >
+                          <Edit className="w-3 h-3 text-slate-400" />
+                          <span>Edit</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteSingle(m.id)}
+                          title="Delete Member"
+                          className="p-1 rounded-md text-slate-400 hover:text-rose-600 transition-colors inline-flex items-center"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )
       ) : (
@@ -591,47 +575,41 @@ export default function TeamPage() {
 
           if (freelancers.length === 0) {
             return (
-              <div className="pixeva-card rounded-2xl border border-white/10 p-12 text-center space-y-4 shadow-card">
-                <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-4xl">
-                  👥
-                </div>
-                <div className="space-y-1 max-w-md mx-auto">
-                  <h3 className="text-lg font-bold text-white tracking-tight">No freelancers yet</h3>
-                  <p className="text-xs text-[#a0a0b0] leading-relaxed">
-                    Add a team member and mark them as a freelancer in the Roster tab to rank them here.
-                  </p>
-                </div>
+              <div className="pixeva-card rounded-xl p-12 text-center space-y-2">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">No freelancers yet</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Add a team member and mark them as a freelancer in the Roster tab to rank them here.
+                </p>
               </div>
             );
           }
 
           return (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {freelancers.map((f, idx) => (
                 <div
                   key={f.id}
-                  className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/90 flex items-center justify-between gap-4 hover:border-[#8b5cf6]/40 transition-colors"
+                  className="pixeva-card rounded-xl p-3.5 flex items-center justify-between gap-4 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
                 >
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-3">
                     {/* Rank Badge */}
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#8b5cf6]/30 to-[#00d4ff]/20 border border-[#8b5cf6]/40 flex items-center justify-center font-extrabold text-white text-sm shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-bold text-slate-900 dark:text-white text-xs shrink-0">
                       #{idx + 1}
                     </div>
 
-                    {/* Drag Icon */}
-                    <GripVertical className="w-5 h-5 text-[#a0a0b0] cursor-grab shrink-0" />
+                    <GripVertical className="w-4 h-4 text-slate-400 cursor-grab shrink-0" />
 
                     {/* Info */}
                     <div>
-                      <h4 className="font-bold text-white text-sm">{f.name}</h4>
-                      <div className="flex items-center space-x-3 text-xs text-[#a0a0b0] mt-0.5">
-                        <span className="text-white font-medium">{f.role}</span>
+                      <h4 className="font-semibold text-slate-900 dark:text-white text-xs">{f.name}</h4>
+                      <div className="flex items-center space-x-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        <span>{f.role}</span>
                         <span>•</span>
                         <span className="font-mono">{f.phone || 'No phone'}</span>
                         {f.day_rate && (
                           <>
                             <span>•</span>
-                            <span className="text-[#00d4ff] font-semibold">₹{f.day_rate}/day</span>
+                            <span className="text-slate-900 dark:text-white font-medium">{f.day_rate}/day</span>
                           </>
                         )}
                       </div>
@@ -639,30 +617,30 @@ export default function TeamPage() {
                   </div>
 
                   {/* Reorder & Action Controls */}
-                  <div className="flex items-center space-x-1.5">
+                  <div className="flex items-center space-x-1">
                     <button
                       disabled={idx === 0}
                       onClick={() => handleMoveFreelancerPriority(idx, idx - 1)}
-                      className="p-2 rounded-xl bg-[#0a0a0f] hover:bg-white/10 text-white border border-white/10 disabled:opacity-30 transition-all"
+                      className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-600 disabled:opacity-30 transition-all"
                       title="Move Priority Up"
                     >
-                      <ArrowUp className="w-4 h-4" />
+                      <ArrowUp className="w-3.5 h-3.5" />
                     </button>
 
                     <button
                       disabled={idx === freelancers.length - 1}
                       onClick={() => handleMoveFreelancerPriority(idx, idx + 1)}
-                      className="p-2 rounded-xl bg-[#0a0a0f] hover:bg-white/10 text-white border border-white/10 disabled:opacity-30 transition-all"
+                      className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-600 disabled:opacity-30 transition-all"
                       title="Move Priority Down"
                     >
-                      <ArrowDown className="w-4 h-4" />
+                      <ArrowDown className="w-3.5 h-3.5" />
                     </button>
 
                     <button
                       onClick={() => setEditingMember(f)}
-                      className="px-3 py-2 rounded-xl bg-[#0a0a0f] hover:bg-white/10 text-white border border-white/10 text-xs font-semibold transition-all inline-flex items-center space-x-1"
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 text-slate-700 text-xs font-medium transition-all inline-flex items-center space-x-1 ml-1"
                     >
-                      <Edit className="w-3.5 h-3.5 text-[#00d4ff]" />
+                      <Edit className="w-3 h-3 text-slate-400" />
                       <span>Edit</span>
                     </button>
                   </div>
@@ -675,14 +653,14 @@ export default function TeamPage() {
 
       {/* Add Member Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-extrabold text-white text-base">Add Team Member</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md pixeva-card bg-white dark:bg-[#0f172a] rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">Add Team Member</h3>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -690,102 +668,92 @@ export default function TeamPage() {
 
             <form onSubmit={handleAddSubmit} className="space-y-3.5 text-xs">
               <div>
-                <label className="font-semibold text-white block mb-1">Full Name *</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Full Name *</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Dhruvi Patel"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-white block mb-1">Role *</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Role *</label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                   >
-                    <option value="Lead Photographer" className="bg-[#12121a]">Lead Photographer</option>
-                    <option value="Candid Photographer" className="bg-[#12121a]">Candid Photographer</option>
-                    <option value="Cinematographer" className="bg-[#12121a]">Cinematographer</option>
-                    <option value="Drone Operator" className="bg-[#12121a]">Drone Operator</option>
-                    <option value="Video Editor" className="bg-[#12121a]">Video Editor</option>
-                    <option value="Photo Editor" className="bg-[#12121a]">Photo Editor</option>
-                    <option value="Assistant" className="bg-[#12121a]">Assistant</option>
+                    <option value="Lead Photographer">Lead Photographer</option>
+                    <option value="Candid Photographer">Candid Photographer</option>
+                    <option value="Cinematographer">Cinematographer</option>
+                    <option value="Drone Operator">Drone Operator</option>
+                    <option value="Video Editor">Video Editor</option>
+                    <option value="Photo Editor">Photo Editor</option>
+                    <option value="Assistant">Assistant</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="font-semibold text-white block mb-1">Type *</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Type *</label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as MemberType })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                   >
-                    <option value="In House" className="bg-[#12121a]">In House</option>
-                    <option value="Freelancer" className="bg-[#12121a]">Freelancer</option>
+                    <option value="In House">In House</option>
+                    <option value="Freelancer">Freelancer</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="font-semibold text-white block">Contact Number</label>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, is_phone_visible: !formData.is_phone_visible })}
-                    className="text-[11px] text-[#00d4ff] hover:underline flex items-center space-x-1"
-                  >
-                    {formData.is_phone_visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-rose-400" />}
-                    <span>{formData.is_phone_visible ? 'Portal Visible' : 'Portal Hidden'}</span>
-                  </button>
-                </div>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Contact Number</label>
                 <input
                   type="text"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="+91 98765 43210"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-white block mb-1">Email Address</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Email Address</label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="dhruvi@studio.com"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-white block mb-1">Day Rate (₹)</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Day Rate (₹)</label>
                 <input
                   type="text"
                   value={formData.day_rate}
                   onChange={(e) => setFormData({ ...formData, day_rate: e.target.value })}
                   placeholder="e.g. 15,000"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
-              <div className="pt-3 flex justify-end space-x-3 border-t border-white/10">
+              <div className="pt-3 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#a0a0b0] hover:bg-white/5"
+                  className="btn-pixeva-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-pixeva-primary px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-[#00d4ff]/20"
+                  className="btn-pixeva-primary"
                 >
                   Add Member
                 </button>
@@ -797,14 +765,14 @@ export default function TeamPage() {
 
       {/* Edit Member Modal */}
       {editingMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-extrabold text-white text-base">Edit Team Member</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md pixeva-card bg-white dark:bg-[#0f172a] rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">Edit Team Member</h3>
               <button
                 type="button"
                 onClick={() => setEditingMember(null)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -812,81 +780,71 @@ export default function TeamPage() {
 
             <form onSubmit={handleEditSubmit} className="space-y-3.5 text-xs">
               <div>
-                <label className="font-semibold text-white block mb-1">Full Name</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Full Name</label>
                 <input
                   type="text"
                   required
                   value={editingMember.name}
                   onChange={(e) => setEditingMember({ ...editingMember, name: e.target.value })}
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-white block mb-1">Role</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Role</label>
                   <input
                     type="text"
                     value={editingMember.role}
                     onChange={(e) => setEditingMember({ ...editingMember, role: e.target.value })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                   />
                 </div>
 
                 <div>
-                  <label className="font-semibold text-white block mb-1">Type</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Type</label>
                   <select
                     value={editingMember.type}
                     onChange={(e) => setEditingMember({ ...editingMember, type: e.target.value as MemberType })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                   >
-                    <option value="In House" className="bg-[#12121a]">In House</option>
-                    <option value="Freelancer" className="bg-[#12121a]">Freelancer</option>
+                    <option value="In House">In House</option>
+                    <option value="Freelancer">Freelancer</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="font-semibold text-white block mb-1">Contact Number</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Contact Number</label>
                 <input
                   type="text"
                   value={editingMember.phone}
                   onChange={(e) => setEditingMember({ ...editingMember, phone: e.target.value })}
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-white block mb-1">Email</label>
-                <input
-                  type="email"
-                  value={editingMember.email}
-                  onChange={(e) => setEditingMember({ ...editingMember, email: e.target.value })}
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-white block mb-1">Day Rate (₹)</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Day Rate</label>
                 <input
                   type="text"
                   value={editingMember.day_rate || ''}
                   onChange={(e) => setEditingMember({ ...editingMember, day_rate: e.target.value })}
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
-              <div className="pt-3 flex justify-end space-x-3 border-t border-white/10">
+              <div className="pt-3 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setEditingMember(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#a0a0b0] hover:bg-white/5"
+                  className="btn-pixeva-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-pixeva-primary px-5 py-2 rounded-xl text-xs font-bold"
+                  className="btn-pixeva-primary"
                 >
                   Save Changes
                 </button>
@@ -896,18 +854,20 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* Feedback Modal */}
-      <FeedbackModal />
-
-      {/* Custom Confirmation Modal */}
+      {/* Confirmation Modal */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         title={confirmModal.title}
         message={confirmModal.message}
-        confirmText={confirmModal.confirmText || 'Delete'}
+        confirmText={confirmModal.confirmText}
+        itemName={confirmModal.itemName}
+        itemType={confirmModal.itemType}
         onConfirm={confirmModal.onConfirm}
         onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
       />
+
+      {/* Feedback Modal */}
+      <FeedbackModal />
     </div>
   );
 }

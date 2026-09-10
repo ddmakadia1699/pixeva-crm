@@ -9,21 +9,13 @@ import {
   Plus,
   Trash2,
   X,
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
   ArrowUpRight,
   ArrowDownLeft,
-  Briefcase,
   Receipt,
   FileText,
   Loader2,
   CheckCircle2,
-  ChevronRight,
   ChevronDown,
-  Calendar,
-  Layers,
-  PieChart
 } from 'lucide-react';
 
 export interface ProjectFinanceItem {
@@ -96,6 +88,8 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
   },
 ];
 
+import { apiClient } from '@/lib/api/apiClient';
+
 const FINANCES_STORAGE_KEY = 'pixeva_finances';
 const TRANSACTIONS_STORAGE_KEY = 'pixeva_transactions';
 
@@ -103,35 +97,49 @@ export default function FinancesPage() {
   const [projectFinances, setProjectFinances] = useState<ProjectFinanceItem[]>(INITIAL_PROJECT_FINANCES);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
 
-  // Load from localStorage on mount
+  // Load from API Gateway with account scoping
   useEffect(() => {
-    try {
-      const savedFin = localStorage.getItem(FINANCES_STORAGE_KEY);
-      if (savedFin) {
-        const parsed = JSON.parse(savedFin);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setProjectFinances(parsed);
-        } else {
-          localStorage.setItem(FINANCES_STORAGE_KEY, JSON.stringify(INITIAL_PROJECT_FINANCES));
+    async function loadCloudFinances() {
+      try {
+        const cloudData = await apiClient.finances.getSummary();
+        if (cloudData) {
+          if (Array.isArray(cloudData.projectFinances) && cloudData.projectFinances.length > 0) {
+            setProjectFinances(cloudData.projectFinances);
+            try {
+              localStorage.setItem(FINANCES_STORAGE_KEY, JSON.stringify(cloudData.projectFinances));
+            } catch {}
+          }
+          if (Array.isArray(cloudData.transactions) && cloudData.transactions.length > 0) {
+            setTransactions(cloudData.transactions);
+            try {
+              localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(cloudData.transactions));
+            } catch {}
+          }
+          return;
         }
-      } else {
-        localStorage.setItem(FINANCES_STORAGE_KEY, JSON.stringify(INITIAL_PROJECT_FINANCES));
+      } catch (e) {
+        console.warn('API Gateway finance sync notice, using local cache:', e);
       }
 
-      const savedTx = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
-      if (savedTx) {
-        const parsedTx = JSON.parse(savedTx);
-        if (Array.isArray(parsedTx) && parsedTx.length > 0) {
-          setTransactions(parsedTx);
-        } else {
-          localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(INITIAL_TRANSACTIONS));
+      try {
+        const savedFin = localStorage.getItem(FINANCES_STORAGE_KEY);
+        if (savedFin) {
+          const parsed = JSON.parse(savedFin);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setProjectFinances(parsed);
+          }
         }
-      } else {
-        localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(INITIAL_TRANSACTIONS));
-      }
-    } catch (e) {
-      console.error('Error reading finances from localStorage:', e);
+        const savedTx = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
+        if (savedTx) {
+          const parsedTx = JSON.parse(savedTx);
+          if (Array.isArray(parsedTx) && parsedTx.length > 0) {
+            setTransactions(parsedTx);
+          }
+        }
+      } catch (e) {}
     }
+
+    loadCloudFinances();
   }, []);
 
   const updateFinances = (updater: ProjectFinanceItem[] | ((prev: ProjectFinanceItem[]) => ProjectFinanceItem[])) => {
@@ -163,7 +171,6 @@ export default function FinancesPage() {
   };
   const [activeTab, setActiveTab] = useState<'Project Finances' | 'Company Expenses' | 'All Transactions'>('Project Finances');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>('fin-proj-1');
 
   // All Transactions Tab Filters
   const [txSearchTerm, setTxSearchTerm] = useState('');
@@ -214,15 +221,6 @@ export default function FinancesPage() {
     return p.project_name.toLowerCase().includes(query) || p.client.toLowerCase().includes(query);
   });
 
-  const filteredTransactions = transactions.filter((t) => {
-    const query = searchTerm.toLowerCase();
-    return (
-      t.project_name.toLowerCase().includes(query) ||
-      t.category.toLowerCase().includes(query) ||
-      (t.note && t.note.toLowerCase().includes(query))
-    );
-  });
-
   // Add Expense Submit
   const handleAddExpenseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -238,8 +236,6 @@ export default function FinancesPage() {
       date: expenseForm.date,
       note: expenseForm.note || undefined,
     };
-
-    setTransactions([newTx, ...transactions]);
 
     updateTransactions([newTx, ...transactions]);
 
@@ -374,10 +370,10 @@ export default function FinancesPage() {
       {/* Top Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-1">
             Finances
           </h1>
-          <p className="text-sm text-[#a0a0b0]">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Revenue, team payouts, and expenses across every project
           </p>
         </div>
@@ -385,23 +381,23 @@ export default function FinancesPage() {
         <div className="flex items-center space-x-2 shrink-0">
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all"
+            className="btn-pixeva-secondary flex items-center space-x-1.5"
           >
-            <FileUp className="w-3.5 h-3.5 text-[#00d4ff]" />
+            <FileUp className="w-3.5 h-3.5 text-slate-500" />
             <span>Import CSV</span>
           </button>
 
           <button
             onClick={() => setIsRecordPaymentOpen(true)}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all"
+            className="btn-pixeva-secondary flex items-center space-x-1.5"
           >
-            <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
+            <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600" />
             <span>Record Payment</span>
           </button>
 
           <button
             onClick={() => setIsAddExpenseOpen(true)}
-            className="btn-pixeva-primary px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-lg shadow-[#00d4ff]/20"
+            className="btn-pixeva-primary flex items-center space-x-1.5"
           >
             <Plus className="w-4 h-4" />
             <span>Add Expense</span>
@@ -411,46 +407,54 @@ export default function FinancesPage() {
 
       {/* KPI Financial Totals Row */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
-          <p className="text-2xl font-extrabold text-emerald-400 mb-1">₹{totalReceived.toLocaleString('en-IN')}</p>
-          <p className="text-xs text-[#a0a0b0] font-semibold">Received</p>
+        <div className="pixeva-card rounded-xl p-4">
+          <p className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 mb-0.5">
+            ₹{totalReceived.toLocaleString('en-IN')}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Received</p>
         </div>
 
-        <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
-          <p className="text-2xl font-extrabold text-white mb-1">₹{totalBalanceDue.toLocaleString('en-IN')}</p>
-          <p className="text-xs text-[#a0a0b0] font-semibold">Balance Due</p>
+        <div className="pixeva-card rounded-xl p-4">
+          <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-0.5">
+            ₹{totalBalanceDue.toLocaleString('en-IN')}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Balance Due</p>
         </div>
 
-        <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
-          <p className="text-2xl font-extrabold text-[#8b5cf6] mb-1">₹{totalTeamPayouts.toLocaleString('en-IN')}</p>
-          <p className="text-xs text-[#a0a0b0] font-semibold">Team Payouts</p>
+        <div className="pixeva-card rounded-xl p-4">
+          <p className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 mb-0.5">
+            ₹{totalTeamPayouts.toLocaleString('en-IN')}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Team Payouts</p>
         </div>
 
-        <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
-          <p className="text-2xl font-extrabold text-rose-400 mb-1">₹{totalExpenses.toLocaleString('en-IN')}</p>
-          <p className="text-xs text-[#a0a0b0] font-semibold">Expenses</p>
+        <div className="pixeva-card rounded-xl p-4">
+          <p className="text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400 mb-0.5">
+            ₹{totalExpenses.toLocaleString('en-IN')}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Expenses</p>
         </div>
 
-        <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80 col-span-2 md:col-span-1">
-          <p className={`text-2xl font-extrabold mb-1 ${netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+        <div className="pixeva-card rounded-xl p-4 col-span-2 md:col-span-1">
+          <p className={`text-2xl font-bold tracking-tight mb-0.5 ${netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
             ₹{netProfit.toLocaleString('en-IN')}
           </p>
-          <p className="text-xs text-[#a0a0b0] font-semibold">Net Profit</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Net Profit</p>
         </div>
       </div>
 
       {/* Sub-Navigation Tabs & Search Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-[#12121a]/90 p-4 rounded-2xl border border-white/10">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pixeva-card p-3 rounded-xl">
         {/* Tabs */}
-        <div className="flex items-center space-x-1 bg-[#0a0a0f] p-1 rounded-xl border border-white/10">
+        <div className="flex items-center space-x-1 bg-slate-100/90 dark:bg-white/5 p-1 rounded-lg border border-slate-200/80 dark:border-white/10">
           {(['Project Finances', 'Company Expenses', 'All Transactions'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
                 activeTab === tab
-                  ? 'bg-[#00d4ff] text-black shadow-md shadow-[#00d4ff]/20'
-                  : 'text-[#a0a0b0] hover:text-white hover:bg-white/5'
+                  ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
               }`}
             >
               {tab}
@@ -461,22 +465,22 @@ export default function FinancesPage() {
         {/* Search & Export CSV */}
         <div className="flex items-center space-x-2 flex-1 sm:max-w-md">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-[#a0a0b0] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search projects…"
-              className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+              className="w-full bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
             />
           </div>
 
           <button
             onClick={handleExportCsv}
             disabled={transactions.length === 0}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#0a0a0f] hover:bg-white/10 text-white border border-white/10 transition-all shrink-0 disabled:opacity-40"
+            className="btn-pixeva-secondary flex items-center space-x-1.5 shrink-0 disabled:opacity-40"
           >
-            <Download className="w-3.5 h-3.5 text-[#8b5cf6]" />
+            <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Export CSV</span>
           </button>
         </div>
@@ -491,26 +495,26 @@ export default function FinancesPage() {
             return (
               <div
                 key={p.id}
-                className="pixeva-card rounded-2xl border border-white/10 bg-[#12121a]/90 p-5 space-y-4 shadow-card hover:border-[#00d4ff]/30 transition-all"
+                className="pixeva-card rounded-xl p-5 space-y-4 hover:border-slate-300 dark:hover:border-slate-700 transition-all"
               >
                 {/* Card Top */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-3.5">
                   <div>
-                    <h3 className="font-extrabold text-white text-base tracking-tight">{p.project_name}</h3>
-                    <p className="text-xs text-[#a0a0b0] mt-0.5">{p.client} • Shoot: {p.event_date}</p>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base tracking-tight">{p.project_name}</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{p.client} • Shoot: {p.event_date}</p>
                   </div>
 
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => setIsRecordPaymentOpen(true)}
-                      className="px-3 py-1.5 rounded-xl bg-[#0a0a0f] hover:bg-white/10 text-emerald-400 border border-white/10 text-xs font-semibold transition-all inline-flex items-center space-x-1"
+                      className="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/70 dark:border-emerald-800/50 text-xs font-semibold hover:bg-emerald-100/60 transition-all inline-flex items-center space-x-1"
                     >
                       <ArrowDownLeft className="w-3.5 h-3.5" />
                       <span>Record Payment</span>
                     </button>
                     <button
                       onClick={() => setIsAddExpenseOpen(true)}
-                      className="px-3 py-1.5 rounded-xl bg-[#0a0a0f] hover:bg-white/10 text-rose-400 border border-white/10 text-xs font-semibold transition-all inline-flex items-center space-x-1"
+                      className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border border-rose-200/70 dark:border-rose-800/50 text-xs font-semibold hover:bg-rose-100/60 transition-all inline-flex items-center space-x-1"
                     >
                       <ArrowUpRight className="w-3.5 h-3.5" />
                       <span>Add Expense</span>
@@ -519,41 +523,41 @@ export default function FinancesPage() {
                 </div>
 
                 {/* Metrics Breakdown Grid */}
-                <div className="grid grid-cols-3 gap-4 pt-1">
-                  <div className="p-3 bg-[#0a0a0f] rounded-xl border border-white/10">
-                    <p className="text-[11px] text-[#a0a0b0] font-semibold mb-1">Received</p>
-                    <p className="text-lg font-bold text-emerald-400">₹{p.received.toLocaleString('en-IN')}</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 bg-slate-50/70 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800/80">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-0.5">Received</p>
+                    <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">₹{p.received.toLocaleString('en-IN')}</p>
                   </div>
 
-                  <div className="p-3 bg-[#0a0a0f] rounded-xl border border-white/10">
-                    <p className="text-[11px] text-[#a0a0b0] font-semibold mb-1">Balance</p>
-                    <p className="text-lg font-bold text-white">₹{p.balance_due.toLocaleString('en-IN')}</p>
+                  <div className="p-3 bg-slate-50/70 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800/80">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-0.5">Balance</p>
+                    <p className="text-base font-bold text-slate-900 dark:text-white">₹{p.balance_due.toLocaleString('en-IN')}</p>
                   </div>
 
-                  <div className="p-3 bg-[#0a0a0f] rounded-xl border border-white/10">
-                    <p className="text-[11px] text-[#a0a0b0] font-semibold mb-1">Net</p>
-                    <p className={`text-lg font-bold ${pNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <div className="p-3 bg-slate-50/70 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800/80">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-0.5">Net</p>
+                    <p className={`text-base font-bold ${pNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                       ₹{pNet.toLocaleString('en-IN')}
                     </p>
                   </div>
                 </div>
 
                 {/* Project Line Item Transactions */}
-                <div className="pt-2">
-                  <p className="text-xs font-bold text-white mb-2">Project Activity Log</p>
-                  <div className="divide-y divide-white/5 bg-[#0a0a0f] rounded-xl border border-white/10 overflow-hidden">
+                <div className="pt-1">
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Project Activity Log</p>
+                  <div className="divide-y divide-slate-100 dark:divide-slate-800/80 rounded-lg border border-slate-200/80 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900/40">
                     {transactions
                       .filter((t) => t.project_name === p.project_name)
                       .map((t) => (
-                        <div key={t.id} className="p-3 flex items-center justify-between text-xs">
+                        <div key={t.id} className="p-3 flex items-center justify-between text-xs hover:bg-slate-50/50 transition-colors">
                           <div className="flex items-center space-x-3">
                             <span
-                              className={`p-1.5 rounded-lg text-xs font-bold ${
+                              className={`p-1.5 rounded-md text-xs font-bold ${
                                 t.type === 'Payment Received'
-                                  ? 'bg-emerald-500/20 text-emerald-400'
+                                  ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
                                   : t.type === 'Team Payout'
-                                  ? 'bg-[#8b5cf6]/20 text-[#8b5cf6]'
-                                  : 'bg-rose-500/20 text-rose-400'
+                                  ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                  : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
                               }`}
                             >
                               {t.type === 'Payment Received' ? (
@@ -563,16 +567,16 @@ export default function FinancesPage() {
                               )}
                             </span>
                             <div>
-                              <p className="font-bold text-white">{t.category}</p>
-                              {t.note && <p className="text-[11px] text-[#a0a0b0]">{t.note}</p>}
+                              <p className="font-semibold text-slate-900 dark:text-white">{t.category}</p>
+                              {t.note && <p className="text-[11px] text-slate-500 dark:text-slate-400">{t.note}</p>}
                             </div>
                           </div>
 
                           <div className="text-right font-mono font-bold">
-                            <p className={t.type === 'Payment Received' ? 'text-emerald-400' : 'text-rose-400'}>
+                            <p className={t.type === 'Payment Received' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
                               {t.type === 'Payment Received' ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
                             </p>
-                            <p className="text-[10px] text-[#a0a0b0] font-normal">{t.date}</p>
+                            <p className="text-[10px] text-slate-400 font-normal">{t.date}</p>
                           </div>
                         </div>
                       ))}
@@ -585,30 +589,30 @@ export default function FinancesPage() {
       )}
 
       {activeTab === 'Company Expenses' && (
-        <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card">
-          <div className="p-4 border-b border-white/10 flex items-center justify-between">
-            <h3 className="font-extrabold text-white text-sm">Studio & Equipment Expenses</h3>
+        <div className="pixeva-card rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <h3 className="font-bold text-slate-900 dark:text-white text-sm">Studio & Equipment Expenses</h3>
             <button
               onClick={() => setIsAddExpenseOpen(true)}
-              className="btn-pixeva-primary px-3.5 py-1.5 rounded-xl text-xs font-bold inline-flex items-center space-x-1"
+              className="btn-pixeva-primary flex items-center space-x-1"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Expense</span>
             </button>
           </div>
 
-          <div className="divide-y divide-white/5 text-xs text-[#a0a0b0]">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
             {transactions
               .filter((t) => t.type === 'Expense')
               .map((t) => (
-                <div key={t.id} className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors">
+                <div key={t.id} className="p-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors">
                   <div className="space-y-0.5">
-                    <p className="font-bold text-white">{t.category}</p>
-                    <p className="text-[11px] text-[#a0a0b0]">Project: {t.project_name} {t.note ? `• ${t.note}` : ''}</p>
+                    <p className="font-semibold text-slate-900 dark:text-white">{t.category}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">Project: {t.project_name} {t.note ? `• ${t.note}` : ''}</p>
                   </div>
                   <div className="text-right font-mono">
-                    <p className="font-bold text-rose-400">-₹{t.amount.toLocaleString('en-IN')}</p>
-                    <p className="text-[10px] text-[#a0a0b0]">{t.date}</p>
+                    <p className="font-bold text-rose-600 dark:text-rose-400">-₹{t.amount.toLocaleString('en-IN')}</p>
+                    <p className="text-[10px] text-slate-400">{t.date}</p>
                   </div>
                 </div>
               ))}
@@ -619,16 +623,16 @@ export default function FinancesPage() {
       {activeTab === 'All Transactions' && (
         <div className="space-y-4 animate-fadeIn">
           {/* All Transactions Filter Toolbar */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-[#12121a]/90 p-4 rounded-2xl border border-white/10">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pixeva-card p-3 rounded-xl">
             {/* Search transactions input */}
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-[#a0a0b0] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={txSearchTerm}
                 onChange={(e) => setTxSearchTerm(e.target.value)}
                 placeholder="Search transactions…"
-                className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                className="w-full bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
               />
             </div>
 
@@ -639,7 +643,7 @@ export default function FinancesPage() {
                 <select
                   value={txDateRange}
                   onChange={(e) => setTxDateRange(e.target.value)}
-                  className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+                  className="bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-xs font-medium rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-7 appearance-none"
                 >
                   <option value="This Month">This Month</option>
                   <option value="Last 30 Days">Last 30 Days</option>
@@ -647,7 +651,7 @@ export default function FinancesPage() {
                   <option value="This Year">This Year</option>
                   <option value="All Time">All Time</option>
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* All Types */}
@@ -655,14 +659,14 @@ export default function FinancesPage() {
                 <select
                   value={txTypeFilter}
                   onChange={(e) => setTxTypeFilter(e.target.value)}
-                  className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+                  className="bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-xs font-medium rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-7 appearance-none"
                 >
                   <option value="All Types">All Types</option>
                   <option value="Income">Income</option>
                   <option value="Payouts">Payouts</option>
                   <option value="Expenses">Expenses</option>
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* All Categories */}
@@ -670,7 +674,7 @@ export default function FinancesPage() {
                 <select
                   value={txCategoryFilter}
                   onChange={(e) => setTxCategoryFilter(e.target.value)}
-                  className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+                  className="bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-xs font-medium rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-7 appearance-none"
                 >
                   <option value="All Categories">All Categories</option>
                   <option value="Advance Booking Fee">Advance Booking Fee</option>
@@ -679,7 +683,7 @@ export default function FinancesPage() {
                   <option value="Team Payout">Team Payout</option>
                   <option value="Studio Rent">Studio Rent</option>
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* All Payment Modes */}
@@ -687,7 +691,7 @@ export default function FinancesPage() {
                 <select
                   value={txPaymentModeFilter}
                   onChange={(e) => setTxPaymentModeFilter(e.target.value)}
-                  className="bg-[#0a0a0f] border border-white/10 text-xs font-semibold rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#00d4ff] cursor-pointer pr-7 appearance-none"
+                  className="bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 text-xs font-medium rounded-lg px-2.5 py-1.5 text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer pr-7 appearance-none"
                 >
                   <option value="All Payment Modes">All Payment Modes</option>
                   <option value="UPI">UPI</option>
@@ -695,16 +699,16 @@ export default function FinancesPage() {
                   <option value="Cash">Cash</option>
                   <option value="Credit Card">Credit Card</option>
                 </select>
-                <ChevronDown className="w-3.5 h-3.5 text-[#a0a0b0] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Export CSV */}
               <button
                 onClick={handleExportCsv}
                 disabled={transactions.length === 0}
-                className="flex items-center space-x-1.5 text-xs font-semibold px-3 py-2 rounded-xl bg-[#0a0a0f] hover:bg-white/10 text-white border border-white/10 transition-all disabled:opacity-40"
+                className="btn-pixeva-secondary flex items-center space-x-1.5 disabled:opacity-40"
               >
-                <Download className="w-3.5 h-3.5 text-[#8b5cf6]" />
+                <Download className="w-3.5 h-3.5 text-slate-500" />
                 <span>Export CSV</span>
               </button>
             </div>
@@ -734,7 +738,6 @@ export default function FinancesPage() {
                 txPaymentModeFilter === 'All Payment Modes' ||
                 (t.payment_mode && t.payment_mode.toLowerCase() === txPaymentModeFilter.toLowerCase());
 
-              // Date range filtering
               let matchesDate = true;
               if (txDateRange === 'This Month') {
                 const nowMonth = new Date().toISOString().slice(0, 7);
@@ -757,85 +760,81 @@ export default function FinancesPage() {
             return (
               <div className="space-y-4">
                 {/* Period Summary Cards */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
-                    <p className="text-xl font-extrabold text-emerald-400 mb-0.5">₹{incomeSum.toLocaleString('en-IN')}</p>
-                    <p className="text-xs text-[#a0a0b0] font-semibold">Income</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="pixeva-card rounded-xl p-3.5">
+                    <p className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 mb-0.5">₹{incomeSum.toLocaleString('en-IN')}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Income</p>
                   </div>
 
-                  <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
-                    <p className="text-xl font-extrabold text-rose-400 mb-0.5">₹{payoutsAndExpensesSum.toLocaleString('en-IN')}</p>
-                    <p className="text-xs text-[#a0a0b0] font-semibold">Payouts + Expenses</p>
+                  <div className="pixeva-card rounded-xl p-3.5">
+                    <p className="text-xl font-bold tracking-tight text-rose-600 dark:text-rose-400 mb-0.5">₹{payoutsAndExpensesSum.toLocaleString('en-IN')}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Payouts + Expenses</p>
                   </div>
 
-                  <div className="pixeva-card rounded-2xl p-4 border border-white/10 bg-[#12121a]/80">
-                    <p className={`text-xl font-extrabold mb-0.5 ${periodNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <div className="pixeva-card rounded-xl p-3.5">
+                    <p className={`text-xl font-bold tracking-tight mb-0.5 ${periodNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                       ₹{periodNet.toLocaleString('en-IN')}
                     </p>
-                    <p className="text-xs text-[#a0a0b0] font-semibold">Net</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Net</p>
                   </div>
                 </div>
 
                 {/* Empty State or Table */}
                 {filteredTxList.length === 0 ? (
-                  <div className="pixeva-card rounded-2xl border border-white/10 p-12 text-center space-y-3 shadow-card">
-                    <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto text-[#a0a0b0]">
-                      <Receipt className="w-6 h-6" />
+                  <div className="pixeva-card rounded-xl p-10 text-center space-y-2">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                      <Receipt className="w-5 h-5" />
                     </div>
-                    <h3 className="text-base font-bold text-white tracking-tight">No transactions in this period</h3>
-                    <p className="text-xs text-[#a0a0b0]">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">No transactions in this period</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Try widening the date range or clearing filters.
                     </p>
                   </div>
                 ) : (
-                  <div className="pixeva-card rounded-2xl border border-white/10 overflow-x-auto shadow-card w-full">
-                    <table className="w-full text-left text-xs text-[#a0a0b0] min-w-[900px]">
-                      <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+                  <div className="pixeva-card rounded-xl overflow-x-auto w-full">
+                    <table className="w-full text-left text-xs min-w-[850px]">
+                      <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200/80 text-[10px]">
                         <tr>
-                          <th className="w-[18%] min-w-[120px] px-3.5 py-3">Type</th>
-                          <th className="w-[22%] min-w-[160px] px-3.5 py-3">Project</th>
-                          <th className="w-[18%] min-w-[130px] px-3.5 py-3">Category</th>
-                          <th className="w-[14%] min-w-[110px] px-3.5 py-3">Payment Mode</th>
-                          <th className="w-[12%] min-w-[100px] px-3.5 py-3">Amount</th>
-                          <th className="w-[10%] min-w-[90px] px-3.5 py-3">Date</th>
-                          <th className="w-[6%] min-w-[80px] px-3.5 py-3 text-right">Note</th>
+                          <th className="w-[18%] px-4 py-3">Type</th>
+                          <th className="w-[22%] px-4 py-3">Project</th>
+                          <th className="w-[18%] px-4 py-3">Category</th>
+                          <th className="w-[14%] px-4 py-3">Payment Mode</th>
+                          <th className="w-[14%] px-4 py-3">Amount</th>
+                          <th className="w-[14%] px-4 py-3">Date</th>
                         </tr>
                       </thead>
-                        <tbody className="divide-y divide-white/5">
-                          {filteredTxList.map((t) => (
-                            <tr key={t.id} className="hover:bg-white/5 transition-colors">
-                              <td className="px-5 py-4 whitespace-nowrap">
-                                <span
-                                  className={`inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs font-bold border whitespace-nowrap ${
-                                    t.type === 'Payment Received'
-                                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                                      : t.type === 'Team Payout'
-                                      ? 'bg-[#8b5cf6]/20 text-[#8b5cf6] border-[#8b5cf6]/40'
-                                      : 'bg-rose-500/20 text-rose-400 border-rose-500/40'
-                                  }`}
-                                >
-                                  {t.type === 'Payment Received' ? (
-                                    <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                  ) : t.type === 'Team Payout' ? (
-                                    <ArrowUpRight className="w-3.5 h-3.5 text-[#8b5cf6] shrink-0" />
-                                  ) : (
-                                    <ArrowUpRight className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                                  )}
-                                  <span>{t.type}</span>
-                                </span>
-                              </td>
-                              <td className="px-5 py-4 font-bold text-white whitespace-nowrap">{t.project_name}</td>
-                              <td className="px-5 py-4 whitespace-nowrap">{t.category}</td>
-                              <td className="px-5 py-4 font-mono text-white whitespace-nowrap">{t.payment_mode || '—'}</td>
-                              <td className={`px-5 py-4 font-mono font-bold whitespace-nowrap ${t.type === 'Payment Received' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                {t.type === 'Payment Received' ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
-                              </td>
-                              <td className="px-5 py-4 font-mono text-white/70 whitespace-nowrap">{t.date}</td>
-                              <td className="px-5 py-4 text-[#a0a0b0] whitespace-nowrap">{t.note || '—'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {filteredTxList.map((t) => (
+                          <tr key={t.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="px-4 py-3.5 whitespace-nowrap">
+                              <span
+                                className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
+                                  t.type === 'Payment Received'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/50'
+                                    : t.type === 'Team Payout'
+                                    ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                                    : 'bg-rose-50 text-rose-700 border-rose-200/70 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800/50'
+                                }`}
+                              >
+                                {t.type === 'Payment Received' ? (
+                                  <ArrowDownLeft className="w-3 h-3 text-emerald-600 shrink-0" />
+                                ) : (
+                                  <ArrowUpRight className="w-3 h-3 shrink-0" />
+                                )}
+                                <span>{t.type}</span>
+                              </span>
+                            </td>
+                            <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white whitespace-nowrap">{t.project_name}</td>
+                            <td className="px-4 py-3.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">{t.category}</td>
+                            <td className="px-4 py-3.5 font-mono text-slate-500 whitespace-nowrap">{t.payment_mode || '—'}</td>
+                            <td className={`px-4 py-3.5 font-mono font-bold whitespace-nowrap ${t.type === 'Payment Received' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                              {t.type === 'Payment Received' ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
+                            </td>
+                            <td className="px-4 py-3.5 text-slate-400 whitespace-nowrap">{t.date}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
@@ -846,14 +845,14 @@ export default function FinancesPage() {
 
       {/* Add Expense Modal */}
       {isAddExpenseOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-extrabold text-white text-base">Add Expense</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md pixeva-card bg-white dark:bg-[#0f172a] rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">Add Expense</h3>
               <button
                 type="button"
                 onClick={() => setIsAddExpenseOpen(false)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -861,80 +860,80 @@ export default function FinancesPage() {
 
             <form onSubmit={handleAddExpenseSubmit} className="space-y-3.5 text-xs">
               <div>
-                <label className="font-semibold text-white block mb-1">Project Name *</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Project Name *</label>
                 <select
                   value={expenseForm.project_name}
                   onChange={(e) => setExpenseForm({ ...expenseForm, project_name: e.target.value })}
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                 >
-                  <option value="Bride & Groom (Demo)" className="bg-[#12121a]">Bride & Groom (Demo)</option>
-                  <option value="Vance Corporate Annual Gala" className="bg-[#12121a]">Vance Corporate Annual Gala</option>
-                  <option value="BioTech Global Summit 2026" className="bg-[#12121a]">BioTech Global Summit 2026</option>
+                  <option value="Bride & Groom (Demo)">Bride & Groom (Demo)</option>
+                  <option value="Vance Corporate Annual Gala">Vance Corporate Annual Gala</option>
+                  <option value="BioTech Global Summit 2026">BioTech Global Summit 2026</option>
                 </select>
               </div>
 
               <div>
-                <label className="font-semibold text-white block mb-1">Category *</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Category *</label>
                 <select
                   value={expenseForm.category}
                   onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                 >
-                  <option value="Equipment Rental" className="bg-[#12121a]">Equipment Rental</option>
-                  <option value="Travel & Stay" className="bg-[#12121a]">Travel & Stay</option>
-                  <option value="Studio Space Rent" className="bg-[#12121a]">Studio Space Rent</option>
-                  <option value="Vendor Fee" className="bg-[#12121a]">Vendor Fee</option>
-                  <option value="Software / AI License" className="bg-[#12121a]">Software / AI License</option>
-                  <option value="Other Expense" className="bg-[#12121a]">Other Expense</option>
+                  <option value="Equipment Rental">Equipment Rental</option>
+                  <option value="Travel & Stay">Travel & Stay</option>
+                  <option value="Studio Space Rent">Studio Space Rent</option>
+                  <option value="Vendor Fee">Vendor Fee</option>
+                  <option value="Software / AI License">Software / AI License</option>
+                  <option value="Other Expense">Other Expense</option>
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-white block mb-1">Amount (₹) *</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Amount (₹) *</label>
                   <input
                     type="number"
                     required
                     value={expenseForm.amount}
                     onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
                     placeholder="1000"
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
                   />
                 </div>
 
                 <div>
-                  <label className="font-semibold text-white block mb-1">Date</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Date</label>
                   <input
                     type="date"
                     value={expenseForm.date}
                     onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff] [color-scheme:dark]"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-semibold text-white block mb-1">Description / Notes</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Description / Notes</label>
                 <input
                   type="text"
                   value={expenseForm.note}
                   onChange={(e) => setExpenseForm({ ...expenseForm, note: e.target.value })}
                   placeholder="e.g. Memory card rental receipt"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
-              <div className="pt-3 flex justify-end space-x-3 border-t border-white/10">
+              <div className="pt-3 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsAddExpenseOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#a0a0b0] hover:bg-white/5"
+                  className="btn-pixeva-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-pixeva-primary px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-[#00d4ff]/20"
+                  className="btn-pixeva-primary"
                 >
                   Save Expense
                 </button>
@@ -946,14 +945,14 @@ export default function FinancesPage() {
 
       {/* Record Payment Modal */}
       {isRecordPaymentOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="font-extrabold text-white text-base">Record Client Payment</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md pixeva-card bg-white dark:bg-[#0f172a] rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">Record Client Payment</h3>
               <button
                 type="button"
                 onClick={() => setIsRecordPaymentOpen(false)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -961,63 +960,63 @@ export default function FinancesPage() {
 
             <form onSubmit={handleRecordPaymentSubmit} className="space-y-3.5 text-xs">
               <div>
-                <label className="font-semibold text-white block mb-1">Project Name *</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Project Name *</label>
                 <select
                   value={paymentForm.project_name}
                   onChange={(e) => setPaymentForm({ ...paymentForm, project_name: e.target.value })}
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                 >
-                  <option value="Bride & Groom (Demo)" className="bg-[#12121a]">Bride & Groom (Demo)</option>
-                  <option value="Vance Corporate Annual Gala" className="bg-[#12121a]">Vance Corporate Annual Gala</option>
+                  <option value="Bride & Groom (Demo)">Bride & Groom (Demo)</option>
+                  <option value="Vance Corporate Annual Gala">Vance Corporate Annual Gala</option>
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-white block mb-1">Payment Amount (₹) *</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Payment Amount (₹) *</label>
                   <input
                     type="number"
                     required
                     value={paymentForm.amount}
                     onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
                     placeholder="10000"
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
                   />
                 </div>
 
                 <div>
-                  <label className="font-semibold text-white block mb-1">Date</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Date</label>
                   <input
                     type="date"
                     value={paymentForm.date}
                     onChange={(e) => setPaymentForm({ ...paymentForm, date: e.target.value })}
-                    className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-[#00d4ff] [color-scheme:dark]"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-semibold text-white block mb-1">Payment Notes / Tx ID</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Payment Notes / Tx ID</label>
                 <input
                   type="text"
                   value={paymentForm.note}
                   onChange={(e) => setPaymentForm({ ...paymentForm, note: e.target.value })}
                   placeholder="e.g. Bank Transfer Ref #987654"
-                  className="w-full bg-[#0a0a0f] border border-white/10 rounded-xl px-3 py-2.5 text-white placeholder-[#a0a0b0] focus:outline-none focus:border-[#00d4ff]"
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl px-3 py-2 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
                 />
               </div>
 
-              <div className="pt-3 flex justify-end space-x-3 border-t border-white/10">
+              <div className="pt-3 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsRecordPaymentOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#a0a0b0] hover:bg-white/5"
+                  className="btn-pixeva-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-pixeva-primary px-5 py-2 rounded-xl text-xs font-bold shadow-lg shadow-[#00d4ff]/20"
+                  className="btn-pixeva-primary"
                 >
                   Record Payment
                 </button>
@@ -1029,29 +1028,29 @@ export default function FinancesPage() {
 
       {/* CSV Import Modal */}
       {isImportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md pixeva-card bg-white dark:bg-[#0f172a] rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div className="flex items-center space-x-2">
-                <FileUp className="w-5 h-5 text-[#8b5cf6]" />
-                <h3 className="font-extrabold text-white text-base">Import CSV Transactions</h3>
+                <FileUp className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+                <h3 className="font-bold text-slate-900 dark:text-white text-base">Import CSV Transactions</h3>
               </div>
               <button
                 onClick={() => setIsImportModalOpen(false)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-4 text-xs">
-              <p className="text-[#a0a0b0]">
-                Upload a CSV file containing columns for <strong className="text-white">Project Name, Type (Payment Received/Expense), Category, Amount</strong>.
+              <p className="text-slate-500 dark:text-slate-400">
+                Upload a CSV file containing columns for <strong className="text-slate-900 dark:text-white">Project Name, Type (Payment Received/Expense), Category, Amount</strong>.
               </p>
 
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-white/20 hover:border-[#00d4ff] rounded-2xl p-6 text-center cursor-pointer transition-colors bg-[#0a0a0f]"
+                className="border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-slate-400 rounded-xl p-6 text-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-slate-900/50"
               >
                 <input
                   ref={fileInputRef}
@@ -1066,30 +1065,30 @@ export default function FinancesPage() {
                 />
 
                 {importedCount !== null ? (
-                  <div className="space-y-2 text-emerald-400 animate-fadeIn">
+                  <div className="space-y-2 text-emerald-600 animate-fadeIn">
                     <CheckCircle2 className="w-8 h-8 mx-auto" />
                     <p className="font-bold text-sm">Successfully Imported {importedCount} Transactions!</p>
                   </div>
                 ) : csvFile ? (
-                  <div className="space-y-1 text-white">
-                    <FileText className="w-8 h-8 text-[#00d4ff] mx-auto" />
+                  <div className="space-y-1 text-slate-900 dark:text-white">
+                    <FileText className="w-8 h-8 text-slate-500 mx-auto" />
                     <p className="font-bold text-xs">{csvFile.name}</p>
-                    <p className="text-[10px] text-[#a0a0b0]">{(csvFile.size / 1024).toFixed(1)} KB</p>
+                    <p className="text-[10px] text-slate-400">{(csvFile.size / 1024).toFixed(1)} KB</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    <FileUp className="w-8 h-8 text-[#a0a0b0] mx-auto" />
-                    <p className="text-xs font-semibold text-white">Click or drag CSV file to upload</p>
-                    <p className="text-[10px] text-[#a0a0b0]">Supports standard exported CSV formats</p>
+                  <div className="space-y-1">
+                    <FileUp className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Click or drag CSV file to upload</p>
+                    <p className="text-[10px] text-slate-400">Supports standard exported CSV formats</p>
                   </div>
                 )}
               </div>
 
-              <div className="pt-2 flex justify-end space-x-2 border-t border-white/10">
+              <div className="pt-2 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsImportModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#a0a0b0] hover:bg-white/5"
+                  className="btn-pixeva-secondary"
                 >
                   Cancel
                 </button>
@@ -1097,7 +1096,7 @@ export default function FinancesPage() {
                   type="button"
                   disabled={!csvFile || isParsingCsv}
                   onClick={handleProcessCsv}
-                  className="btn-pixeva-primary px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 disabled:opacity-50"
+                  className="btn-pixeva-primary flex items-center space-x-2 disabled:opacity-50"
                 >
                   {isParsingCsv && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Import Transactions</span>

@@ -2,20 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
   Download,
-  Plus,
-  Users,
   Clock,
   Briefcase,
   AlertCircle,
   CheckCircle2,
   X,
-  Search,
   Check,
-  UserCheck,
   UserPlus
 } from 'lucide-react';
 import { ScheduledEvent } from '@/lib/supabase/types';
@@ -96,11 +91,9 @@ const CREW_STORAGE_KEY = 'pixeva_scheduled_events';
 export default function CrewSchedulingPage() {
   const [events, setEvents] = useState<ScheduledEvent[]>(INITIAL_EVENTS);
   const [currentMonthIndex, setCurrentMonthIndex] = useState(7); // August 2026
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [assigningEvent, setAssigningEvent] = useState<ScheduledEvent | null>(null);
   const [selectedCrew, setSelectedCrew] = useState<string[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -208,8 +201,7 @@ export default function CrewSchedulingPage() {
     document.body.removeChild(link);
   };
 
-  // Generate Calendar Days Grid for Selected Month (e.g. August 2026: 35 days layout)
-  // Matching screenshot: Starts at 26 Sun Jul, ends at 5 Sat Sep
+  // Generate Calendar Days Grid for Selected Month (August 2026 layout)
   const calendarDays = [
     { day: 26, isCurrentMonth: false, dateStr: '2026-07-26' },
     { day: 27, isCurrentMonth: false, dateStr: '2026-07-27' },
@@ -260,31 +252,31 @@ export default function CrewSchedulingPage() {
       {/* Top Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mb-1 flex items-center space-x-3">
-            <span>Crew Scheduling</span>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-1">
+            Crew Scheduling
           </h1>
-          <p className="text-sm text-[#a0a0b0]">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Every event across every project, and who’s working it
           </p>
         </div>
 
         {/* Month Selector & Export Action */}
-        <div className="flex items-center space-x-3 shrink-0">
-          <div className="flex items-center space-x-2 bg-[#12121a] border border-white/10 px-3 py-1.5 rounded-xl">
+        <div className="flex items-center space-x-2 shrink-0">
+          <div className="flex items-center space-x-1.5 bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-slate-800 px-2 py-1 rounded-xl shadow-xs">
             <button
               onClick={handlePrevMonth}
-              className="p-1 rounded-lg hover:bg-white/10 text-[#a0a0b0] hover:text-white transition-colors"
+              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            <span className="text-xs font-bold text-white min-w-[100px] text-center">
+            <span className="text-xs font-semibold text-slate-900 dark:text-white min-w-[100px] text-center">
               {MONTHS[currentMonthIndex]}
             </span>
 
             <button
               onClick={handleNextMonth}
-              className="p-1 rounded-lg hover:bg-white/10 text-[#a0a0b0] hover:text-white transition-colors"
+              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -292,18 +284,18 @@ export default function CrewSchedulingPage() {
 
           <button
             onClick={handleExportCsv}
-            className="flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl bg-[#12121a] hover:bg-white/10 text-white border border-white/10 transition-all"
+            className="btn-pixeva-secondary flex items-center space-x-1.5"
           >
-            <Download className="w-3.5 h-3.5 text-[#8b5cf6]" />
+            <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Export CSV</span>
           </button>
         </div>
       </div>
 
       {/* Interactive Calendar Month Grid */}
-      <div className="pixeva-card rounded-2xl border border-white/10 overflow-hidden shadow-card p-4 space-y-3 bg-[#0a0a0f]/90">
+      <div className="pixeva-card rounded-xl p-4 space-y-3">
         {/* Day Name Headers */}
-        <div className="grid grid-cols-7 text-center text-xs font-bold text-[#a0a0b0] border-b border-white/10 pb-2">
+        <div className="grid grid-cols-7 text-center text-xs font-semibold text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-2">
           <div>Sun</div>
           <div>Mon</div>
           <div>Tue</div>
@@ -316,30 +308,29 @@ export default function CrewSchedulingPage() {
         {/* Days Grid */}
         <div className="grid grid-cols-7 gap-1.5">
           {calendarDays.map((d, index) => {
-            // Demo events logic for 30 and 31 Dec (and August demo days)
             const isAugust30 = d.isCurrentMonth && d.day === 30;
             const isAugust31 = d.isCurrentMonth && d.day === 31;
 
             return (
               <div
                 key={`${d.dateStr}-${index}`}
-                className={`min-h-[72px] md:min-h-[84px] p-2 rounded-xl border flex flex-col justify-between transition-all ${
+                className={`min-h-[72px] md:min-h-[84px] p-2 rounded-lg border flex flex-col justify-between transition-all ${
                   d.isCurrentMonth
-                    ? 'bg-[#12121a] border-white/10 hover:border-[#00d4ff]/40'
-                    : 'bg-[#0a0a0f]/40 border-white/5 opacity-40'
+                    ? 'bg-white dark:bg-[#0f172a] border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
+                    : 'bg-slate-50/50 dark:bg-slate-900/30 border-transparent opacity-40'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span
-                    className={`text-xs font-extrabold ${
-                      d.isCurrentMonth ? 'text-white' : 'text-[#a0a0b0]'
+                    className={`text-xs font-bold ${
+                      d.isCurrentMonth ? 'text-slate-900 dark:text-white' : 'text-slate-400'
                     }`}
                   >
                     {d.day}
                   </span>
 
                   {(isAugust30 || isAugust31) && (
-                    <span className="w-2 h-2 rounded-full bg-[#00d4ff] animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-slate-900 dark:bg-white" />
                   )}
                 </div>
 
@@ -347,7 +338,7 @@ export default function CrewSchedulingPage() {
                 {isAugust30 && (
                   <button
                     onClick={() => handleOpenAssignModal(events[0])}
-                    className="w-full text-left mt-1 px-1.5 py-1 rounded-lg bg-[#00d4ff]/10 hover:bg-[#00d4ff]/20 border border-[#00d4ff]/30 text-[10px] font-bold text-[#00d4ff] truncate transition-colors"
+                    className="w-full text-left mt-1 px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/70 border border-slate-200 dark:border-slate-700 text-[10px] font-semibold text-slate-900 dark:text-white truncate transition-colors"
                   >
                     Reception
                   </button>
@@ -356,7 +347,7 @@ export default function CrewSchedulingPage() {
                 {isAugust31 && (
                   <button
                     onClick={() => handleOpenAssignModal(events[1])}
-                    className="w-full text-left mt-1 px-1.5 py-1 rounded-lg bg-[#8b5cf6]/10 hover:bg-[#8b5cf6]/20 border border-[#8b5cf6]/30 text-[10px] font-bold text-[#8b5cf6] truncate transition-colors"
+                    className="w-full text-left mt-1 px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/70 border border-slate-200 dark:border-slate-700 text-[10px] font-semibold text-slate-900 dark:text-white truncate transition-colors"
                   >
                     Wedding
                   </button>
@@ -370,32 +361,32 @@ export default function CrewSchedulingPage() {
       {/* Unassigned Events Section */}
       <div className="space-y-3 pt-2">
         <div className="flex items-center space-x-2 px-1">
-          <h2 className="text-lg font-extrabold text-white tracking-tight">Unassigned Events</h2>
-          <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 text-xs font-bold">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Unassigned Events</h2>
+          <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/70 dark:bg-amber-950/30 dark:text-amber-400 text-xs font-semibold">
             {unassignedEvents.length}
           </span>
         </div>
 
         {/* Unassigned Events Table */}
-        <div className="pixeva-card rounded-2xl border border-white/10 overflow-x-auto shadow-card w-full">
-          <table className="w-full text-left text-xs text-[#a0a0b0] min-w-[750px]">
-            <thead className="bg-[#0a0a0f] text-[#a0a0b0] uppercase tracking-wider font-bold border-b border-white/10 text-[10px]">
+        <div className="pixeva-card rounded-xl overflow-x-auto w-full">
+          <table className="w-full text-left text-xs min-w-[750px]">
+            <thead className="bg-slate-50 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200/80 text-[10px]">
               <tr>
-                <th className="w-[28%] min-w-[160px] px-4 py-3.5">Project</th>
-                <th className="w-[20%] min-w-[130px] px-4 py-3.5">Event</th>
-                <th className="w-[25%] min-w-[160px] px-4 py-3.5">Date & Time</th>
-                <th className="w-[15%] min-w-[100px] px-4 py-3.5">Status</th>
-                <th className="w-[12%] min-w-[100px] px-4 py-3.5 text-right">Actions</th>
+                <th className="w-[28%] px-4 py-3">Project</th>
+                <th className="w-[20%] px-4 py-3">Event</th>
+                <th className="w-[25%] px-4 py-3">Date & Time</th>
+                <th className="w-[15%] px-4 py-3">Status</th>
+                <th className="w-[12%] px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {unassignedEvents.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-10">
                     <div className="max-w-xs mx-auto space-y-2">
-                      <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
-                      <p className="text-sm font-bold text-white">All events fully assigned!</p>
-                      <p className="text-xs text-[#a0a0b0]">
+                      <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">All events fully assigned!</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         Great job! Every upcoming event has assigned crew members.
                       </p>
                     </div>
@@ -403,39 +394,39 @@ export default function CrewSchedulingPage() {
                 </tr>
               ) : (
                 unassignedEvents.map((evt) => (
-                  <tr key={evt.id} className="hover:bg-white/5 transition-colors group">
+                  <tr key={evt.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                     {/* Project Name */}
-                    <td className="px-5 py-4 font-bold text-white">
+                    <td className="px-4 py-3.5 font-semibold text-slate-900 dark:text-white">
                       <div className="flex items-center space-x-2">
-                        <Briefcase className="w-4 h-4 text-[#00d4ff] shrink-0" />
+                        <Briefcase className="w-4 h-4 text-slate-400 shrink-0" />
                         <span className="truncate">{evt.project_name}</span>
                       </div>
                     </td>
 
                     {/* Event Title */}
-                    <td className="px-5 py-4 font-medium text-white">{evt.event_title}</td>
+                    <td className="px-4 py-3.5 font-medium text-slate-700 dark:text-slate-300">{evt.event_title}</td>
 
                     {/* Date & Time */}
-                    <td className="px-5 py-4 font-mono text-white/80 whitespace-nowrap">
+                    <td className="px-4 py-3.5 font-mono text-slate-600 dark:text-slate-400 whitespace-nowrap">
                       <div className="flex items-center space-x-1.5">
-                        <Clock className="w-3.5 h-3.5 text-[#8b5cf6] shrink-0" />
+                        <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span>{evt.date_time}</span>
                       </div>
                     </td>
 
                     {/* Status Badge */}
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40">
+                    <td className="px-4 py-3.5">
+                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/70 dark:bg-amber-950/30 dark:text-amber-400">
                         <AlertCircle className="w-3 h-3 shrink-0" />
                         <span>{evt.status}</span>
                       </span>
                     </td>
 
                     {/* Actions */}
-                    <td className="px-5 py-4 text-right">
+                    <td className="px-4 py-3.5 text-right">
                       <button
                         onClick={() => handleOpenAssignModal(evt)}
-                        className="btn-pixeva-primary px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center space-x-1 shadow-md shadow-[#00d4ff]/20"
+                        className="btn-pixeva-primary px-3 py-1.5 inline-flex items-center space-x-1"
                       >
                         <UserPlus className="w-3.5 h-3.5" />
                         <span>Assign</span>
@@ -451,35 +442,35 @@ export default function CrewSchedulingPage() {
 
       {/* Assign Crew Modal */}
       {isAssignModalOpen && assigningEvent && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-          <div className="w-full max-w-md pixeva-card bg-[#12121a] border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md pixeva-card bg-white dark:bg-[#0f172a] rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
-                <h3 className="font-extrabold text-white text-base">
+                <h3 className="font-bold text-slate-900 dark:text-white text-base">
                   Assign Crew to {assigningEvent.event_title}
                 </h3>
-                <p className="text-xs text-[#a0a0b0]">{assigningEvent.project_name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{assigningEvent.project_name}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAssignModalOpen(false)}
-                className="p-1 rounded-lg text-[#a0a0b0] hover:text-white hover:bg-white/5 transition-colors"
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSaveAssignment} className="space-y-4 text-xs">
-              <div className="p-3 bg-[#0a0a0f] rounded-xl border border-white/10 space-y-1">
-                <p className="text-[11px] text-[#a0a0b0] font-semibold">Event Schedule</p>
-                <p className="font-mono text-white font-bold">{assigningEvent.date_time}</p>
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800 space-y-0.5">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Event Schedule</p>
+                <p className="font-mono text-slate-900 dark:text-white font-semibold">{assigningEvent.date_time}</p>
               </div>
 
               <div>
-                <label className="block text-[#a0a0b0] font-semibold mb-2">
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-2">
                   Select Team Members
                 </label>
-                <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                   {AVAILABLE_CREW.map((crew) => {
                     const isChecked = selectedCrew.includes(crew);
 
@@ -489,8 +480,8 @@ export default function CrewSchedulingPage() {
                         onClick={() => handleToggleCrew(crew)}
                         className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
                           isChecked
-                            ? 'bg-[#00d4ff]/10 border-[#00d4ff]/40 text-white'
-                            : 'bg-[#0a0a0f] border-white/10 text-[#a0a0b0] hover:bg-white/5'
+                            ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-xs'
+                            : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
                         }`}
                       >
                         <div className="flex items-center space-x-2.5">
@@ -498,28 +489,28 @@ export default function CrewSchedulingPage() {
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => {}} // Handled by label click
-                            className="rounded border-white/20 bg-[#12121a] text-[#00d4ff] focus:ring-0 cursor-pointer"
+                            className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
                           />
-                          <span className="font-semibold text-xs">{crew}</span>
+                          <span className="font-medium text-xs">{crew}</span>
                         </div>
-                        {isChecked && <Check className="w-4 h-4 text-[#00d4ff]" />}
+                        {isChecked && <Check className="w-4 h-4" />}
                       </label>
                     );
                   })}
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end space-x-2">
+              <div className="pt-2 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => setIsAssignModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-[#0a0a0f] hover:bg-white/5 text-[#a0a0b0] hover:text-white font-semibold transition-colors"
+                  className="btn-pixeva-secondary"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-pixeva-primary px-5 py-2 rounded-xl text-xs font-bold"
+                  className="btn-pixeva-primary"
                 >
                   Save Crew Roster
                 </button>

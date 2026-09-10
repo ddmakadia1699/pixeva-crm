@@ -4,9 +4,12 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 
+import { apiClient, DEFAULT_ACCOUNT_ID, setActiveAccountId } from '@/lib/api/apiClient';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  accountId: string;
   loading: boolean;
   signInWithEmail: (email: string, password: string) => Promise<{ error: any }>;
   signUpWithEmail: (email: string, password: string) => Promise<{ error: any }>;
@@ -17,6 +20,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
+  accountId: DEFAULT_ACCOUNT_ID,
   loading: true,
   signInWithEmail: async () => ({ error: null }),
   signUpWithEmail: async () => ({ error: null }),
@@ -27,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [accountId, setAccountId] = useState<string>(DEFAULT_ACCOUNT_ID);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -44,6 +49,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user?.id) {
+        setAccountId(session.user.id);
+        setActiveAccountId(session.user.id);
+      }
       setLoading(false);
       clearTimeout(timer);
     }).catch(() => {
@@ -55,6 +64,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      if (session?.user?.id) {
+        setAccountId(session.user.id);
+        setActiveAccountId(session.user.id);
+      } else {
+        setAccountId(DEFAULT_ACCOUNT_ID);
+        setActiveAccountId(DEFAULT_ACCOUNT_ID);
+      }
       setLoading(false);
       clearTimeout(timer);
     });
@@ -104,6 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         session,
+        accountId,
         loading,
         signInWithEmail,
         signUpWithEmail,

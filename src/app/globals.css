@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,502 +6,231 @@
 
 @layer base {
   :root {
-    --pixeva-bg: #0a0a0f;
-    --pixeva-card: rgba(18, 18, 26, 0.85);
-    --pixeva-surface: #161622;
-    --pixeva-cyan: #00d4ff;
-    --pixeva-purple: #8b5cf6;
-    --pixeva-blue: #3b82f6;
-    --pixeva-emerald: #10b981;
-    --pixeva-amber: #f59e0b;
-    --pixeva-muted: #a0a0b0;
-    --pixeva-border: rgba(255, 255, 255, 0.12);
-    --pixeva-text: #ffffff;
+    --bg-canvas: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-subtle: #f1f5f9;
+    --bg-hover: #f8fafc;
+    --border-hairline: rgba(226, 232, 240, 0.85);
+    --border-subtle: rgba(203, 213, 225, 0.9);
+    
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    
+    --accent-primary: #2563eb;
+    --accent-primary-hover: #1d4ed8;
+    --accent-subtle: #eff6ff;
+    --accent-subtle-border: #bfdbfe;
+    --accent-subtle-text: #1d4ed8;
   }
 
-  .light, [data-theme='light'] {
-    --pixeva-bg: #f8fafc;
-    --pixeva-card: #ffffff;
-    --pixeva-surface: #f1f5f9;
-    --pixeva-cyan: #0284c7;
-    --pixeva-purple: #6366f1;
-    --pixeva-blue: #2563eb;
-    --pixeva-emerald: #059669;
-    --pixeva-amber: #d97706;
-    --pixeva-muted: #64748b;
-    --pixeva-border: #e2e8f0;
-    --pixeva-text: #0f172a;
+  .dark, [data-theme='dark'] {
+    --bg-canvas: #090d16;
+    --bg-card: #0f172a;
+    --bg-subtle: #172033;
+    --bg-hover: #1e293b;
+    --border-hairline: rgba(255, 255, 255, 0.07);
+    --border-subtle: rgba(255, 255, 255, 0.12);
+    
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    
+    --accent-primary: #3b82f6;
+    --accent-primary-hover: #2563eb;
+    --accent-subtle: rgba(59, 130, 246, 0.15);
+    --accent-subtle-border: rgba(59, 130, 246, 0.3);
+    --accent-subtle-text: #93c5fd;
   }
 
   body {
-    background-color: var(--pixeva-bg) !important;
-    color: var(--pixeva-text) !important;
-    font-family: 'Outfit', system-ui, -apple-system, sans-serif;
-    overflow-x: hidden;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.012em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
 }
 
 /* ===================================================
-   GUARANTEED PIXEVA COLOR & GRADIENT UTILITIES
+   WORLD-CLASS MINIMAL SAAS COMPONENTS (Linear / Stripe Quality)
    =================================================== */
 
-.bg-pixeva-dark {
-  background-color: var(--pixeva-bg) !important;
-}
-
-.bg-pixeva-card {
-  background-color: var(--pixeva-card) !important;
-}
-
-.bg-pixeva-surface {
-  background-color: var(--pixeva-surface) !important;
-}
-
-.text-pixeva-cyan {
-  color: var(--pixeva-cyan) !important;
-}
-
-.text-pixeva-purple {
-  color: var(--pixeva-purple) !important;
-}
-
-.text-pixeva-blue {
-  color: var(--pixeva-blue) !important;
-}
-
-.text-pixeva-emerald {
-  color: var(--pixeva-emerald) !important;
-}
-
-.text-pixeva-muted {
-  color: var(--pixeva-muted) !important;
-}
-
-/* Gradients */
-.text-pixeva-gradient {
-  background: linear-gradient(135deg, #00d4ff 0%, #3b82f6 45%, #8b5cf6 100%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-}
-
-.light .text-pixeva-gradient {
-  background: none !important;
-  -webkit-background-clip: unset !important;
-  -webkit-text-fill-color: initial !important;
-  color: #0f172a !important;
-}
-
-.bg-pixeva-gradient {
-  background: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%) !important;
-}
-
-.light .bg-pixeva-gradient {
-  background: #0284c7 !important;
-}
-
-.btn-pixeva-primary {
-  background: linear-gradient(135deg, #00d4ff 0%, #8b5cf6 100%) !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  border-radius: 0.5rem !important;
-  transition: all 0.2s ease !important;
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-}
-
-.light .btn-pixeva-primary {
-  background: #0284c7 !important;
-  color: #ffffff !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-  border: 1px solid #0369a1 !important;
-}
-
-.btn-pixeva-primary:hover {
-  opacity: 0.95 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 0 25px rgba(0, 212, 255, 0.5) !important;
-}
-
-.light .btn-pixeva-primary:hover {
-  background: #0369a1 !important;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25) !important;
-}
-
-/* Glassmorphism Cards */
+/* Cards & Surface Containers */
 .pixeva-card {
-  background: var(--pixeva-card) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid var(--pixeva-border) !important;
-  color: var(--pixeva-text) !important;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.light .pixeva-card {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04) !important;
-  backdrop-filter: none !important;
-}
-
-.pixeva-card-hover {
-  transition: all 0.2s ease !important;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02), 0 1px 3px 0 rgba(0, 0, 0, 0.015);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
 .pixeva-card-hover:hover {
-  background: var(--pixeva-surface) !important;
-  border-color: rgba(0, 212, 255, 0.4) !important;
-  box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.15), 0 0 25px -5px rgba(0, 212, 255, 0.25) !important;
-  transform: translateY(-2px) !important;
+  border-color: var(--border-subtle);
+  box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.04), 0 2px 4px -1px rgba(15, 23, 42, 0.02);
+  transform: translateY(-1px);
 }
 
-.light .pixeva-card-hover:hover {
-  background: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -1px rgba(15, 23, 42, 0.04) !important;
-  transform: translateY(-1px) !important;
+.dark .pixeva-card {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
 }
 
-/* Glow Effects */
-.glow-cyan {
-  box-shadow: 0 0 25px rgba(0, 212, 255, 0.45) !important;
+.dark .pixeva-card-hover:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 24px -2px rgba(0, 0, 0, 0.6);
 }
 
-.light .glow-cyan {
-  box-shadow: none !important;
+/* Primary Button — Modern Precision Action */
+.btn-pixeva-primary {
+  background-color: #2563eb;
+  color: #ffffff !important;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: -0.01em;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px 0 rgba(37, 99, 235, 0.2);
+  border: 1px solid #1d4ed8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
-.glow-purple {
-  box-shadow: 0 0 25px rgba(139, 92, 246, 0.45) !important;
+.dark .btn-pixeva-primary {
+  background-color: #2563eb;
+  color: #ffffff !important;
+  border: 1px solid #3b82f6;
 }
 
-.light .glow-purple {
-  box-shadow: none !important;
+.btn-pixeva-primary:hover {
+  background-color: #1d4ed8;
+  border-color: #1e40af;
+  box-shadow: 0 2px 6px 0 rgba(37, 99, 235, 0.3);
 }
 
-.glow-blue {
-  box-shadow: 0 0 25px rgba(59, 130, 246, 0.45) !important;
+.btn-pixeva-primary:active {
+  transform: scale(0.98);
 }
 
-.light .glow-blue {
-  box-shadow: none !important;
+.dark .btn-pixeva-primary:hover {
+  background-color: #3b82f6;
+  box-shadow: 0 2px 8px 0 rgba(59, 130, 246, 0.4);
 }
 
-/* Badges */
-.badge-cyan {
-  background: rgba(0, 212, 255, 0.15) !important;
-  color: #00d4ff !important;
-  border: 1px solid rgba(0, 212, 255, 0.35) !important;
+/* Secondary Button — Minimalist Crisp White */
+.btn-pixeva-secondary {
+  background-color: #ffffff;
+  color: #334155;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: -0.01em;
+  transition: all 0.15s ease;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
-.light .badge-cyan {
-  background: #e0f2fe !important;
-  color: #0369a1 !important;
-  border: 1px solid #bae6fd !important;
+.dark .btn-pixeva-secondary {
+  background-color: #111827;
+  color: #f8fafc;
+  border-color: var(--border-hairline);
 }
 
-.badge-purple {
-  background: rgba(139, 92, 246, 0.15) !important;
-  color: #c084fc !important;
-  border: 1px solid rgba(139, 92, 246, 0.35) !important;
+.btn-pixeva-secondary:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
 }
 
-.light .badge-purple {
-  background: #f5f3ff !important;
-  color: #6d28d9 !important;
-  border: 1px solid #ddd6fe !important;
+.btn-pixeva-secondary:active {
+  transform: scale(0.98);
 }
 
-.badge-emerald {
-  background: rgba(16, 185, 129, 0.15) !important;
-  color: #34d399 !important;
-  border: 1px solid rgba(16, 185, 129, 0.35) !important;
+.dark .btn-pixeva-secondary:hover {
+  background-color: #172033;
+  border-color: var(--border-subtle);
 }
 
-.light .badge-emerald {
-  background: #ecfdf5 !important;
-  color: #047857 !important;
-  border: 1px solid #a7f3d0 !important;
+/* Segmented Control Container (Linear style) */
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem;
+  background-color: #f1f5f9;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 0.625rem;
+  gap: 0.125rem;
 }
 
-.badge-amber {
-  background: rgba(245, 158, 11, 0.15) !important;
-  color: #fbbf24 !important;
-  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+.dark .segmented-control {
+  background-color: #111827;
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
-.light .badge-amber {
-  background: #fffbeb !important;
-  color: #b45309 !important;
-  border: 1px solid #fde68a !important;
+.segmented-control-item {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  border-radius: 0.5rem;
+  transition: all 0.15s ease;
+  cursor: pointer;
 }
 
-/* Custom Scrollbar */
+.segmented-control-item:hover {
+  color: #0f172a;
+}
+
+.dark .segmented-control-item:hover {
+  color: #f8fafc;
+}
+
+.segmented-control-item-active {
+  background-color: #ffffff;
+  color: #0f172a;
+  font-weight: 600;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.dark .segmented-control-item-active {
+  background-color: #1e293b;
+  color: #ffffff;
+}
+
+/* Minimalist Clean Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--pixeva-bg);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2d2d42;
+  background: #e2e8f0;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3d3d5c;
+  background: #cbd5e1;
 }
 
-/* ===================================================
-   ENTERPRISE-GRADE LIGHT THEME LIGHT-BLUE OVERRIDES
-   =================================================== */
-
-.light body {
-  background-color: #f8fafc !important;
-  background-image: none !important;
-  color: #0f172a !important;
+.dark ::-webkit-scrollbar-thumb {
+  background: #1e293b;
 }
 
-/* Light Blue Active Buttons and Badges Override */
-.light .bg-blue-600,
-.light .bg-blue-500 {
-  background-color: #e0f2fe !important;
-  color: #0369a1 !important;
-  border-color: #bae6fd !important;
-}
-
-.light .bg-blue-600 *,
-.light .bg-blue-500 * {
-  color: #0369a1 !important;
-}
-
-/* Light Mode Card and Surface Overrides */
-.light header {
-  background-color: #ffffff !important;
-  backdrop-filter: none !important;
-  border-bottom: 1px solid #e2e8f0 !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03) !important;
-}
-
-.light aside {
-  background-color: #ffffff !important;
-  border-right: 1px solid #e2e8f0 !important;
-  box-shadow: none !important;
-}
-
-/* Surface & Background Overrides */
-.light [class*="bg-[#0a0a0f]"],
-.light [class*="bg-[#0b0f17]"],
-.light [class*="bg-[#09090e]"],
-.light [class*="bg-[#0d0d14]"] {
-  background-color: #f8fafc !important;
-}
-
-.light [class*="bg-[#12121a]"],
-.light [class*="bg-[#14141f]"],
-.light [class*="bg-[#181825]"],
-.light [class*="bg-[#0f0f16]"],
-.light .bg-slate-900,
-.light .bg-zinc-900,
-.light .bg-gray-900 {
-  background-color: #ffffff !important;
-}
-
-.light [class*="bg-[#161622]"],
-.light [class*="bg-[#1a1a24]"],
-.light [class*="bg-[#1e1e2d]"],
-.light .bg-slate-800,
-.light .bg-zinc-800,
-.light .bg-gray-800 {
-  background-color: #f0f9ff !important;
-}
-
-/* Alpha Overlay Overrides */
-.light .bg-white\/5 {
-  background-color: #f0f9ff !important;
-}
-
-.light .bg-white\/10 {
-  background-color: #e0f2fe !important;
-}
-
-.light .bg-white\/15,
-.light .bg-white\/20 {
-  background-color: #bae6fd !important;
-}
-
-.light .hover\:bg-white\/5:hover {
-  background-color: #e0f2fe !important;
-}
-
-.light .hover\:bg-white\/10:hover {
-  background-color: #bae6fd !important;
-}
-
-.light .bg-black\/80,
-.light .bg-black\/70,
-.light .bg-black\/60 {
-  background-color: rgba(15, 23, 42, 0.5) !important;
-}
-
-.light .bg-black\/50,
-.light .bg-black\/40,
-.light .bg-black\/30 {
-  background-color: rgba(15, 23, 42, 0.1) !important;
-}
-
-/* Typography & Accents in Light Mode */
-.light [class*="text-[#00d4ff]"],
-.light .text-cyan-400,
-.light .text-cyan-300,
-.light .text-cyan-500 {
-  color: #0284c7 !important;
-}
-
-.light [class*="text-[#8b5cf6]"],
-.light .text-purple-400,
-.light .text-purple-300,
-.light .text-purple-500,
-.light [class*="text-[#c084fc]"] {
-  color: #4f46e5 !important;
-}
-
-.light [class*="text-[#3b82f6]"],
-.light .text-blue-400,
-.light .text-blue-300,
-.light .text-blue-500 {
-  color: #0284c7 !important;
-}
-
-.light [class*="text-[#10b981]"],
-.light .text-emerald-400,
-.light .text-emerald-300,
-.light .text-emerald-500,
-.light [class*="text-[#34d399]"] {
-  color: #059669 !important;
-}
-
-.light .text-rose-400,
-.light .text-rose-300,
-.light .text-rose-500,
-.light .text-red-400,
-.light .text-red-500 {
-  color: #dc2626 !important;
-}
-
-.light .text-amber-400,
-.light .text-amber-300,
-.light .text-amber-500,
-.light .text-yellow-400,
-.light [class*="text-[#fbbf24]"],
-.light [class*="text-[#f59e0b]"] {
-  color: #d97706 !important;
-}
-
-.light [class*="bg-[#00d4ff]"] {
-  background-color: #e0f2fe !important;
-}
-
-.light [class*="bg-[#8b5cf6]"] {
-  background-color: #e0e7ff !important;
-}
-
-.light [class*="bg-[#10b981]"] {
-  background-color: #d1fae5 !important;
-}
-
-/* Base Text & Border Overrides */
-.light .text-white {
-  color: #0f172a !important;
-}
-
-.light .text-white\/90,
-.light .text-white\/80,
-.light .text-white\/70 {
-  color: #1e293b !important;
-}
-
-.light [class*="text-[#a0a0b0]"],
-.light .text-white\/60,
-.light .text-white\/50,
-.light .text-slate-400,
-.light .text-gray-400 {
-  color: #475569 !important;
-}
-
-.light .text-white\/40,
-.light .text-white\/30,
-.light .text-white\/20 {
-  color: #64748b !important;
-}
-
-.light .border-white\/10,
-.light .border-white\/15,
-.light .border-white\/20,
-.light .border-white\/30,
-.light .border-white\/5 {
-  border-color: #e2e8f0 !important;
-}
-
-.light .divide-white\/5 > * + *,
-.light .divide-white\/10 > * + * {
-  border-color: #e2e8f0 !important;
-}
-
-.light [class*="border-[#00d4ff]"] {
-  border-color: #bae6fd !important;
-}
-
-/* Primary Action Buttons Keep Crisp White Text */
-.light .btn-pixeva-primary,
-.light .btn-pixeva-primary * {
-  color: #ffffff !important;
-}
-
-/* Light Mode Input Fields & Select Options */
-.light input,
-.light select,
-.light textarea {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
-  border-radius: 0.5rem !important;
-}
-
-.light input:focus,
-.light select:focus,
-.light textarea:focus {
-  border-color: #0284c7 !important;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12) !important;
-}
-
-.light input::placeholder,
-.light textarea::placeholder {
-  color: #94a3b8 !important;
-}
-
-.light select option {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-}
-
-.light input[type="date"] {
-  color-scheme: light !important;
-}
-
-.light ::-webkit-scrollbar-track {
-  background: #f8fafc;
-}
-
-.light ::-webkit-scrollbar-thumb {
-  background: #bae6fd;
-}
-
-.light ::-webkit-scrollbar-thumb:hover {
-  background: #7dd3fc;
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #334155;
 }
