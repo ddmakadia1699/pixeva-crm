@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Enquiry, EnquiryStatus, EnquirySource } from '@/lib/supabase/types';
 import { invokeLambdaFunction } from '@/lib/aws/lambda';
-import { formatCurrency } from '@/lib/utils';
+import { useCurrency } from '@/context/CurrencyContext';
 import {
   Search,
   Plus,
@@ -59,6 +59,7 @@ export default function EnquiriesListTab({
   onDeleteBatchEnquiries,
   onClearAllEnquiries,
 }: EnquiriesListTabProps) {
+  const { formatCurrency, currency } = useCurrency();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedSource, setSelectedSource] = useState<string>('all');
@@ -1950,7 +1951,7 @@ export default function EnquiriesListTab({
 
                 <div>
                   <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
-                    Estimated Budget (₹ / $)
+                    Estimated Budget ({currency.symbol.trim()})
                   </label>
                   <input
                     type="text"

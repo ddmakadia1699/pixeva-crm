@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Enquiry } from '@/lib/supabase/types';
-import { formatCurrency } from '@/lib/utils';
+import { useCurrency } from '@/context/CurrencyContext';
 import { 
   TrendingUp, 
   Users, 
@@ -19,6 +19,7 @@ interface AnalyticsTabProps {
 }
 
 export default function AnalyticsTab({ enquiries }: AnalyticsTabProps) {
+  const { formatCurrency } = useCurrency();
   const totalEnquiries = enquiries.length || 5;
   const totalBudget = enquiries.reduce((acc, curr) => acc + (curr.estimated_budget || 0), 0);
   const bookedCount = enquiries.filter((e) => e.status === 'booked' || e.status === 'qualified').length;

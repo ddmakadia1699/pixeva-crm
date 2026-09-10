@@ -11,8 +11,10 @@ import {
 } from 'lucide-react';
 
 import { apiClient } from '@/lib/api/apiClient';
+import { useCurrency } from '@/context/CurrencyContext';
 
 export default function DashboardPage() {
+  const { formatCurrency } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     enquiriesNew: 3,
@@ -20,9 +22,9 @@ export default function DashboardPage() {
     enquiriesBooked: 2,
     totalEnquiries: 9,
     activeProjectsCount: 3,
-    totalRevenue: '₹9,80,000',
-    receivedRevenue: '₹5,60,000',
-    pendingRevenue: '₹4,20,000',
+    totalRevenueAmount: 980000,
+    receivedRevenueAmount: 560000,
+    pendingRevenueAmount: 420000,
     postProdInProgress: 2,
     postProdReview: 1,
     postProdReady: 4,
@@ -34,9 +36,21 @@ export default function DashboardPage() {
       try {
         const metrics = await apiClient.dashboard.getMetrics();
         if (metrics) {
+          const parseAmount = (val: any, fallback: number) => {
+            if (typeof val === 'number') return val;
+            if (typeof val === 'string') {
+              const cleaned = Number(val.replace(/[^0-9.-]+/g, ''));
+              if (!isNaN(cleaned) && cleaned > 0) return cleaned;
+            }
+            return fallback;
+          };
+
           setStats((prev) => ({
             ...prev,
             ...metrics,
+            totalRevenueAmount: parseAmount(metrics.totalRevenueAmount ?? metrics.totalRevenue, prev.totalRevenueAmount),
+            receivedRevenueAmount: parseAmount(metrics.receivedRevenueAmount ?? metrics.receivedRevenue, prev.receivedRevenueAmount),
+            pendingRevenueAmount: parseAmount(metrics.pendingRevenueAmount ?? metrics.pendingRevenue, prev.pendingRevenueAmount),
           }));
         }
       } catch (err) {
@@ -99,11 +113,11 @@ export default function DashboardPage() {
               </span>
             </div>
             <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white pt-1">
-              {stats.totalRevenue}
+              {formatCurrency(stats.totalRevenueAmount)}
             </div>
           </div>
           <div className="pt-3 mt-1 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">{stats.receivedRevenue}</span> collected • <span className="font-semibold text-slate-700 dark:text-slate-300">{stats.pendingRevenue}</span> pending
+            <span className="font-semibold text-slate-700 dark:text-slate-300">{formatCurrency(stats.receivedRevenueAmount)}</span> collected • <span className="font-semibold text-slate-700 dark:text-slate-300">{formatCurrency(stats.pendingRevenueAmount)}</span> pending
           </div>
         </div>
 
@@ -296,11 +310,11 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5">
               <div>
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Collected</p>
-                <p className="text-base font-bold text-slate-900 dark:text-white mt-0.5">{stats.receivedRevenue}</p>
+                <p className="text-base font-bold text-slate-900 dark:text-white mt-0.5">{formatCurrency(stats.receivedRevenueAmount)}</p>
               </div>
               <div>
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Receivable</p>
-                <p className="text-base font-bold text-slate-900 dark:text-white mt-0.5">{stats.pendingRevenue}</p>
+                <p className="text-base font-bold text-slate-900 dark:text-white mt-0.5">{formatCurrency(stats.pendingRevenueAmount)}</p>
               </div>
             </div>
 
@@ -316,7 +330,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="pt-3.5 mt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">Volume: {stats.totalRevenue}</span>
+            <span className="text-slate-500 font-medium">Volume: {formatCurrency(stats.totalRevenueAmount)}</span>
             <Link href="/finances" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
               View Invoices →
             </Link>

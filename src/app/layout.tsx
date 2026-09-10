@@ -4,6 +4,7 @@ import AppShell from "@/components/layout/AppShell";
 import { ThemeProvider } from "@/context/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
 import { SidebarProvider } from "@/context/SidebarContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 import AuthGuard from "@/components/auth/AuthGuard";
 
 export const metadata: Metadata = {
@@ -40,13 +41,15 @@ export default function RootLayout({
       </head>
       <body className="bg-slate-50 dark:bg-[#0b0f17] text-slate-900 dark:text-slate-100 antialiased min-h-screen">
         <ThemeProvider>
-          <AuthProvider>
-            <SidebarProvider>
-              <AuthGuard>
-                <AppShell>{children}</AppShell>
-              </AuthGuard>
-            </SidebarProvider>
-          </AuthProvider>
+          <CurrencyProvider>
+            <AuthProvider>
+              <SidebarProvider>
+                <AuthGuard>
+                  <AppShell>{children}</AppShell>
+                </AuthGuard>
+              </SidebarProvider>
+            </AuthProvider>
+          </CurrencyProvider>
         </ThemeProvider>
       </body>
     </html>

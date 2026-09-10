@@ -21,9 +21,11 @@ import {
   Upload,
   RefreshCw,
   Sliders,
-  Check
+  Check,
+  Coins
 } from 'lucide-react';
 import IntegrationsStatus from '@/components/system/IntegrationsStatus';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface StudioDocument {
   id: string;
@@ -169,9 +171,20 @@ const DEFAULT_PAYMENT_SPLITS: PaymentSplitItem[] = [
 const DEFAULT_PAYMENT_MODES = ['Cash', 'UPI', 'Bank Transfer', 'Cheque', 'Online'];
 
 export default function SettingsPage() {
+  const { currencies, currencyCode, currency, symbol, setCurrencyCode, formatCurrency } = useCurrency();
   const [activeTab, setActiveTab] = useState<
     'services' | 'packages' | 'payments' | 'contract' | 'documents' | 'team' | 'domain' | 'system'
   >('services');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab === 'payments' || tab === 'currency') {
+        setActiveTab('payments');
+      }
+    }
+  }, []);
 
   // Services State
   const [crewRoles, setCrewRoles] = useState<CrewRoleItem[]>(INITIAL_CREW_ROLES);
@@ -345,7 +358,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
           {[
             { key: 'services', label: 'Services', icon: Sliders },
             { key: 'packages', label: 'Packages', icon: Briefcase },
-            { key: 'payments', label: 'Payments', icon: CreditCard },
+            { key: 'payments', label: 'Payments & Currency', icon: CreditCard },
             { key: 'contract', label: 'Contract', icon: FileSignature },
             { key: 'documents', label: 'Documents Library', icon: FolderArchive },
             { key: 'team', label: 'Team Access', icon: Users },
@@ -407,7 +420,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                   <div className="flex items-center space-x-3 shrink-0">
                     <div className="flex items-center space-x-1 text-xs text-slate-500">
                       <span className="text-[10px]">Rate/Day:</span>
-                      <span className="font-mono font-bold text-slate-900 dark:text-white">₹{role.defaultRate.toLocaleString()}</span>
+                      <span className="font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(role.defaultRate)}</span>
                     </div>
 
                     <button
@@ -433,7 +446,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
               />
               <input
                 type="number"
-                placeholder="Day rate (₹)..."
+                placeholder={`Day rate (${symbol})...`}
                 value={newRoleRate}
                 onChange={(e) => setNewRoleRate(e.target.value)}
                 className="w-full sm:w-32 bg-slate-50/70 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
@@ -476,7 +489,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
 
                   <div className="flex items-center space-x-3 shrink-0">
                     <span className="font-mono font-bold text-xs text-slate-900 dark:text-white">
-                      ₹{service.price.toLocaleString()}
+                      {formatCurrency(service.price)}
                     </span>
                     <button
                       onClick={() => setOtherServices(prev => prev.filter(s => s.id !== service.id))}
@@ -501,7 +514,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
               />
               <input
                 type="number"
-                placeholder="Price (₹)..."
+                placeholder={`Price (${symbol})...`}
                 value={newServicePrice}
                 onChange={(e) => setNewServicePrice(e.target.value)}
                 className="w-full sm:w-32 bg-slate-50/70 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white font-mono placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
@@ -791,11 +804,135 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
       )}
 
       {/* ========================================================= */}
-      {/* TAB 3: PAYMENTS */}
+      {/* TAB 3: PAYMENTS & CURRENCY */}
       {/* ========================================================= */}
       {activeTab === 'payments' && (
         <div className="space-y-6 animate-fadeIn">
-          {/* SECTION 1: Payment Split */}
+          {/* SECTION 1: STUDIO CURRENCY & REGIONAL LOV */}
+          <div className="p-5 rounded-xl pixeva-card space-y-4 border-2 border-blue-500/30 dark:border-blue-500/20 bg-gradient-to-br from-white via-white to-blue-50/20 dark:from-[#111827] dark:via-[#111827] dark:to-blue-950/20 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="space-y-0.5">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                    <Coins className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                      <span>Studio Currency & LOV</span>
+                      <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 font-semibold">
+                        Dynamic CRM
+                      </span>
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Select your accounting currency. Automatically formats Dashboard volume, ledger, invoices, and proposals.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Badge */}
+              <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 self-start sm:self-auto">
+                <span className="text-base">{currency.flag}</span>
+                <div className="text-left">
+                  <div className="text-[10px] uppercase font-bold text-slate-400">Active Currency</div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">
+                    {currency.code} ({currency.symbol})
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Currency LOV Dropdown */}
+            <div className="space-y-2">
+              <label htmlFor="currency-lov-select" className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
+                Primary Currency Dropdown (LOV):
+              </label>
+              <div className="relative max-w-md">
+                <select
+                  id="currency-lov-select"
+                  value={currencyCode}
+                  onChange={(e) => setCurrencyCode(e.target.value)}
+                  className="w-full appearance-none bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-xs cursor-pointer"
+                >
+                  {currencies.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.flag} {c.code} — {c.symbol} {c.name} {c.code === 'INR' ? '(Rupees / Lakhs format)' : ''}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <span className="text-xs font-mono">▼</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Currency Tiles Grid */}
+            <div className="space-y-2 pt-1">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">
+                Quick Selection:
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {currencies.map((c) => {
+                  const isSelected = c.code === currencyCode;
+                  return (
+                    <button
+                      key={c.code}
+                      type="button"
+                      onClick={() => setCurrencyCode(c.code)}
+                      className={`flex items-center space-x-2.5 p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50/80 dark:bg-blue-500/15 ring-2 ring-blue-500/20 shadow-xs'
+                          : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                      }`}
+                    >
+                      <span className="text-xl shrink-0">{c.flag}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className={`text-xs font-bold ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-900 dark:text-white'}`}>
+                            {c.code} ({c.symbol.trim()})
+                          </span>
+                          {isSelected && (
+                            <span className="w-4 h-4 rounded-full bg-blue-600 dark:bg-blue-500 text-white flex items-center justify-center text-[10px]">
+                              ✓
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                          {c.code === 'INR' ? 'Indian Rupee (₹)' : c.name}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Live Interactive Preview */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 rounded-lg p-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="space-y-0.5">
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">
+                    Live CRM Formatting Preview:
+                  </span>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    All numbers in Dashboard, Finances, and Invoices automatically adapt to {currency.name}.
+                  </p>
+                </div>
+                <div className="flex items-center space-x-3 text-xs font-mono">
+                  <div className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] text-slate-400 block">Advance (20%)</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(200000)}</span>
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] text-slate-400 block">Total Volume</span>
+                    <span className="font-bold text-blue-600 dark:text-blue-400">{formatCurrency(980000)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2: Payment Split */}
           <div className="p-5 rounded-xl pixeva-card space-y-4">
             <div>
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Payment Split</h2>

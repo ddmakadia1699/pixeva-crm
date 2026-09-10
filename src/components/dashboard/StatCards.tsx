@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { formatCurrency } from '@/lib/utils';
+import { useCurrency } from '@/context/CurrencyContext';
 import { DollarSign, Users, Award, Cpu, TrendingUp, ArrowUpRight } from 'lucide-react';
 
 interface StatCardsProps {
@@ -17,6 +17,7 @@ export default function StatCards({
   closedWonAmount,
   lambdaInvocations,
 }: StatCardsProps) {
+  const { formatCurrency } = useCurrency();
   const STATS = [
     {
       title: 'Total Pipeline Value',

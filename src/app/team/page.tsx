@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import FeedbackModal from '@/components/enquiries/FeedbackModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
+import { useCurrency } from '@/context/CurrencyContext';
 import {
   Search,
   Download,
@@ -72,6 +73,7 @@ const INITIAL_MEMBERS: TeamMember[] = [
 ];
 
 export default function TeamPage() {
+  const { symbol } = useCurrency();
   const [members, setMembers] = useState<TeamMember[]>(INITIAL_MEMBERS);
 
   // Load from localStorage on mount
@@ -733,7 +735,7 @@ export default function TeamPage() {
               </div>
 
               <div>
-                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Day Rate (₹)</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Day Rate ({symbol})</label>
                 <input
                   type="text"
                   value={formData.day_rate}

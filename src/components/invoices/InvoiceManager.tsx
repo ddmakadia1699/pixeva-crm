@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { formatCurrency } from '@/lib/utils';
+import { useCurrency } from '@/context/CurrencyContext';
 import { invokeLambdaFunction } from '@/lib/aws/lambda';
 import { Receipt, FileText, Mail, CheckCircle2, Clock, AlertTriangle, Plus, Loader2, Sparkles, X } from 'lucide-react';
 
@@ -24,32 +24,33 @@ export const INITIAL_INVOICES: Invoice[] = [
     client_email: 'sarah@acme.com',
     total_amount: 4500,
     amount_paid: 4500,
-    due_date: '2026-08-01',
+    due_date: '2026-04-01',
     status: 'paid',
   },
   {
     id: 'inv-2',
     invoice_number: 'INV-2026-002',
-    client_name: 'Nexus Tech (Marcus Vance)',
-    client_email: 'marcus@nexus.io',
-    total_amount: 8200,
-    amount_paid: 4100,
-    due_date: '2026-08-20',
+    client_name: 'Summit Media (David Miller)',
+    client_email: 'david@summitmedia.com',
+    total_amount: 18000,
+    amount_paid: 5000,
+    due_date: '2026-04-15',
     status: 'pending',
   },
   {
     id: 'inv-3',
     invoice_number: 'INV-2026-003',
-    client_name: 'Cyberdyne Systems (Elena Rostova)',
-    client_email: 'elena@cyberdyne.net',
-    total_amount: 12000,
+    client_name: 'Starlight Productions',
+    client_email: 'finance@starlight.io',
+    total_amount: 12500,
     amount_paid: 0,
-    due_date: '2026-07-28',
+    due_date: '2026-03-25',
     status: 'overdue',
   },
 ];
 
 export default function InvoiceManager() {
+  const { formatCurrency } = useCurrency();
   const [invoices, setInvoices] = useState<Invoice[]>(INITIAL_INVOICES);
   const [activeLambdaTask, setActiveLambdaTask] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);

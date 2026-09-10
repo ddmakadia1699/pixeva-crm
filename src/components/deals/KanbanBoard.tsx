@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Deal, DealStage } from '@/lib/supabase/types';
-import { formatCurrency } from '@/lib/utils';
+import { useCurrency } from '@/context/CurrencyContext';
 import { ArrowRight, ArrowLeft, CheckCircle2, LayoutGrid, List, Sparkles, Building2 } from 'lucide-react';
 
 interface KanbanBoardProps {
@@ -19,6 +19,7 @@ const STAGES: { key: DealStage; label: string; description: string; badge: strin
 ];
 
 export default function KanbanBoard({ deals, onMoveStage }: KanbanBoardProps) {
+  const { formatCurrency } = useCurrency();
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
 
   return (

@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   ChevronDown,
 } from 'lucide-react';
+import { useCurrency } from '@/context/CurrencyContext';
 
 export interface ProjectFinanceItem {
   id: string;
@@ -94,6 +95,7 @@ const FINANCES_STORAGE_KEY = 'pixeva_finances';
 const TRANSACTIONS_STORAGE_KEY = 'pixeva_transactions';
 
 export default function FinancesPage() {
+  const { formatCurrency, symbol } = useCurrency();
   const [projectFinances, setProjectFinances] = useState<ProjectFinanceItem[]>(INITIAL_PROJECT_FINANCES);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
 
@@ -409,35 +411,35 @@ export default function FinancesPage() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="pixeva-card rounded-xl p-4">
           <p className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 mb-0.5">
-            ₹{totalReceived.toLocaleString('en-IN')}
+            {formatCurrency(totalReceived)}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Received</p>
         </div>
 
         <div className="pixeva-card rounded-xl p-4">
           <p className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-0.5">
-            ₹{totalBalanceDue.toLocaleString('en-IN')}
+            {formatCurrency(totalBalanceDue)}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Balance Due</p>
         </div>
 
         <div className="pixeva-card rounded-xl p-4">
           <p className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-200 mb-0.5">
-            ₹{totalTeamPayouts.toLocaleString('en-IN')}
+            {formatCurrency(totalTeamPayouts)}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Team Payouts</p>
         </div>
 
         <div className="pixeva-card rounded-xl p-4">
           <p className="text-2xl font-bold tracking-tight text-rose-600 dark:text-rose-400 mb-0.5">
-            ₹{totalExpenses.toLocaleString('en-IN')}
+            {formatCurrency(totalExpenses)}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Expenses</p>
         </div>
 
         <div className="pixeva-card rounded-xl p-4 col-span-2 md:col-span-1">
           <p className={`text-2xl font-bold tracking-tight mb-0.5 ${netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-            ₹{netProfit.toLocaleString('en-IN')}
+            {formatCurrency(netProfit)}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Net Profit</p>
         </div>
@@ -526,18 +528,18 @@ export default function FinancesPage() {
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-3 bg-slate-50/70 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800/80">
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-0.5">Received</p>
-                    <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">₹{p.received.toLocaleString('en-IN')}</p>
+                    <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(p.received)}</p>
                   </div>
 
                   <div className="p-3 bg-slate-50/70 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800/80">
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-0.5">Balance</p>
-                    <p className="text-base font-bold text-slate-900 dark:text-white">₹{p.balance_due.toLocaleString('en-IN')}</p>
+                    <p className="text-base font-bold text-slate-900 dark:text-white">{formatCurrency(p.balance_due)}</p>
                   </div>
 
                   <div className="p-3 bg-slate-50/70 dark:bg-slate-900/40 rounded-lg border border-slate-100 dark:border-slate-800/80">
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mb-0.5">Net</p>
                     <p className={`text-base font-bold ${pNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                      ₹{pNet.toLocaleString('en-IN')}
+                      {formatCurrency(pNet)}
                     </p>
                   </div>
                 </div>
@@ -574,7 +576,7 @@ export default function FinancesPage() {
 
                           <div className="text-right font-mono font-bold">
                             <p className={t.type === 'Payment Received' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>
-                              {t.type === 'Payment Received' ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
+                              {t.type === 'Payment Received' ? '+' : '-'}{formatCurrency(t.amount)}
                             </p>
                             <p className="text-[10px] text-slate-400 font-normal">{t.date}</p>
                           </div>
@@ -611,7 +613,7 @@ export default function FinancesPage() {
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">Project: {t.project_name} {t.note ? `• ${t.note}` : ''}</p>
                   </div>
                   <div className="text-right font-mono">
-                    <p className="font-bold text-rose-600 dark:text-rose-400">-₹{t.amount.toLocaleString('en-IN')}</p>
+                    <p className="font-bold text-rose-600 dark:text-rose-400">-{formatCurrency(t.amount)}</p>
                     <p className="text-[10px] text-slate-400">{t.date}</p>
                   </div>
                 </div>
@@ -762,18 +764,18 @@ export default function FinancesPage() {
                 {/* Period Summary Cards */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="pixeva-card rounded-xl p-3.5">
-                    <p className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 mb-0.5">₹{incomeSum.toLocaleString('en-IN')}</p>
+                    <p className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 mb-0.5">{formatCurrency(incomeSum)}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Income</p>
                   </div>
 
                   <div className="pixeva-card rounded-xl p-3.5">
-                    <p className="text-xl font-bold tracking-tight text-rose-600 dark:text-rose-400 mb-0.5">₹{payoutsAndExpensesSum.toLocaleString('en-IN')}</p>
+                    <p className="text-xl font-bold tracking-tight text-rose-600 dark:text-rose-400 mb-0.5">{formatCurrency(payoutsAndExpensesSum)}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Payouts + Expenses</p>
                   </div>
 
                   <div className="pixeva-card rounded-xl p-3.5">
                     <p className={`text-xl font-bold tracking-tight mb-0.5 ${periodNet >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                      ₹{periodNet.toLocaleString('en-IN')}
+                      {formatCurrency(periodNet)}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Net</p>
                   </div>
@@ -828,7 +830,7 @@ export default function FinancesPage() {
                             <td className="px-4 py-3.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">{t.category}</td>
                             <td className="px-4 py-3.5 font-mono text-slate-500 whitespace-nowrap">{t.payment_mode || '—'}</td>
                             <td className={`px-4 py-3.5 font-mono font-bold whitespace-nowrap ${t.type === 'Payment Received' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                              {t.type === 'Payment Received' ? '+' : '-'}₹{t.amount.toLocaleString('en-IN')}
+                              {t.type === 'Payment Received' ? '+' : '-'}{formatCurrency(t.amount)}
                             </td>
                             <td className="px-4 py-3.5 text-slate-400 whitespace-nowrap">{t.date}</td>
                           </tr>
@@ -890,7 +892,7 @@ export default function FinancesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Amount (₹) *</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Amount ({symbol}) *</label>
                   <input
                     type="number"
                     required
@@ -973,7 +975,7 @@ export default function FinancesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Payment Amount (₹) *</label>
+                  <label className="font-semibold text-slate-700 dark:text-slate-200 block mb-1">Payment Amount ({symbol}) *</label>
                   <input
                     type="number"
                     required
