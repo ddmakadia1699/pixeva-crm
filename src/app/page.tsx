@@ -7,11 +7,120 @@ import {
   Calendar, 
   Inbox, 
   CheckCircle2, 
-  ChevronRight 
+  ChevronRight,
+  Clock,
+  MapPin,
+  Users,
+  Video,
+  Film,
+  ArrowUpRight,
+  DollarSign,
+  Sparkles,
+  Plus,
+  CreditCard,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
 
 import { apiClient } from '@/lib/api/apiClient';
 import { useCurrency } from '@/context/CurrencyContext';
+
+interface RecentLead {
+  id: string;
+  name: string;
+  email: string;
+  eventType: string;
+  eventDate: string;
+  budget: number;
+  status: 'new' | 'proposal' | 'booked' | 'qualified';
+}
+
+interface UpcomingShoot {
+  id: string;
+  title: string;
+  date: string;
+  daysAway: string;
+  location: string;
+  crewCount: number;
+  gearStatus: string;
+  stage: string;
+  category: string;
+}
+
+const UPCOMING_SHOOTS: UpcomingShoot[] = [
+  {
+    id: 'shoot-1',
+    title: 'Vance Corporate Annual Gala',
+    date: '15 Nov 2026',
+    daysAway: 'In 6 Days',
+    location: 'Udaipur Lake Palace',
+    crewCount: 8,
+    gearStatus: '100% Prepared',
+    stage: 'Final Prep',
+    category: 'Corporate Film'
+  },
+  {
+    id: 'shoot-2',
+    title: 'Kapur & Mehta Luxury Wedding',
+    date: '28 Nov 2026',
+    daysAway: 'In 19 Days',
+    location: 'Taj Falaknuma, Hyderabad',
+    crewCount: 6,
+    gearStatus: 'Equipment Staged',
+    stage: 'Confirmed',
+    category: 'Wedding Cinema'
+  },
+  {
+    id: 'shoot-3',
+    title: 'Aura Tech Commercial Launch',
+    date: '04 Dec 2026',
+    daysAway: 'In 25 Days',
+    location: 'Studio 4, Mumbai',
+    crewCount: 4,
+    gearStatus: 'Checklist Ready',
+    stage: 'Pre-Production',
+    category: 'Brand Commercial'
+  },
+];
+
+const RECENT_LEADS: RecentLead[] = [
+  {
+    id: 'enq-1',
+    name: 'Eleanor Vance',
+    email: 'eleanor.vance@vancecorp.com',
+    eventType: 'Corporate Gala',
+    eventDate: '15 Nov 2026',
+    budget: 980000,
+    status: 'booked'
+  },
+  {
+    id: 'enq-2',
+    name: 'Rohan & Ananya Kapoor',
+    email: 'rohan.kapoor@gmail.com',
+    eventType: 'Destination Wedding',
+    eventDate: '28 Nov 2026',
+    budget: 1450000,
+    status: 'proposal'
+  },
+  {
+    id: 'enq-3',
+    name: 'Zara Patel',
+    email: 'zara@auramedia.co',
+    eventType: 'Fashion Editorial',
+    eventDate: '10 Dec 2026',
+    budget: 350000,
+    status: 'new'
+  },
+  {
+    id: 'enq-4',
+    name: 'Siddharth Roy',
+    email: 'sid.roy@gmail.com',
+    eventType: 'Pre-Wedding Film',
+    eventDate: '18 Dec 2026',
+    budget: 280000,
+    status: 'qualified'
+  }
+];
 
 export default function DashboardPage() {
   const { formatCurrency } = useCurrency();
@@ -63,410 +172,501 @@ export default function DashboardPage() {
     syncCloudMetrics();
   }, []);
 
+  const collectionPercent = stats.totalRevenueAmount > 0 
+    ? Math.min(100, Math.round((stats.receivedRevenueAmount / stats.totalRevenueAmount) * 100))
+    : 57;
+
   return (
-    <div className="space-y-6 animate-fadeIn pb-12 max-w-7xl mx-auto">
-      {/* Studio Executive Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-white/10">
+    <div className="space-y-8 animate-fadeIn pb-16 max-w-7xl mx-auto">
+      {/* 1. Header: Greeting, Live Status & Quick Action Buttons */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 dark:border-white/10">
         <div>
-          <div className="flex items-center space-x-2.5">
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <div className="flex items-center space-x-3">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               Studio Executive Dashboard
             </h1>
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-500/20">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-500/20">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live Studio Node
+              Cloud Live
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Real-time pipeline analytics, upcoming productions, financial ledger, and post-production suite.
+            Welcome back, <strong className="text-slate-700 dark:text-slate-300 font-semibold">Dhruvi</strong>. Real-time pipeline, upcoming productions, and financial health.
           </p>
         </div>
 
-        {/* Quick Action Buttons */}
-        <div className="flex items-center space-x-2">
+        {/* Quick Actions Bar */}
+        <div className="flex items-center space-x-2.5">
           <Link
             href="/enquiries"
-            className="btn-pixeva-secondary space-x-1.5"
+            className="btn-pixeva-secondary flex items-center space-x-1.5 text-xs"
           >
-            <Inbox className="w-3.5 h-3.5 text-slate-400" />
-            <span>Leads ({stats.totalEnquiries})</span>
+            <Plus className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+            <span>New Lead</span>
           </Link>
           <Link
             href="/projects"
-            className="btn-pixeva-primary space-x-1.5"
+            className="btn-pixeva-primary flex items-center space-x-1.5 text-xs"
           >
             <Calendar className="w-3.5 h-3.5" />
-            <span>Shoots ({stats.activeProjectsCount})</span>
+            <span>Schedule Shoot</span>
           </Link>
         </div>
       </div>
 
-      {/* Top 4 KPI Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1 */}
-        <div className="pixeva-card p-4.5 flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-              <span>Total Booked Volume</span>
-              <span className="inline-flex items-center text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-200/50 dark:border-emerald-500/20">
-                <TrendingUp className="w-3 h-3 mr-1" /> +14.2%
-              </span>
-            </div>
-            <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white pt-1">
-              {formatCurrency(stats.totalRevenueAmount)}
-            </div>
+      {/* 2. Top 4 High-Impact KPI Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4.5">
+        {/* Card 1: Total Booked Volume */}
+        <div className="pixeva-card p-5 space-y-3 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              Total Booked Volume
+            </span>
+            <span className="inline-flex items-center text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-500/20">
+              <TrendingUp className="w-3 h-3 mr-1" /> +14.2%
+            </span>
           </div>
-          <div className="pt-3 mt-1 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">{formatCurrency(stats.receivedRevenueAmount)}</span> collected • <span className="font-semibold text-slate-700 dark:text-slate-300">{formatCurrency(stats.pendingRevenueAmount)}</span> pending
+          <div className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-mono">
+            {formatCurrency(stats.totalRevenueAmount)}
           </div>
-        </div>
-
-        {/* Metric 2 */}
-        <div className="pixeva-card p-4.5 flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-              <span>Enquiries Pipeline</span>
-              <span className="inline-flex items-center text-[11px] font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-200/50 dark:border-blue-500/20">
-                {stats.enquiriesNew} New
-              </span>
+          <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-white/5">
+            <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              <span>{formatCurrency(stats.receivedRevenueAmount)} collected</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300">{collectionPercent}%</span>
             </div>
-            <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white pt-1">
-              {stats.totalEnquiries} <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Leads</span>
+            <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <div 
+                className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
+                style={{ width: `${collectionPercent}%` }} 
+              />
             </div>
-          </div>
-          <div className="pt-3 mt-1 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">{stats.enquiriesFollowUp}</span> in proposal • <span className="font-semibold text-slate-700 dark:text-slate-300">{stats.enquiriesBooked}</span> confirmed
           </div>
         </div>
 
-        {/* Metric 3 */}
-        <div className="pixeva-card p-4.5 flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-              <span>Active Productions</span>
-              <span className="inline-flex items-center text-[11px] font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-white/10 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-white/10">
-                8 Crew Deployed
-              </span>
-            </div>
-            <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white pt-1">
-              {stats.activeProjectsCount} <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Shoots</span>
-            </div>
+        {/* Card 2: Enquiries Pipeline */}
+        <div className="pixeva-card p-5 space-y-3 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              Enquiries Pipeline
+            </span>
+            <span className="inline-flex items-center text-[11px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-full border border-blue-200/50 dark:border-blue-500/20">
+              {stats.enquiriesNew} New Leads
+            </span>
           </div>
-          <div className="pt-3 mt-1 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-            Next: <span className="font-semibold text-slate-700 dark:text-slate-300">Vance Gala</span> (15 Nov)
+          <div className="flex items-baseline space-x-2">
+            <span className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-mono">
+              {stats.totalEnquiries}
+            </span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Active Deals</span>
+          </div>
+          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400">
+            <span><strong className="text-slate-700 dark:text-slate-300 font-semibold">{stats.enquiriesFollowUp}</strong> in proposal</span>
+            <span>•</span>
+            <span><strong className="text-slate-700 dark:text-slate-300 font-semibold">{stats.enquiriesBooked}</strong> confirmed</span>
           </div>
         </div>
 
-        {/* Metric 4 */}
-        <div className="pixeva-card p-4.5 flex flex-col justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-              <span>Post-Production SLA</span>
-              <span className="inline-flex items-center text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-200/50 dark:border-emerald-500/20">
-                4 Ready
-              </span>
-            </div>
-            <div className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white pt-1">
-              85% <span className="text-sm font-medium text-slate-500 dark:text-slate-400">On Schedule</span>
-            </div>
+        {/* Card 3: Active Productions */}
+        <div className="pixeva-card p-5 space-y-3 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              Active Productions
+            </span>
+            <span className="inline-flex items-center text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200/50 dark:border-amber-500/20">
+              8 Crew Deployed
+            </span>
           </div>
-          <div className="pt-3 mt-1 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">2</span> in suite • <span className="font-semibold text-slate-700 dark:text-slate-300">1</span> in review
+          <div className="flex items-baseline space-x-2">
+            <span className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-mono">
+              {stats.activeProjectsCount}
+            </span>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Upcoming Shoots</span>
+          </div>
+          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+            <span>Next: <strong className="text-slate-700 dark:text-slate-300 font-semibold truncate">Vance Gala</strong></span>
+            <span className="text-amber-600 dark:text-amber-400 font-medium shrink-0">In 6 Days</span>
+          </div>
+        </div>
+
+        {/* Card 4: Post-Production SLA */}
+        <div className="pixeva-card p-5 space-y-3 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              Post-Production SLA
+            </span>
+            <span className="inline-flex items-center text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-500/20">
+              {stats.postProdReady} Ready
+            </span>
+          </div>
+          <div className="flex items-baseline space-x-2">
+            <span className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-mono">
+              85%
+            </span>
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 font-semibold">On Schedule</span>
+          </div>
+          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400">
+            <span><strong className="text-slate-700 dark:text-slate-300 font-semibold">{stats.postProdInProgress}</strong> in suite</span>
+            <span>•</span>
+            <span><strong className="text-slate-700 dark:text-slate-300 font-semibold">{stats.postProdReview}</strong> in review</span>
           </div>
         </div>
       </div>
 
-      {/* Main 6-Matrix Studio Workflows Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">
-        {/* Card 1: Enquiries Pipeline */}
-        <div className="pixeva-card pixeva-card-hover p-5 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Enquiries Pipeline
-              </h2>
-              <Link 
-                href="/enquiries" 
-                className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center space-x-0.5"
+      {/* 3. Main Dashboard Body: Asymmetric 2-Column Split */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* ========================================================================= */}
+        {/* LEFT COLUMN (8 Columns): Shoot Timeline & High-Priority Pipeline Table */}
+        {/* ========================================================================= */}
+        <div className="lg:col-span-8 space-y-6">
+          
+          {/* SECTION A: Upcoming Production Schedule Timeline */}
+          <div className="pixeva-card p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <Video className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Upcoming Productions & Shoots
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Live schedule, crew deployments, and venue preparation.
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href="/projects"
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1"
               >
-                <span>Pipeline ({stats.totalEnquiries})</span>
+                <span>View All Shoots</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {/* Metrics Breakdown */}
-            <div className="grid grid-cols-3 gap-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 text-center">
-              <div>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">New</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{stats.enquiriesNew}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Proposals</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{stats.enquiriesFollowUp}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Booked</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{stats.enquiriesBooked}</p>
-              </div>
-            </div>
+            {/* Production List Items */}
+            <div className="space-y-3">
+              {UPCOMING_SHOOTS.map((shoot) => (
+                <div
+                  key={shoot.id}
+                  className="p-4 rounded-xl bg-slate-50/70 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80 hover:border-blue-200 dark:hover:border-blue-900/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                >
+                  <div className="flex items-start space-x-3.5 min-w-0">
+                    {/* Date Block */}
+                    <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 flex flex-col items-center justify-center shrink-0 shadow-2xs">
+                      <span className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 leading-none">
+                        {shoot.date.split(' ')[1]}
+                      </span>
+                      <span className="text-base font-black text-slate-900 dark:text-white leading-tight">
+                        {shoot.date.split(' ')[0]}
+                      </span>
+                    </div>
 
-            {/* Visual Funnel Bar */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
-                <span>Conversion Rate</span>
-                <span className="font-semibold text-blue-600 dark:text-blue-400">33.3%</span>
-              </div>
-              <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden flex">
-                <div className="bg-slate-300 dark:bg-slate-700 h-full" style={{ width: '33%' }} title="New" />
-                <div className="bg-blue-400 dark:bg-blue-500 h-full" style={{ width: '44%' }} title="Proposals" />
-                <div className="bg-blue-600 dark:bg-blue-400 h-full" style={{ width: '23%' }} title="Booked" />
-              </div>
+                    {/* Shoot Details */}
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {shoot.title}
+                        </h3>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-500/20 font-semibold shrink-0">
+                          {shoot.daysAway}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="flex items-center space-x-1">
+                          <MapPin className="w-3 h-3 text-slate-400" />
+                          <span className="truncate">{shoot.location}</span>
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center space-x-1">
+                          <Users className="w-3 h-3 text-slate-400" />
+                          <span>{shoot.crewCount} Specialists</span>
+                        </span>
+                        <span>•</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                          {shoot.gearStatus}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stage Badge & Action */}
+                  <div className="flex items-center space-x-3 sm:self-auto self-end">
+                    <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+                      {shoot.stage}
+                    </span>
+                    <Link
+                      href="/crew-scheduling"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                      title="View Crew Roster"
+                    >
+                      <ArrowUpRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="pt-3.5 mt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
-            <span className="flex items-center space-x-1.5 text-slate-500 dark:text-slate-400 font-medium">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Cloud API Connected</span>
-            </span>
-            <Link href="/enquiries" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-              Manage Leads →
-            </Link>
-          </div>
-        </div>
+          {/* SECTION B: High-Priority Pipeline & Leads Table */}
+          <div className="pixeva-card p-6 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                  <Inbox className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                    High-Priority Leads & Pipeline
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Latest client enquiries, event dates, and budget estimates.
+                  </p>
+                </div>
+              </div>
 
-        {/* Card 2: Active Shoots & Next Production */}
-        <div className="pixeva-card pixeva-card-hover p-5 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Active Shoots & Calendar
-              </h2>
-              <Link 
-                href="/projects" 
-                className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center space-x-0.5"
+              <Link
+                href="/enquiries"
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1"
               >
-                <span>All Shoots</span>
+                <span>Manage All Leads ({stats.totalEnquiries})</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {/* Next Production Block */}
-            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Next Production</span>
-                <span className="text-[10px] font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-200/50 dark:border-amber-500/20">
-                  In 6 Days
-                </span>
-              </div>
-              <h3 className="font-semibold text-xs text-slate-900 dark:text-white line-clamp-1">
-                Vance Corporate Annual Gala
-              </h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
-                <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
-                <span>15 Nov 2026</span>
-                <span>•</span>
-                <span className="truncate">Udaipur Lake Palace</span>
-              </p>
-            </div>
+            {/* Clean Leads Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                    <th className="pb-2.5 font-semibold">Client</th>
+                    <th className="pb-2.5 font-semibold">Event Type</th>
+                    <th className="pb-2.5 font-semibold">Event Date</th>
+                    <th className="pb-2.5 font-semibold">Budget</th>
+                    <th className="pb-2.5 font-semibold">Status</th>
+                    <th className="pb-2.5 font-semibold text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {RECENT_LEADS.map((lead) => {
+                    const statusConfig = {
+                      new: { label: 'New Lead', bg: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-blue-200/50 dark:border-blue-500/20' },
+                      proposal: { label: 'Proposal Sent', bg: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400 border-indigo-200/50 dark:border-indigo-500/20' },
+                      booked: { label: 'Booked', bg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-500/20' },
+                      qualified: { label: 'Qualified', bg: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200/50 dark:border-amber-500/20' }
+                    }[lead.status];
 
-            {/* Shoot Readiness Status */}
-            <div className="grid grid-cols-2 gap-2 text-center">
-              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5">
-                <span className="text-[10px] text-slate-400 font-medium block">Crew Allocated</span>
-                <span className="text-xs font-bold text-slate-900 dark:text-white mt-0.5 block">8 Specialists</span>
-              </div>
-              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5">
-                <span className="text-[10px] text-slate-400 font-medium block">Gear Checklist</span>
-                <span className="text-xs font-bold text-slate-900 dark:text-white mt-0.5 block">100% Prepared</span>
-              </div>
+                    return (
+                      <tr key={lead.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                        <td className="py-3 pr-3">
+                          <div className="flex items-center space-x-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold flex items-center justify-center text-[11px] shrink-0 border border-slate-200 dark:border-slate-700">
+                              {lead.name.charAt(0)}
+                            </div>
+                            <div className="truncate">
+                              <span className="font-bold text-slate-900 dark:text-white block truncate">
+                                {lead.name}
+                              </span>
+                              <span className="text-[10px] text-slate-400 font-mono truncate block">
+                                {lead.email}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 pr-3 text-slate-600 dark:text-slate-300 font-medium">
+                          {lead.eventType}
+                        </td>
+                        <td className="py-3 pr-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                          {lead.eventDate}
+                        </td>
+                        <td className="py-3 pr-3 font-mono font-bold text-slate-900 dark:text-white">
+                          {formatCurrency(lead.budget)}
+                        </td>
+                        <td className="py-3 pr-3">
+                          <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-md border ${statusConfig.bg}`}>
+                            {statusConfig.label}
+                          </span>
+                        </td>
+                        <td className="py-3 text-right">
+                          <Link
+                            href="/enquiries"
+                            className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                          >
+                            View →
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          </div>
-
-          <div className="pt-3.5 mt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">{stats.activeProjectsCount} Active Productions</span>
-            <Link href="/crew-scheduling" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-              View Schedule →
-            </Link>
           </div>
         </div>
 
-        {/* Card 3: Financial Health & Ledger */}
-        <div className="pixeva-card pixeva-card-hover p-5 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Financial Ledger
-              </h2>
+        {/* ========================================================================= */}
+        {/* RIGHT COLUMN (4 Columns): Financial Settlement, Post-Prod, Team Readiness */}
+        {/* ========================================================================= */}
+        <div className="lg:col-span-4 space-y-6">
+          
+          {/* WIDGET 1: Financial Ledger & Settlement Progress */}
+          <div className="pixeva-card p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                  Financial Settlement
+                </h3>
+              </div>
               <Link 
                 href="/finances" 
-                className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center space-x-0.5"
+                className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-0.5"
               >
                 <span>Ledger</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5">
-              <div>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Collected</p>
-                <p className="text-base font-bold text-slate-900 dark:text-white mt-0.5">{formatCurrency(stats.receivedRevenueAmount)}</p>
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-bold uppercase text-slate-400 block">Collected</span>
+                <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 block truncate">
+                  {formatCurrency(stats.receivedRevenueAmount)}
+                </span>
               </div>
-              <div>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Receivable</p>
-                <p className="text-base font-bold text-slate-900 dark:text-white mt-0.5">{formatCurrency(stats.pendingRevenueAmount)}</p>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+                <span className="text-[10px] font-bold uppercase text-slate-400 block">Receivable</span>
+                <span className="text-sm font-black text-slate-900 dark:text-white font-mono mt-0.5 block truncate">
+                  {formatCurrency(stats.pendingRevenueAmount)}
+                </span>
               </div>
             </div>
 
-            <div className="space-y-2">
+            {/* Settlement Progress */}
+            <div className="space-y-1.5 pt-1">
               <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
-                <span>Settlement Progress</span>
-                <span className="font-semibold text-blue-600 dark:text-blue-400">57.1%</span>
+                <span>Settlement Ratio</span>
+                <span className="font-bold text-blue-600 dark:text-blue-400">{collectionPercent}%</span>
               </div>
               <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                <div className="bg-blue-600 dark:bg-blue-500 h-full rounded-full" style={{ width: '57.1%' }} />
+                <div 
+                  className="bg-blue-600 dark:bg-blue-500 h-full rounded-full transition-all duration-500" 
+                  style={{ width: `${collectionPercent}%` }} 
+                />
               </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+              <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+                Total Volume: <strong className="text-slate-700 dark:text-slate-300">{formatCurrency(stats.totalRevenueAmount)}</strong>
+              </span>
+              <Link href="/finances" className="font-bold text-blue-600 dark:text-blue-400 hover:underline text-[11px]">
+                Invoices →
+              </Link>
             </div>
           </div>
 
-          <div className="pt-3.5 mt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">Volume: {formatCurrency(stats.totalRevenueAmount)}</span>
-            <Link href="/finances" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-              View Invoices →
-            </Link>
-          </div>
-        </div>
-
-        {/* Card 4: Post-Production Queue */}
-        <div className="pixeva-card pixeva-card-hover p-5 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Post-Production Queue
-              </h2>
+          {/* WIDGET 2: Post-Production Suite */}
+          <div className="pixeva-card p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                  <Film className="w-4 h-4" />
+                </div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                  Post-Production Suite
+                </h3>
+              </div>
               <Link 
                 href="/post-production" 
-                className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center space-x-0.5"
+                className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-0.5"
               >
                 <span>Queue</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 text-center">
-              <div>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">In Edit</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{stats.postProdInProgress}</p>
+            {/* Quick Status Counts */}
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">In Edit</span>
+                <span className="text-base font-black text-slate-900 dark:text-white mt-0.5 block">{stats.postProdInProgress}</span>
               </div>
-              <div>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Review</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{stats.postProdReview}</p>
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Review</span>
+                <span className="text-base font-black text-slate-900 dark:text-white mt-0.5 block">{stats.postProdReview}</span>
               </div>
-              <div>
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Ready</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{stats.postProdReady}</p>
+              <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                <span className="text-[10px] text-slate-400 font-bold uppercase block">Ready</span>
+                <span className="text-base font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block">{stats.postProdReady}</span>
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 text-xs">
-              <p className="font-semibold text-slate-900 dark:text-slate-200">
-                4K Color Grading: 85% complete
-              </p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Vance Gala Teaser • Editor: Marcus Rao
-              </p>
+            {/* Deliverable Progress Highlight */}
+            <div className="p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900 dark:text-white">Vance Gala 4K Teaser</span>
+                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">85% Color Grading</span>
+              </div>
+              <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-purple-600 dark:bg-purple-500 h-full rounded-full" style={{ width: '85%' }} />
+              </div>
+              <p className="text-[10px] text-slate-400">Lead Colorist: Marcus Rao • Delivery: Nov 20</p>
             </div>
           </div>
 
-          <div className="pt-3.5 mt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">7 Deliverables in Studio</span>
-            <Link href="/post-production" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-              Open Queue →
-            </Link>
-          </div>
-        </div>
-
-        {/* Card 5: Crew Roster & Gear */}
-        <div className="pixeva-card pixeva-card-hover p-5 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Crew Roster & Availability
-              </h2>
+          {/* WIDGET 3: Studio Crew & Resource Readiness */}
+          <div className="pixeva-card p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-7 h-7 rounded-lg bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                  <Users className="w-4 h-4" />
+                </div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                  Crew & Studio Readiness
+                </h3>
+              </div>
               <Link 
-                href="/crew-scheduling" 
-                className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center space-x-0.5"
+                href="/team" 
+                className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-0.5"
               >
-                <span>Schedule</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                <span>Team</span>
+                <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
 
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5">
+              <div className="flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">Cinematographers:</span>
                 <span className="font-bold text-slate-900 dark:text-white">4 Available Today</span>
               </div>
-              <div className="flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5">
+              <div className="flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">Drone Pilots:</span>
-                <span className="font-bold text-slate-900 dark:text-white">2 Ready (Certified)</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">2 Ready & Certified</span>
+              </div>
+              <div className="flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                <span className="text-slate-600 dark:text-slate-400 font-medium">Average Client SLA:</span>
+                <span className="font-bold text-slate-900 dark:text-white">45 Min Response</span>
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 text-xs flex items-center justify-between">
-              <span className="text-slate-500 font-medium">Next Available Crew:</span>
-              <span className="font-semibold text-blue-600 dark:text-blue-400">Alex R., Rohan V.</span>
-            </div>
-          </div>
-
-          <div className="pt-3.5 mt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">14 Active Team Members</span>
-            <Link href="/team" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-              Manage Rates →
-            </Link>
-          </div>
-        </div>
-
-        {/* Card 6: Client Requests & SLA */}
-        <div className="pixeva-card pixeva-card-hover p-5 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Client Feedback & Edits
-              </h2>
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-center">
               <Link 
-                href="/client-requests" 
-                className="text-xs font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white flex items-center space-x-0.5"
+                href="/crew-scheduling" 
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
               >
-                <span>Requests ({stats.clientRequestsPending})</span>
-                <ChevronRight className="w-3.5 h-3.5" />
+                Open Full Crew Scheduling Calendar →
               </Link>
             </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5">
-                <span className="text-slate-600 dark:text-slate-400 font-medium">Revision Tickets:</span>
-                <span className="font-bold text-slate-900 dark:text-white">2 In Review</span>
-              </div>
-              <div className="flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5">
-                <span className="text-slate-600 dark:text-slate-400 font-medium">Average Response:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">45 Minutes</span>
-              </div>
-            </div>
-
-            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-white/5 text-xs flex items-center justify-between">
-              <span className="text-slate-500 font-medium">SLA Resolution Rate:</span>
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">98.5% On Time</span>
-            </div>
           </div>
 
-          <div className="pt-3.5 mt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs">
-            <span className="text-slate-500 font-medium">Priority SLA Active</span>
-            <Link href="/client-requests" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
-              Review Edits →
-            </Link>
-          </div>
         </div>
+
       </div>
     </div>
   );
