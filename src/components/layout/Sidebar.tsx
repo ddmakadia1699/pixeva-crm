@@ -84,7 +84,7 @@ export default function Sidebar() {
     return null;
   }
 
-  const userName = user?.user_metadata?.full_name || 'Dhruvi Govani';
+  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Studio User';
   const userEmail = user?.email || 'dhruvigovani1699@gmail.com';
   const userInitial = userName ? userName.charAt(0).toUpperCase() : 'D';
 

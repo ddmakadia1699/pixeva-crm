@@ -59,7 +59,10 @@ export default function EnquiriesListTab({
   onDeleteBatchEnquiries,
   onClearAllEnquiries,
 }: EnquiriesListTabProps) {
-  const { formatCurrency, currency } = useCurrency();
+  const { formatCurrency, currency, convertAmount } = useCurrency();
+  // Budgets are stored in INR; the form fields are entered in the active display currency.
+  const toStoredBudget = (displayAmount: number) => Math.round(convertAmount(displayAmount, currency.code, 'INR'));
+  const toDisplayBudget = (storedAmount: number) => String(Math.round(convertAmount(storedAmount, 'INR', currency.code)));
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedSource, setSelectedSource] = useState<string>('all');
@@ -405,7 +408,7 @@ export default function EnquiriesListTab({
     setIsSubmittingAdd(true);
     try {
       const rawBudget = formData.budget.replace(/[^0-9]/g, '');
-      const numericBudget = rawBudget ? Number(rawBudget) : 200000;
+      const numericBudget = rawBudget ? toStoredBudget(Number(rawBudget)) : 200000;
 
       const emailVal = formData.email.trim();
       const phoneVal = formData.contact.trim();
@@ -465,7 +468,7 @@ export default function EnquiriesListTab({
       event_type: enq.event_type || 'wedding',
       event_date: enq.event_date || enq.received_on || new Date().toISOString().slice(0, 10),
       venue: enq.venue || '',
-      budget: enq.estimated_budget ? String(enq.estimated_budget) : (enq.budget || '200000'),
+      budget: enq.estimated_budget ? toDisplayBudget(enq.estimated_budget) : '',
       source: (enq.source as EnquirySource) || 'Instagram',
       status: statusVal,
       notes: enq.notes || enq.event_details || '',
@@ -480,7 +483,11 @@ export default function EnquiriesListTab({
     if (!editingEnquiry || !editFormData.name) return;
 
     const rawBudget = editFormData.budget.replace(/[^0-9]/g, '');
-    const numericBudget = rawBudget ? Number(rawBudget) : (editingEnquiry.estimated_budget || 200000);
+    const budgetUnchanged =
+      !!editingEnquiry.estimated_budget && editFormData.budget === toDisplayBudget(editingEnquiry.estimated_budget);
+    const numericBudget = budgetUnchanged || !rawBudget
+      ? (editingEnquiry.estimated_budget || 200000)
+      : toStoredBudget(Number(rawBudget));
 
     const updated: Enquiry = {
       ...editingEnquiry,

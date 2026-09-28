@@ -138,6 +138,8 @@ export default function SettingsPage() {
     symbol, 
     baseCurrency,
     exchangeRates,
+    ratesDate,
+    ratesStatus,
     setCurrencyCode, 
     updateExchangeRate,
     resetExchangeRates,
@@ -155,6 +157,14 @@ export default function SettingsPage() {
   const [calcTo, setCalcTo] = useState<string>('AED');
   const [editingRateCode, setEditingRateCode] = useState<string | null>(null);
   const [rateInputVal, setRateInputVal] = useState<string>('');
+  const ratesDateLabel = ratesDate
+    ? new Date(`${ratesDate}T00:00:00`).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    : null;
+  const ratesStatusLabel =
+    ratesStatus === 'loading' ? 'Fetching today\'s rates…'
+    : ratesStatus === 'live' ? `Live • as of ${ratesDateLabel}`
+    : ratesStatus === 'stale' ? `Offline • last rates ${ratesDateLabel}`
+    : 'Offline • built-in fallback rates';
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -885,7 +895,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                 >
                   {currencies.map((c) => (
                     <option key={c.code} value={c.code}>
-                      {c.flag} {c.code} — {c.symbol.trim()} ({c.name}) {c.code === 'INR' ? '• Base Currency' : `• 1 ${c.code} = ₹${exchangeRates[c.code] || 1}`}
+                      {c.flag} {c.code} — {c.symbol.trim()} ({c.name}) {c.code === 'INR' ? '• Base Currency' : `• 1 ${c.code} = ₹${(exchangeRates[c.code] || 1).toFixed(4)}`}
                     </option>
                   ))}
                 </select>
@@ -928,7 +938,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                           )}
                         </div>
                         <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                          {c.code === 'INR' ? 'Base Currency (₹)' : `1 ${c.code} = ₹${rate}`}
+                          {c.code === 'INR' ? 'Base Currency (₹)' : `1 ${c.code} = ₹${rate.toFixed(4)}`}
                         </p>
                       </div>
                     </button>
@@ -952,11 +962,11 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                 <div className="flex items-center space-x-3 text-xs font-mono shrink-0">
                   <div className="bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
                     <span className="text-[10px] text-slate-400 block font-sans">Advance (₹2,00,000)</span>
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(200000)}</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(200000, undefined, 'INR', 2)}</span>
                   </div>
                   <div className="bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
                     <span className="text-[10px] text-slate-400 block font-sans">Deal Volume (₹9,80,000)</span>
-                    <span className="font-bold text-blue-600 dark:text-blue-400">{formatCurrency(980000)}</span>
+                    <span className="font-bold text-blue-600 dark:text-blue-400">{formatCurrency(980000, undefined, 'INR', 2)}</span>
                   </div>
                 </div>
               </div>
@@ -1066,14 +1076,14 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                       <span>{fromCurrencyObj.flag} {fromCurrencyObj.symbol.trim()}{calcAmount.toLocaleString()} {calcFrom}</span>
                       <ArrowRight className="w-4 h-4 text-blue-500 shrink-0" />
                       <span className="text-blue-600 dark:text-blue-400 font-mono">
-                        {toCurrencyObj.flag} {formatCurrency(calcAmount, calcTo, calcFrom)} {calcTo}
+                        {toCurrencyObj.flag} {formatCurrency(calcAmount, calcTo, calcFrom, 2)} {calcTo}
                       </span>
                     </div>
                   </div>
                   <div className="text-right sm:self-auto self-start bg-white/80 dark:bg-slate-900/80 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-slate-800 text-[11px] font-mono">
                     <span className="text-slate-400 block text-[10px]">Exchange Ratio</span>
                     <span className="font-bold text-slate-700 dark:text-slate-300">
-                      1 {calcFrom} = {rate < 1 ? rate.toFixed(4) : rate.toFixed(2)} {calcTo}
+                      1 {calcFrom} = {rate.toFixed(4)} {calcTo}
                     </span>
                   </div>
                 </div>
@@ -1087,12 +1097,18 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
                   <span>Exchange Rates Matrix (Base: INR ₹)</span>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                    Configurable
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      ratesStatus === 'live'
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400'
+                        : 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'
+                    }`}
+                  >
+                    {ratesStatusLabel}
                   </span>
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Current valuation of 1 unit of foreign currency in Indian Rupees (INR).
+                  Today's market value of 1 unit of foreign currency in Indian Rupees (INR), refreshed daily. Manual edits apply for today only.
                 </p>
               </div>
 
@@ -1100,10 +1116,10 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                 type="button"
                 onClick={resetExchangeRates}
                 className="btn-pixeva-secondary flex items-center space-x-1.5 text-xs self-start sm:self-auto"
-                title="Reset all rates to standard baseline"
+                title="Discard manual edits and fetch today's rates"
               >
                 <RotateCcw className="w-3 h-3" />
-                <span>Reset to Defaults</span>
+                <span>Reset to Today's Rates</span>
               </button>
             </div>
 
@@ -1133,7 +1149,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-slate-400">₹</span>
                           <input
                             type="number"
-                            step="0.01"
+                            step="0.0001"
                             value={rateInputVal}
                             onChange={(e) => setRateInputVal(e.target.value)}
                             className="w-full bg-white dark:bg-slate-800 border border-blue-500 rounded-lg pl-6 pr-2 py-1 text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none"
@@ -1165,7 +1181,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="font-mono font-black text-sm text-slate-900 dark:text-white">
-                            ₹{currentRate.toFixed(2)}
+                            ₹{currentRate.toFixed(4)}
                           </div>
                           <p className="text-[10px] text-slate-400">
                             1 INR ≈ {(1 / currentRate).toFixed(4)} {c.code}
@@ -1175,7 +1191,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                           type="button"
                           onClick={() => {
                             setEditingRateCode(c.code);
-                            setRateInputVal(currentRate.toString());
+                            setRateInputVal(currentRate.toFixed(4));
                           }}
                           className="p-1 rounded text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
                           title="Edit exchange rate"

@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  TrendingUp, 
   Calendar, 
   Inbox, 
   CheckCircle2, 
@@ -26,6 +25,7 @@ import {
 
 import { apiClient } from '@/lib/api/apiClient';
 import { useCurrency } from '@/context/CurrencyContext';
+import { useAuth } from '@/context/AuthContext';
 
 interface RecentLead {
   id: string;
@@ -56,6 +56,8 @@ const RECENT_LEADS: RecentLead[] = [];
 export default function DashboardPage() {
   const router = useRouter();
   const { formatCurrency } = useCurrency();
+  const { user } = useAuth();
+  const firstName = (user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'there').split(' ')[0];
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     enquiriesNew: 0,
@@ -106,7 +108,7 @@ export default function DashboardPage() {
 
   const collectionPercent = stats.totalRevenueAmount > 0 
     ? Math.min(100, Math.round((stats.receivedRevenueAmount / stats.totalRevenueAmount) * 100))
-    : 57;
+    : 0;
 
   return (
     <div className="space-y-8 animate-fadeIn pb-16 max-w-7xl mx-auto">
@@ -123,7 +125,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Welcome back, <strong className="text-slate-700 dark:text-slate-300 font-semibold">Dhruvi</strong>. Real-time pipeline, upcoming productions, and financial health.
+            Welcome back, <strong className="text-slate-700 dark:text-slate-300 font-semibold">{firstName}</strong>. Real-time pipeline, upcoming productions, and financial health.
           </p>
         </div>
 
@@ -157,9 +159,6 @@ export default function DashboardPage() {
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex items-center gap-1">
               Total Booked Volume
               <ChevronRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-emerald-500" />
-            </span>
-            <span className="inline-flex items-center text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-500/20">
-              <TrendingUp className="w-3 h-3 mr-1" /> +14.2%
             </span>
           </div>
           <div className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-mono group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">

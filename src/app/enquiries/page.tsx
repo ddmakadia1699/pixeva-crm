@@ -232,7 +232,17 @@ export default function EnquiriesPage() {
     }
 
     try {
-      await apiClient.enquiries.update(updatedEnquiry.id, updatedEnquiry.status);
+      await apiClient.enquiries.update(updatedEnquiry.id, updatedEnquiry.status, {
+        name: updatedEnquiry.name,
+        email: updatedEnquiry.email,
+        phone: updatedEnquiry.phone,
+        event_name: updatedEnquiry.event_name,
+        event_type: updatedEnquiry.event_type,
+        event_date: updatedEnquiry.event_date,
+        estimated_budget: updatedEnquiry.estimated_budget,
+        source: updatedEnquiry.source,
+        notes: updatedEnquiry.notes,
+      });
     } catch (e) {
       console.error('Failed to sync updated enquiry to cloud:', e);
     }

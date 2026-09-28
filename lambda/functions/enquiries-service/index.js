@@ -178,10 +178,30 @@ exports.handler = async (event) => {
         const validStatus = sanitizeStatus(status);
         let updatedRecord = null;
 
+        // Status-only updates send just { id, status }; full edits also carry lead details.
+        const updates = { status: validStatus, updated_at: new Date().toISOString() };
+        if (payload.name !== undefined) {
+          const nameParts = (payload.name || 'Client').trim().split(' ');
+          updates.first_name = nameParts[0] || 'Client';
+          updates.last_name = nameParts.slice(1).join(' ') || 'Enquiry';
+        }
+        if (payload.email) updates.email = payload.email.trim();
+        if (payload.phone !== undefined) updates.phone = payload.phone || '';
+        if (payload.event_name !== undefined) updates.company = payload.event_name || 'Event';
+        if (payload.source !== undefined) updates.source = payload.source || 'Website';
+        if (payload.estimated_budget !== undefined || payload.estimated_value !== undefined) {
+          updates.estimated_value = Number(payload.estimated_budget ?? payload.estimated_value) || 0;
+        }
+        if (payload.notes !== undefined || payload.event_type !== undefined || payload.event_date !== undefined) {
+          // Notes are loaded back with their "<type> event on <date>." prefix, so strip it before rebuilding.
+          const userNotes = (payload.notes || '').replace(/^\S* event on \S*\.\s*/, '');
+          updates.notes = `${payload.event_type || ''} event on ${payload.event_date || ''}. ${userNotes}`.trim();
+        }
+
         try {
           const { data, error } = await supabase
             .from('leads')
-            .update({ status: validStatus, updated_at: new Date().toISOString() })
+            .update(updates)
             .eq('id', id)
             .eq('account_id', accountId)
             .select();
@@ -189,7 +209,8 @@ exports.handler = async (event) => {
           if (error) throw error;
           updatedRecord = data ? data[0] : { id, status: validStatus, account_id: accountId };
         } catch (dbErr) {
-          updatedRecord = { id, status: validStatus, account_id: accountId, updated_at: new Date().toISOString() };
+          console.error('[enquiries-service] Supabase update error:', dbErr.message);
+          updatedRecord = { id, ...updates, account_id: accountId };
         }
 
         return {

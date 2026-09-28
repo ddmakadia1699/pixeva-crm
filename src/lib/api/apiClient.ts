@@ -129,10 +129,10 @@ export const apiClient = {
       });
       return res.data;
     },
-    update: async (id: string, status: string) => {
+    update: async (id: string, status: string, details: Record<string, any> = {}) => {
       const res = await apiRequest('/enquiries', {
         method: 'PUT',
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({ ...details, id, status }),
       });
       return res.data;
     },
