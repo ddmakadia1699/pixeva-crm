@@ -58,18 +58,18 @@ export default function DashboardPage() {
   const { formatCurrency } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
-    enquiriesNew: 3,
-    enquiriesFollowUp: 4,
-    enquiriesBooked: 2,
-    totalEnquiries: 9,
-    activeProjectsCount: 3,
-    totalRevenueAmount: 980000,
-    receivedRevenueAmount: 560000,
-    pendingRevenueAmount: 420000,
-    postProdInProgress: 2,
-    postProdReview: 1,
-    postProdReady: 4,
-    clientRequestsPending: 2,
+    enquiriesNew: 0,
+    enquiriesFollowUp: 0,
+    enquiriesBooked: 0,
+    totalEnquiries: 0,
+    activeProjectsCount: 0,
+    totalRevenueAmount: 0,
+    receivedRevenueAmount: 0,
+    pendingRevenueAmount: 0,
+    postProdInProgress: 0,
+    postProdReview: 0,
+    postProdReady: 0,
+    clientRequestsPending: 0,
   });
 
   useEffect(() => {
@@ -217,7 +217,7 @@ export default function DashboardPage() {
               <ChevronRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-amber-500" />
             </span>
             <span className="inline-flex items-center text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200/50 dark:border-amber-500/20">
-              8 Crew Deployed
+              0 Crew Deployed
             </span>
           </div>
           <div className="flex items-baseline space-x-2">
@@ -227,8 +227,8 @@ export default function DashboardPage() {
             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Upcoming Shoots</span>
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
-            <span>Next: <strong className="text-slate-700 dark:text-slate-300 font-semibold truncate">Vance Gala</strong></span>
-            <span className="text-amber-600 dark:text-amber-400 font-medium shrink-0">In 6 Days</span>
+            <span>Next: <strong className="text-slate-700 dark:text-slate-300 font-semibold truncate">None</strong></span>
+            <span className="text-amber-600 dark:text-amber-400 font-medium shrink-0">N/A</span>
           </div>
         </Link>
 
@@ -248,9 +248,9 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-baseline space-x-2">
             <span className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-mono group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-              85%
+              0%
             </span>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 font-semibold">On Schedule</span>
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 font-semibold">No Schedule</span>
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400">
             <span><strong className="text-slate-700 dark:text-slate-300 font-semibold">{stats.postProdInProgress}</strong> in suite</span>
@@ -607,14 +607,14 @@ export default function DashboardPage() {
             >
               <div className="flex items-center justify-between">
                 <span className="font-bold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                  Vance Gala 4K Teaser
+                  No active projects
                 </span>
-                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">85% Color Grading</span>
+                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">0%</span>
               </div>
               <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-purple-600 dark:bg-purple-500 h-full rounded-full" style={{ width: '85%' }} />
+                <div className="bg-purple-600 dark:bg-purple-500 h-full rounded-full" style={{ width: '0%' }} />
               </div>
-              <p className="text-[10px] text-slate-400">Lead Colorist: Marcus Rao • Delivery: Nov 20</p>
+              <p className="text-[10px] text-slate-400">Waiting for assignment</p>
             </Link>
           </div>
 
@@ -645,21 +645,21 @@ export default function DashboardPage() {
                 className="group flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 hover:border-amber-300 dark:hover:border-amber-600 hover:bg-white dark:hover:bg-slate-900 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
               >
                 <span className="text-slate-600 dark:text-slate-400 font-medium group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">Cinematographers:</span>
-                <span className="font-bold text-slate-900 dark:text-white">4 Available Today</span>
+                <span className="font-bold text-slate-900 dark:text-white">0 Available</span>
               </Link>
               <Link 
                 href="/crew-scheduling"
                 className="group flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-600 hover:bg-white dark:hover:bg-slate-900 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
               >
                 <span className="text-slate-600 dark:text-slate-400 font-medium group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Drone Pilots:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">2 Ready & Certified</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">0 Ready</span>
               </Link>
               <Link 
                 href="/team"
                 className="group flex justify-between items-center p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-white dark:hover:bg-slate-900 transition-all cursor-pointer shadow-2xs hover:shadow-xs"
               >
                 <span className="text-slate-600 dark:text-slate-400 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Average Client SLA:</span>
-                <span className="font-bold text-slate-900 dark:text-white">45 Min Response</span>
+                <span className="font-bold text-slate-900 dark:text-white">N/A</span>
               </Link>
             </div>
 
