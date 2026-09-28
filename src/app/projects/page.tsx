@@ -618,14 +618,16 @@ export default function ProjectsPage() {
       name: '',
       type: 'Wedding',
       client: '',
+      client_phone_prefix: '+91',
+      client_phone: '',
       first_event: '',
       venue: '',
       call_time: '08:00 AM',
       total_amount: 2500,
       paid_amount: 1250,
-      status: 'Active',
+      status: 'Active' as ProjectStatus,
       stage: 1,
-      contract: 'Accepted',
+      contract: 'Accepted' as ContractStatus,
     });
   };
 

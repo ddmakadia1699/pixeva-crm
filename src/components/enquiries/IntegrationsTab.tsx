@@ -88,19 +88,19 @@ export default function IntegrationsTab() {
 
       return {
         id: `enq-sheet-${r.name.toLowerCase()}-${Date.now()}-${i}`,
-        name: `${r.name} (${r.class})`,
-        email: `${r.name.toLowerCase()}@clientmail.com`,
+        name: `${r.name} (${(r as any).class || 'Lead'})`,
+        email: `${r.name.split(' ')[0].toLowerCase()}@clientmail.com`,
         phone: `+1 (555) 01${(i + 10).toString()}`,
         contact: `+1 (555) 01${(i + 10).toString()}`,
-        event_name: `${r.name}'s ${r.activity || 'Studio Shoot'}`,
+        event_name: `${r.name}'s ${(r as any).activity || 'Studio Shoot'}`,
         event_type: eventType,
         event_date: eventDate,
-        venue: `${r.state} Grand Hall & Studio`,
+        venue: `${(r as any).state || 'Central'} Grand Hall & Studio`,
         estimated_budget: budgetNum,
         budget: `$${budgetNum.toLocaleString()}`,
         source: source,
         status: status,
-        notes: `Imported from Google Sheet: Major: ${r.subject} | Activity: ${r.activity} | State: ${r.state} | Gender: ${r.gender}`,
+        notes: `Imported from Google Sheet: Major: ${(r as any).subject} | Activity: ${(r as any).activity} | State: ${(r as any).state} | Gender: ${(r as any).gender}`,
         created_at: new Date(Date.now() - (i * 3600000)).toISOString(),
       };
     });
@@ -216,7 +216,7 @@ export default function IntegrationsTab() {
         }
       } catch (e) {
         setIsSyncing(false);
-        alert(e.message || "Failed to import. Please check your URL and ensure the sheet is public.");
+        alert((e as any).message || "Failed to import. Please check your URL and ensure the sheet is public.");
         return;
       }
     }
@@ -231,8 +231,8 @@ export default function IntegrationsTab() {
       if (raw) currentList = JSON.parse(raw);
 
       // Deduplicate by name
-      const existingNames = new Set(currentList.map((e) => e.name));
-      const toAdd = newEnquiries.filter((e) => !existingNames.has(e.name));
+      const existingNames = new Set(currentList.map((e: any) => e.name));
+      const toAdd = newEnquiries.filter((e: any) => !existingNames.has(e.name));
       const merged = [...toAdd, ...currentList];
       localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(merged));
     } catch (err) {
@@ -267,7 +267,7 @@ export default function IntegrationsTab() {
       };
     });
 
-    const newEnquiries = convertRowsToEnquiries(parsedRows);
+    const newEnquiries = convertRowsToEnquiries(parsedRows as any);
 
     try {
       const raw = localStorage.getItem(ENQUIRIES_STORAGE_KEY);
