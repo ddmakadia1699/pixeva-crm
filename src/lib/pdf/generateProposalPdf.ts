@@ -365,3 +365,301 @@ export function openProposalPdfWindow(enquiry: Enquiry) {
     win.document.close();
   }
 }
+
+export function generateReceiptHtml(enquiry: Enquiry, advanceAmount: number, signatureName?: string): string {
+  const receiptId = `REC-${Date.now().toString().slice(-6)}`;
+  const dateStr = new Date().toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+  const budget = enquiry.estimated_budget || 200000;
+  const balanceRemaining = Math.max(0, budget - advanceAmount);
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Payment Receipt - ${enquiry.name} - ${receiptId}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #0f172a;
+      background: #f8fafc;
+      padding: 40px 20px;
+      line-height: 1.5;
+      font-size: 13px;
+    }
+
+    .receipt-card {
+      max-width: 650px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 35px 40px;
+      box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08);
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .receipt-card {
+        border: none;
+        box-shadow: none;
+        padding: 20px 0;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px dashed #e2e8f0;
+      padding-bottom: 20px;
+      margin-bottom: 25px;
+    }
+
+    .brand-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0284c7;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-sub {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .status-pill {
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+
+    .receipt-meta {
+      text-align: right;
+    }
+
+    .receipt-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 13px;
+      color: #0f172a;
+    }
+
+    .grid-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+
+    .info-box {
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+      padding: 15px 18px;
+      border-radius: 12px;
+    }
+
+    .info-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .info-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 25px;
+    }
+
+    .items-table th {
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #64748b;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .items-table td {
+      padding: 12px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 13px;
+    }
+
+    .amount-highlight {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 12px;
+      padding: 18px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    .amount-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #166534;
+    }
+
+    .amount-val {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: #15803d;
+    }
+
+    .footer {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .btn-print {
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="receipt-card">
+    <div class="header">
+      <div>
+        <div class="brand-title">Pixeva STUDIO</div>
+        <div class="brand-sub">Official Booking Retainer & Payment Receipt</div>
+      </div>
+      <div class="receipt-meta">
+        <div class="status-pill">✓ Payment Verified</div>
+        <div class="receipt-id" style="margin-top: 6px;">${receiptId}</div>
+        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">${dateStr}</div>
+      </div>
+    </div>
+
+    <div class="grid-info">
+      <div class="info-box">
+        <div class="info-label">Billed To</div>
+        <div class="info-val">${enquiry.name}</div>
+        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">${enquiry.email || 'Client Direct'}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">Event & Shoot Date</div>
+        <div class="info-val">${enquiry.event_name || "Client Event"}</div>
+        <div style="font-size: 11px; color: #0284c7; font-weight: 600; margin-top: 2px;">Shoot Date: ${enquiry.received_on || enquiry.event_date || "2026-11-28"}</div>
+      </div>
+    </div>
+
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th>Milestone</th>
+          <th style="text-align: right;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong>Advance Booking Deposit (20%)</strong><br>
+            <span style="font-size: 11px; color: #64748b;">Secures shooting schedule, crew lock & equipment staging</span>
+          </td>
+          <td>20% Retainer</td>
+          <td style="text-align: right; font-weight: 700; font-family: 'JetBrains Mono', monospace;">${formatCurrency(advanceAmount)}</td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Total Package Value</strong>
+          </td>
+          <td>100% Contract</td>
+          <td style="text-align: right; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: #64748b;">${formatCurrency(budget)}</td>
+        </tr>
+        <tr>
+          <td>
+            <strong>Remaining Balance on Shoot/Delivery</strong>
+          </td>
+          <td>80% Balance</td>
+          <td style="text-align: right; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: #64748b;">${formatCurrency(balanceRemaining)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="amount-highlight">
+      <div>
+        <div class="amount-label">Amount Paid Today (Advance Retainer)</div>
+        <div style="font-size: 11px; color: #166534; margin-top: 2px;">Payment Method: Verified Instant Deposit</div>
+      </div>
+      <div class="amount-val">${formatCurrency(advanceAmount)}</div>
+    </div>
+
+    <div class="footer">
+      <div>
+        <strong>Signed & Authorized:</strong> ${signatureName || enquiry.name}<br>
+        <span>Pixeva CRM Tri-Cloud Serverless Verification</span>
+      </div>
+      <div class="no-print">
+        <button class="btn-print" onclick="window.print()">🖨️ Print / Save PDF</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
+  `;
+}
+
+export function openReceiptPdfWindow(enquiry: Enquiry, advanceAmount: number, signatureName?: string) {
+  const html = generateReceiptHtml(enquiry, advanceAmount, signatureName);
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+  }
+}
+

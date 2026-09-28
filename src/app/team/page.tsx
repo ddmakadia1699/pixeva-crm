@@ -117,6 +117,19 @@ export default function TeamPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
 
+  // ESC key to close all modals
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsAddModalOpen(false);
+        setEditingMember(null);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Add Form State
   const [formData, setFormData] = useState({
     name: '',

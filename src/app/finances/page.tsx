@@ -109,13 +109,13 @@ export default function FinancesPage() {
             setProjectFinances(cloudData.projectFinances);
             try {
               localStorage.setItem(FINANCES_STORAGE_KEY, JSON.stringify(cloudData.projectFinances));
-            } catch {}
+            } catch { }
           }
           if (Array.isArray(cloudData.transactions) && cloudData.transactions.length > 0) {
             setTransactions(cloudData.transactions);
             try {
               localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(cloudData.transactions));
-            } catch {}
+            } catch { }
           }
           return;
         }
@@ -138,7 +138,7 @@ export default function FinancesPage() {
             setTransactions(parsedTx);
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     loadCloudFinances();
@@ -283,10 +283,10 @@ export default function FinancesPage() {
       projectFinances.map((p) =>
         p.project_name === paymentForm.project_name
           ? {
-              ...p,
-              received: p.received + amt,
-              balance_due: Math.max(0, p.balance_due - amt),
-            }
+            ...p,
+            received: p.received + amt,
+            balance_due: Math.max(0, p.balance_due - amt),
+          }
           : p
       )
     );
@@ -453,11 +453,10 @@ export default function FinancesPage() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
-                activeTab === tab
+              className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${activeTab === tab
                   ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
-              }`}
+                }`}
             >
               {tab}
             </button>
@@ -554,13 +553,12 @@ export default function FinancesPage() {
                         <div key={t.id} className="p-3 flex items-center justify-between text-xs hover:bg-slate-50/50 transition-colors">
                           <div className="flex items-center space-x-3">
                             <span
-                              className={`p-1.5 rounded-md text-xs font-bold ${
-                                t.type === 'Payment Received'
+                              className={`p-1.5 rounded-md text-xs font-bold ${t.type === 'Payment Received'
                                   ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
                                   : t.type === 'Team Payout'
-                                  ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                                  : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
-                              }`}
+                                    ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                    : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
+                                }`}
                             >
                               {t.type === 'Payment Received' ? (
                                 <ArrowDownLeft className="w-3.5 h-3.5" />
@@ -810,13 +808,12 @@ export default function FinancesPage() {
                           <tr key={t.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                             <td className="px-4 py-3.5 whitespace-nowrap">
                               <span
-                                className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${
-                                  t.type === 'Payment Received'
+                                className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${t.type === 'Payment Received'
                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/50'
                                     : t.type === 'Team Payout'
-                                    ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                                    : 'bg-rose-50 text-rose-700 border-rose-200/70 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800/50'
-                                }`}
+                                      ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+                                      : 'bg-rose-50 text-rose-700 border-rose-200/70 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800/50'
+                                  }`}
                               >
                                 {t.type === 'Payment Received' ? (
                                   <ArrowDownLeft className="w-3 h-3 text-emerald-600 shrink-0" />

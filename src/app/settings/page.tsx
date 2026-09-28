@@ -191,6 +191,7 @@ export default function SettingsPage() {
     convertAmount,
     formatCurrency 
   } = useCurrency();
+  const [defaultPhonePrefix, setDefaultPhonePrefix] = useState('+91');
   const [activeTab, setActiveTab] = useState<
     'services' | 'packages' | 'payments' | 'contract' | 'documents' | 'team' | 'domain' | 'system'
   >('services');
@@ -204,6 +205,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const savedPrefix = localStorage.getItem('pixeva_phone_prefix');
+      if (savedPrefix) setDefaultPhonePrefix(savedPrefix);
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
       if (tab === 'payments' || tab === 'currency') {
@@ -444,9 +447,17 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                   </div>
 
                   <div className="flex items-center space-x-3 shrink-0">
-                    <div className="flex items-center space-x-1 text-xs text-slate-500">
-                      <span className="text-[10px]">Rate/Day:</span>
-                      <span className="font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(role.defaultRate)}</span>
+                    <div className="flex items-center space-x-2 text-xs text-slate-500">
+                      <span className="text-[10px] font-medium uppercase tracking-wider hidden sm:inline-block">Rate/Day:</span>
+                      <div className="relative flex items-center group/input">
+                        <span className="absolute left-2 text-slate-400 font-mono text-xs pointer-events-none">{symbol}</span>
+                        <input
+                          type="number"
+                          value={role.defaultRate}
+                          onChange={(e) => setCrewRoles(prev => prev.map(r => r.id === role.id ? { ...r, defaultRate: Number(e.target.value) } : r))}
+                          className="w-24 pl-6 pr-2 py-1.5 text-right bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-xs font-mono font-bold text-slate-900 dark:text-white hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm"
+                        />
+                      </div>
                     </div>
 
                     <button
@@ -514,9 +525,15 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                   </div>
 
                   <div className="flex items-center space-x-3 shrink-0">
-                    <span className="font-mono font-bold text-xs text-slate-900 dark:text-white">
-                      {formatCurrency(service.price)}
-                    </span>
+                    <div className="relative flex items-center group/input">
+                      <span className="absolute left-2 text-slate-400 font-mono text-xs pointer-events-none">{symbol}</span>
+                      <input
+                        type="number"
+                        value={service.price}
+                        onChange={(e) => setOtherServices(prev => prev.map(s => s.id === service.id ? { ...s, price: Number(e.target.value) } : s))}
+                        className="w-24 pl-6 pr-2 py-1.5 text-right bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-xs font-mono font-bold text-slate-900 dark:text-white hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm"
+                      />
+                    </div>
                     <button
                       onClick={() => setOtherServices(prev => prev.filter(s => s.id !== service.id))}
                       className="p-1 rounded-md text-slate-400 hover:text-rose-600 transition-colors"
@@ -585,10 +602,18 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                   </div>
 
                   <div className="flex items-center space-x-3 shrink-0">
-                    <span className="text-[11px] text-slate-500 font-mono flex items-center space-x-1">
-                      <Clock className="w-3 h-3 text-slate-400" />
-                      <span>{deliv.estimatedDays} Days</span>
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
+                      <div className="relative flex items-center group/input">
+                        <input
+                          type="number"
+                          value={deliv.estimatedDays}
+                          onChange={(e) => setDeliverables(prev => prev.map(d => d.id === deliv.id ? { ...d, estimatedDays: Number(e.target.value) } : d))}
+                          className="w-16 px-2 py-1.5 text-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-xs font-mono font-bold text-slate-900 dark:text-white hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm"
+                        />
+                        <span className="ml-2 text-[10px] font-medium uppercase tracking-wider text-slate-500">Days</span>
+                      </div>
+                    </div>
                     <button
                       onClick={() => setDeliverables(prev => prev.filter(d => d.id !== deliv.id))}
                       className="p-1 rounded-md text-slate-400 hover:text-rose-600 transition-colors"
@@ -1551,7 +1576,39 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
       {/* TAB 8: SYSTEM & CLOUD */}
       {/* ========================================================= */}
       {activeTab === 'system' && (
+
         <div className="space-y-6 animate-fadeIn">
+          <div className="pixeva-card p-6">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-4">General Preferences</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 block mb-1">
+                  Default Country Dial Code
+                </label>
+                <p className="text-[10px] text-slate-500 mb-3">
+                  Select the default country code prefix for client contact numbers. This is used for WhatsApp links and SMS automation when a client doesn't provide a country code.
+                </p>
+                <select
+                  value={defaultPhonePrefix}
+                  onChange={(e) => {
+                    setDefaultPhonePrefix(e.target.value);
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem('pixeva_phone_prefix', e.target.value);
+                    }
+                  }}
+                  className="w-full max-w-sm bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 cursor-pointer"
+                >
+                  <option value="+1">+1 (United States / Canada)</option>
+                  <option value="+44">+44 (United Kingdom)</option>
+                  <option value="+91">+91 (India)</option>
+                  <option value="+61">+61 (Australia)</option>
+                  <option value="+971">+971 (UAE)</option>
+                  <option value="+65">+65 (Singapore)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <IntegrationsStatus />
         </div>
       )}

@@ -55,6 +55,7 @@ export interface ProjectDeliverable {
 export interface ExtendedProject extends Project {
   venue?: string;
   call_time?: string;
+  client_phone?: string;
   total_amount?: number;
   paid_amount?: number;
   payment_status?: 'Paid' | 'Partial' | 'Pending';
@@ -68,6 +69,7 @@ const INITIAL_PROJECTS: ExtendedProject[] = [
     name: "Priya & Rohan's Royal Destination Wedding",
     type: 'Wedding',
     client: 'Priya & Rohan Sharma',
+    client_phone: '919876543211',
     first_event: '20 Nov 2026',
     venue: 'Taj Lake Palace, Udaipur',
     call_time: '07:30 AM',
@@ -78,9 +80,9 @@ const INITIAL_PROJECTS: ExtendedProject[] = [
     paid_amount: 3000,
     payment_status: 'Partial',
     assigned_crew: [
-      { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '918904832762' },
-      { id: 'c2', name: 'Rahul Verma', role: 'Cinematographer', initials: 'RV', phone: '918904832762' },
-      { id: 'c3', name: 'Vikram Patel', role: 'Drone Pilot', initials: 'VP', phone: '918904832762' },
+      { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '919876543219' },
+      { id: 'c2', name: 'Rahul Verma', role: 'Cinematographer', initials: 'RV', phone: '919876543219' },
+      { id: 'c3', name: 'Vikram Patel', role: 'Drone Pilot', initials: 'VP', phone: '919876543219' },
     ],
     deliverables: [
       { id: 'd1', title: '4K Cinematic Master Film (25 Mins)', completed: true },
@@ -95,6 +97,7 @@ const INITIAL_PROJECTS: ExtendedProject[] = [
     name: 'Vance Corporate Annual Keynote & Gala',
     type: 'Corporate',
     client: 'Eleanor Vance',
+    client_phone: '919876543212',
     first_event: '15 Nov 2026',
     venue: 'Grand Hyatt Convention Center',
     call_time: '08:00 AM',
@@ -105,8 +108,8 @@ const INITIAL_PROJECTS: ExtendedProject[] = [
     paid_amount: 2800,
     payment_status: 'Paid',
     assigned_crew: [
-      { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '918904832762' },
-      { id: 'c4', name: 'Sneha Joshi', role: 'Lead Editor', initials: 'SJ', phone: '918904832762' },
+      { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '919876543219' },
+      { id: 'c4', name: 'Sneha Joshi', role: 'Lead Editor', initials: 'SJ', phone: '919876543219' },
     ],
     deliverables: [
       { id: 'd1', title: 'Keynote Speaker 4K Live Stream Recording', completed: true },
@@ -120,6 +123,7 @@ const INITIAL_PROJECTS: ExtendedProject[] = [
     name: 'BioTech Global Healthcare Summit 2026',
     type: 'Corporate',
     client: 'Dr. Alistair Thorne',
+    client_phone: '919876543213',
     first_event: '20 Oct 2026',
     venue: 'Marina Expo Center, Hall 4',
     call_time: '09:00 AM',
@@ -130,8 +134,8 @@ const INITIAL_PROJECTS: ExtendedProject[] = [
     paid_amount: 2100,
     payment_status: 'Partial',
     assigned_crew: [
-      { id: 'c2', name: 'Rahul Verma', role: 'Cinematographer', initials: 'RV', phone: '918904832762' },
-      { id: 'c3', name: 'Vikram Patel', role: 'Drone Pilot', initials: 'VP', phone: '918904832762' },
+      { id: 'c2', name: 'Rahul Verma', role: 'Cinematographer', initials: 'RV', phone: '919876543219' },
+      { id: 'c3', name: 'Vikram Patel', role: 'Drone Pilot', initials: 'VP', phone: '919876543219' },
     ],
     deliverables: [
       { id: 'd1', title: 'Product Launch 4K Multi-Cam Coverage', completed: true },
@@ -155,7 +159,7 @@ const INITIAL_PROJECTS: ExtendedProject[] = [
     paid_amount: 1950,
     payment_status: 'Paid',
     assigned_crew: [
-      { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '918904832762' },
+      { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '919876543219' },
     ],
     deliverables: [
       { id: 'd1', title: 'Auction Gala Photo Documentation', completed: true },
@@ -213,7 +217,7 @@ export default function ProjectsPage() {
   const [viewMode, setViewMode] = useState<'table' | 'cards' | 'kanban'>('table');
 
   // Drawer Panel for Shoot Details
-  const [selectedDrawerProject, setSelectedDrawerProject] = useState<ExtendedProject | null>(null);
+  
 
   // Load via AWS API Gateway with account scoping
   useEffect(() => {
@@ -242,7 +246,7 @@ export default function ProjectsPage() {
           setProjects(mapped);
           try {
             localStorage.setItem('pixeva_projects', JSON.stringify(mapped));
-          } catch {}
+          } catch { }
           setIsLoaded(true);
           return;
         }
@@ -309,14 +313,28 @@ export default function ProjectsPage() {
     message: '',
     confirmText: '',
     isDestructive: true,
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   // Form State
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsAddModalOpen(false);
+        setIsEditModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     type: 'Wedding',
     client: '',
+    client_phone_prefix: '+91',
+    client_phone: '',
     first_event: '',
     venue: '',
     call_time: '08:00 AM',
@@ -378,8 +396,8 @@ export default function ProjectsPage() {
       prev.map((p) => (p.id === project.id ? { ...p, completeness: completenessText } : p))
     );
 
-    if (selectedDrawerProject && selectedDrawerProject.id === project.id) {
-      setSelectedDrawerProject((prev) => (prev ? { ...prev, completeness: completenessText } : null));
+    if (editingProject && editingProject.id === project.id) {
+      setEditingProject((prev) => (prev ? { ...prev, completeness: completenessText } : null));
     }
   };
 
@@ -396,8 +414,8 @@ export default function ProjectsPage() {
       })
     );
 
-    if (selectedDrawerProject && selectedDrawerProject.id === projectId) {
-      setSelectedDrawerProject((prev) => {
+    if (editingProject && editingProject.id === projectId) {
+      setEditingProject((prev) => {
         if (!prev) return null;
         const currentDelivs = prev.deliverables || [];
         const updated = currentDelivs.map((d) =>
@@ -408,13 +426,61 @@ export default function ProjectsPage() {
     }
   };
 
+
+  // Open Add Modal
+  const handleOpenAdd = () => {
+    const prefix = typeof window !== 'undefined' ? (localStorage.getItem('pixeva_phone_prefix') || '+91') : '+91';
+    setFormData({
+      name: '',
+      type: 'Wedding',
+      client: '',
+      client_phone_prefix: prefix,
+      client_phone: '',
+      first_event: new Date().toISOString().slice(0, 10),
+      venue: '',
+      call_time: '08:00 AM',
+      total_amount: 2500,
+      paid_amount: 1250,
+      status: 'Active',
+      stage: 1,
+      contract: 'Accepted',
+    });
+    setEditingProject(null);
+    setIsAddModalOpen(true);
+  };
+
   // Open Edit Modal
   const handleOpenEdit = (project: ExtendedProject) => {
     setEditingProject(project);
+    let prefix = typeof window !== 'undefined' ? (localStorage.getItem('pixeva_phone_prefix') || '+91') : '+91';
+    let phoneNum = project.client_phone || '';
+    
+    // Auto-detect if phone string starts with +
+    if (phoneNum.startsWith('+')) {
+      // Find where prefix ends (usually +XX or +XXX)
+      const spaceIdx = phoneNum.indexOf(' ');
+      if (spaceIdx !== -1) {
+         prefix = phoneNum.slice(0, spaceIdx);
+         phoneNum = phoneNum.slice(spaceIdx + 1);
+      } else {
+         // simple fallback: +91, +1, +44, +61, +65, +971
+         const possiblePrefixes = ['+971', '+44', '+61', '+65', '+91', '+1'];
+         for (const p of possiblePrefixes) {
+           if (phoneNum.startsWith(p)) {
+             prefix = p;
+             phoneNum = phoneNum.slice(p.length);
+             break;
+           }
+         }
+      }
+    }
+
     setFormData({
       name: project.name,
       type: project.type,
       client: project.client,
+      client_phone_prefix: prefix,
+      client_phone: phoneNum,
       first_event: project.first_event,
       venue: project.venue || '',
       call_time: project.call_time || '08:00 AM',
@@ -438,27 +504,28 @@ export default function ProjectsPage() {
       formData.paid_amount >= formData.total_amount
         ? 'Paid'
         : formData.paid_amount > 0
-        ? 'Partial'
-        : 'Pending';
+          ? 'Partial'
+          : 'Pending';
 
     updateProjects((prev) =>
       prev.map((p) =>
         p.id === editingProject.id
           ? {
-              ...p,
-              name: formData.name,
-              type: formData.type,
-              client: formData.client,
-              first_event: formData.first_event,
-              venue: formData.venue,
-              call_time: formData.call_time,
-              total_amount: formData.total_amount,
-              paid_amount: formData.paid_amount,
-              payment_status: payStatus,
-              status: formData.status,
-              completeness: completenessText,
-              contract: formData.contract,
-            }
+            ...p,
+            name: formData.name,
+            type: formData.type,
+            client: formData.client,
+            client_phone: formData.client_phone ? `${formData.client_phone_prefix}${formData.client_phone}` : '',
+            first_event: formData.first_event,
+            venue: formData.venue,
+            call_time: formData.call_time,
+            total_amount: formData.total_amount,
+            paid_amount: formData.paid_amount,
+            payment_status: payStatus,
+            status: formData.status,
+            completeness: completenessText,
+            contract: formData.contract,
+          }
           : p
       )
     );
@@ -491,8 +558,8 @@ export default function ProjectsPage() {
       formData.paid_amount >= formData.total_amount
         ? 'Paid'
         : formData.paid_amount > 0
-        ? 'Partial'
-        : 'Pending';
+          ? 'Partial'
+          : 'Pending';
 
     const tempId = `proj-${Date.now()}`;
     const newProject: ExtendedProject = {
@@ -500,6 +567,7 @@ export default function ProjectsPage() {
       name: formData.name,
       type: formData.type,
       client: formData.client,
+      client_phone: formData.client_phone ? `${formData.client_phone_prefix}${formData.client_phone}` : '',
       first_event: formData.first_event || new Date().toISOString().slice(0, 10),
       venue: formData.venue || 'Main Event Ballroom',
       call_time: formData.call_time || '08:00 AM',
@@ -510,8 +578,8 @@ export default function ProjectsPage() {
       completeness: completenessText,
       contract: formData.contract,
       assigned_crew: [
-        { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '918904832762' },
-        { id: 'c2', name: 'Rahul Verma', role: 'Cinematographer', initials: 'RV', phone: '918904832762' },
+        { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '919876543219' },
+        { id: 'c2', name: 'Rahul Verma', role: 'Cinematographer', initials: 'RV', phone: '919876543219' },
       ],
       deliverables: [
         { id: 'd1', title: 'Master 4K Cinematic Video Cut', completed: false },
@@ -575,7 +643,7 @@ export default function ProjectsPage() {
       onConfirm: () => {
         updateProjects((prev) => prev.filter((p) => p.id !== project.id));
         setSelectedIds((prev) => prev.filter((id) => id !== project.id));
-        if (selectedDrawerProject?.id === project.id) setSelectedDrawerProject(null);
+        if (editingProject?.id === project.id) setEditingProject(null);
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
         apiClient.projects.delete(project.id).catch((err) => console.warn('Cloud delete notice:', err));
       },
@@ -597,7 +665,7 @@ export default function ProjectsPage() {
         const idSet = new Set(selectedIds);
         updateProjects((prev) => prev.filter((p) => !idSet.has(p.id)));
         setSelectedIds([]);
-        setSelectedDrawerProject(null);
+        setEditingProject(null);
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
       },
     });
@@ -608,7 +676,12 @@ export default function ProjectsPage() {
     e.stopPropagation();
     const stage = PRODUCTION_STAGES[getStageFromCompleteness(project.completeness) - 1].label;
     const msg = `*Pixeva Studio Shoot Call-Sheet & Briefing*\n\n📌 *Project:* ${project.name}\n👤 *Client:* ${project.client}\n📅 *Event Date:* ${project.first_event}\n📍 *Venue:* ${project.venue || 'Main Location'}\n⏰ *Call Time:* ${project.call_time || '08:00 AM'}\n🎯 *Production Milestone:* ${stage}\n📋 *Contract Status:* Signed & Confirmed\n\n*Crew Protocol:* Please arrive 45 mins early with formatted dual SD cards and backup batteries.`;
-    window.open(`https://wa.me/918904832762?text=${encodeURIComponent(msg)}`, '_blank');
+    
+    // Use client phone or a generic placeholder if missing (so it doesn't use the hardcoded revepod number)
+    const rawPhone = (project.client_phone || '9876543210').replace(/[^0-9]/g, '');
+    const phone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
+    
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   // Export CSV
@@ -683,7 +756,7 @@ export default function ProjectsPage() {
           </button>
 
           <button
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={handleOpenAdd}
             className="btn-pixeva-primary space-x-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -758,21 +831,19 @@ export default function ProjectsPage() {
           <div className="flex items-center p-1 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs">
             <button
               onClick={() => setActiveTab('Active')}
-              className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
-                activeTab === 'Active'
+              className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${activeTab === 'Active'
                   ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
-              }`}
+                }`}
             >
               Active ({projects.filter((p) => p.status === 'Active').length})
             </button>
             <button
               onClick={() => setActiveTab('Archived')}
-              className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
-                activeTab === 'Archived'
+              className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${activeTab === 'Archived'
                   ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
-              }`}
+                }`}
             >
               Archived ({projects.filter((p) => p.status === 'Archived').length})
             </button>
@@ -807,11 +878,10 @@ export default function ProjectsPage() {
             <button
               onClick={() => setViewMode('table')}
               title="Table View"
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
-                viewMode === 'table'
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${viewMode === 'table'
                   ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
-              }`}
+                }`}
             >
               <TableIcon className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Table</span>
@@ -820,11 +890,10 @@ export default function ProjectsPage() {
             <button
               onClick={() => setViewMode('cards')}
               title="Cards View"
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
-                viewMode === 'cards'
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${viewMode === 'cards'
                   ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
-              }`}
+                }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Cards</span>
@@ -833,11 +902,10 @@ export default function ProjectsPage() {
             <button
               onClick={() => setViewMode('kanban')}
               title="Pipeline View"
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${
-                viewMode === 'kanban'
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md font-medium transition-all cursor-pointer ${viewMode === 'kanban'
                   ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5'
-              }`}
+                }`}
             >
               <Columns3 className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Pipeline</span>
@@ -890,10 +958,9 @@ export default function ProjectsPage() {
                     return (
                       <tr
                         key={project.id}
-                        onClick={() => setSelectedDrawerProject(project)}
-                        className={`hover:bg-slate-50/75 dark:hover:bg-white/5 transition-colors cursor-pointer group ${
-                          isSelected ? 'bg-slate-50/80 dark:bg-white/5' : ''
-                        }`}
+                        onClick={() => handleOpenEdit(project)}
+                        className={`hover:bg-slate-50/75 dark:hover:bg-white/5 transition-colors cursor-pointer group ${isSelected ? 'bg-slate-50/80 dark:bg-white/5' : ''
+                          }`}
                       >
                         {/* Checkbox */}
                         <td className="px-3 py-3 text-center" onClick={(e) => e.stopPropagation()}>
@@ -925,8 +992,27 @@ export default function ProjectsPage() {
                             <span className="font-medium text-slate-800 dark:text-slate-200 block">
                               {project.client}
                             </span>
+                            {project.client_phone && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  let p = project.client_phone || '';
+                                  if (!p.startsWith('+')) {
+                                    const prefix = localStorage.getItem('pixeva_phone_prefix') || '+91';
+                                    p = `${prefix}${p}`;
+                                  }
+                                  window.open(`https://wa.me/${p.replace(/[^0-9]/g, '')}`, '_blank');
+                                }}
+                                className="text-[10px] text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 flex items-center space-x-1 truncate max-w-[150px] transition-colors mt-0.5 text-left"
+                                title="Chat on WhatsApp"
+                              >
+                                <MessageSquare className="w-2.5 h-2.5 shrink-0" />
+                                <span>+{project.client_phone}</span>
+                              </button>
+                            )}
                             {project.venue && (
-                              <span className="text-[10px] text-slate-400 flex items-center space-x-1 truncate max-w-[150px]">
+                              <span className="text-[10px] text-slate-400 flex items-center space-x-1 truncate max-w-[150px] mt-0.5">
                                 <MapPin className="w-2.5 h-2.5 text-slate-400 shrink-0" />
                                 <span>{project.venue}</span>
                               </span>
@@ -1062,10 +1148,9 @@ export default function ProjectsPage() {
             return (
               <div
                 key={project.id}
-                onClick={() => setSelectedDrawerProject(project)}
-                className={`pixeva-card pixeva-card-hover overflow-hidden flex flex-col justify-between cursor-pointer ${
-                  isSelected ? 'border-slate-800 dark:border-slate-200' : ''
-                }`}
+                onClick={() => handleOpenEdit(project)}
+                className={`pixeva-card pixeva-card-hover overflow-hidden flex flex-col justify-between cursor-pointer ${isSelected ? 'border-slate-800 dark:border-slate-200' : ''
+                  }`}
               >
                 {/* Cover Image Banner */}
                 <div className="relative h-36 w-full overflow-hidden bg-slate-900">
@@ -1219,7 +1304,7 @@ export default function ProjectsPage() {
                     stageShoots.map((project) => (
                       <div
                         key={project.id}
-                        onClick={() => setSelectedDrawerProject(project)}
+                        onClick={() => handleOpenEdit(project)}
                         className="p-3 rounded-lg bg-white dark:bg-[#0f172a] border border-slate-200/80 dark:border-white/10 shadow-2xs hover:border-slate-300 dark:hover:border-white/20 transition-all cursor-pointer space-y-1.5 group"
                       >
                         <div className="flex items-center justify-between">
@@ -1261,171 +1346,6 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* 4. SLIDE-OVER SHOOT DETAIL DRAWER                                         */}
-      {/* ========================================================================= */}
-      {selectedDrawerProject && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs animate-fadeIn">
-          <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-            <div className="w-screen max-w-md bg-white dark:bg-[#0f172a] border-l border-slate-200 dark:border-white/10 shadow-xl p-5 sm:p-6 flex flex-col justify-between overflow-y-auto space-y-5">
-              <div className="space-y-5">
-                {/* Drawer Header */}
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300">
-                      {selectedDrawerProject.type}
-                    </span>
-                    <span className="text-xs font-medium text-slate-500">
-                      Shoot Overview
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setSelectedDrawerProject(null)}
-                    className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Shoot Title & Client */}
-                <div className="space-y-0.5">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
-                    {selectedDrawerProject.name}
-                  </h2>
-                  <p className="text-xs text-slate-500 font-medium">
-                    Client: <span className="text-slate-900 dark:text-white font-semibold">{selectedDrawerProject.client}</span>
-                  </p>
-                </div>
-
-                {/* Key Details Cards */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="p-3 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 space-y-1">
-                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Shoot Date</span>
-                    <p className="text-xs font-semibold text-slate-900 dark:text-white flex items-center space-x-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{selectedDrawerProject.first_event}</span>
-                    </p>
-                  </div>
-
-                  <div className="p-3 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 space-y-1">
-                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Call Time</span>
-                    <p className="text-xs font-semibold text-slate-900 dark:text-white flex items-center space-x-1.5">
-                      <Clock className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{selectedDrawerProject.call_time || '08:00 AM'}</span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Venue Location */}
-                <div className="p-3 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 space-y-1">
-                  <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block">Venue / Destination</span>
-                  <p className="text-xs font-semibold text-slate-900 dark:text-white flex items-center space-x-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>{selectedDrawerProject.venue || 'Main Location TBA'}</span>
-                  </p>
-                </div>
-
-                {/* Assigned Production Crew */}
-                <div className="space-y-2">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                    Assigned Production Crew
-                  </span>
-                  <div className="space-y-1.5">
-                    {(selectedDrawerProject.assigned_crew || []).map((crew) => (
-                      <div
-                        key={crew.id}
-                        className="p-2.5 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 flex items-center justify-between"
-                      >
-                        <div className="flex items-center space-x-2.5">
-                          <div className="w-7 h-7 rounded-full bg-slate-800 text-white font-bold text-[10px] flex items-center justify-center">
-                            {crew.initials}
-                          </div>
-                          <div>
-                            <p className="text-xs font-semibold text-slate-900 dark:text-white">{crew.name}</p>
-                            <p className="text-[10px] text-slate-400">{crew.role}</p>
-                          </div>
-                        </div>
-
-                        <a
-                          href={`https://wa.me/${crew.phone}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1 rounded-md text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Deliverables Checklist */}
-                <div className="space-y-2">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                    Deliverables Checklist
-                  </span>
-                  <div className="space-y-1.5">
-                    {(selectedDrawerProject.deliverables || []).map((deliv) => (
-                      <div
-                        key={deliv.id}
-                        onClick={() => handleToggleDeliverable(selectedDrawerProject.id, deliv.id)}
-                        className={`p-2.5 rounded-lg border flex items-center space-x-2.5 transition-colors cursor-pointer ${
-                          deliv.completed
-                            ? 'bg-emerald-50/60 border-emerald-200/80 dark:bg-emerald-500/10 dark:border-emerald-500/20 text-slate-900 dark:text-white'
-                            : 'bg-slate-50/80 dark:bg-[#111827] border-slate-200/60 dark:border-white/5 text-slate-700 dark:text-slate-300'
-                        }`}
-                      >
-                        <div
-                          className={`w-3.5 h-3.5 rounded flex items-center justify-center border transition-colors ${
-                            deliv.completed
-                              ? 'bg-emerald-600 border-emerald-600 text-white'
-                              : 'border-slate-300 dark:border-white/20 bg-white dark:bg-transparent'
-                          }`}
-                        >
-                          {deliv.completed && <Check className="w-2.5 h-2.5" />}
-                        </div>
-                        <span className={`text-xs font-medium ${deliv.completed ? 'line-through text-slate-400' : ''}`}>
-                          {deliv.title}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Drawer Bottom Actions */}
-              <div className="pt-3 border-t border-slate-100 dark:border-white/10 space-y-2">
-                <button
-                  onClick={(e) => handleSendWhatsAppBriefing(selectedDrawerProject, e)}
-                  className="w-full btn-pixeva-primary space-x-2 justify-center py-2"
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>Send Call-Sheet Briefing to Crew</span>
-                </button>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    href={`/proposal/${selectedDrawerProject.id}`}
-                    target="_blank"
-                    className="btn-pixeva-secondary space-x-1.5 justify-center py-2"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Client Portal</span>
-                  </Link>
-
-                  <button
-                    onClick={() => handleOpenEdit(selectedDrawerProject)}
-                    className="btn-pixeva-secondary space-x-1.5 justify-center py-2"
-                  >
-                    <Edit className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Edit Shoot</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ========================================================================= */}
       {/* CREATE / EDIT PROJECT MODAL                                               */}
@@ -1498,6 +1418,33 @@ export default function ProjectsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
+                    Client Phone
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <select
+                      value={formData.client_phone_prefix || '+91'}
+                      onChange={(e) => setFormData({ ...formData, client_phone_prefix: e.target.value })}
+                      className="w-24 bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-2 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 cursor-pointer"
+                    >
+                      <option value="+1">+1 (US/CA)</option>
+                      <option value="+44">+44 (UK)</option>
+                      <option value="+91">+91 (IN)</option>
+                      <option value="+61">+61 (AU)</option>
+                      <option value="+971">+971 (UAE)</option>
+                      <option value="+65">+65 (SG)</option>
+                    </select>
+                    <input
+                      type="text"
+                      value={formData.client_phone || ''}
+                      onChange={(e) => setFormData({ ...formData, client_phone: e.target.value.replace(/[^0-9]/g, '') })}
+                      placeholder="9876543210"
+                      className="w-full min-w-0 bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
                     Venue / Destination
                   </label>
                   <input
@@ -1505,19 +1452,6 @@ export default function ProjectsPage() {
                     value={formData.venue}
                     onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
                     placeholder="e.g. Taj Lake Palace"
-                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
-                    Call Time
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.call_time}
-                    onChange={(e) => setFormData({ ...formData, call_time: e.target.value })}
-                    placeholder="08:00 AM"
                     className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
                   />
                 </div>
@@ -1538,21 +1472,129 @@ export default function ProjectsPage() {
 
                 <div>
                   <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
-                    Production Stage
+                    Call Time
                   </label>
-                  <select
-                    value={formData.stage}
-                    onChange={(e) => setFormData({ ...formData, stage: Number(e.target.value) })}
-                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 cursor-pointer"
-                  >
-                    {PRODUCTION_STAGES.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        Stage {s.id}: {s.label} ({s.percent}%)
-                      </option>
-                    ))}
-                  </select>
+                  <input
+                    type="text"
+                    value={formData.call_time}
+                    onChange={(e) => setFormData({ ...formData, call_time: e.target.value })}
+                    placeholder="08:00 AM"
+                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
+                  />
                 </div>
               </div>
+
+              <div>
+                <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
+                  Production Stage
+                </label>
+                <select
+                  value={formData.stage}
+                  onChange={(e) => setFormData({ ...formData, stage: Number(e.target.value) })}
+                  className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-2.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400 cursor-pointer"
+                >
+                  {PRODUCTION_STAGES.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      Stage {s.id}: {s.label} ({s.percent}%)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              
+              {isEditModalOpen && editingProject && (
+                <div className="pt-3 border-t border-slate-100 dark:border-white/10 space-y-4">
+                  {/* Assigned Production Crew */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                      Assigned Production Crew
+                    </span>
+                    <div className="space-y-1.5">
+                      {(editingProject.assigned_crew || []).map((crew) => (
+                        <div
+                          key={crew.id}
+                          className="p-2.5 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 flex items-center justify-between"
+                        >
+                          <div className="flex items-center space-x-2.5">
+                            <div className="w-7 h-7 rounded-full bg-slate-800 text-white font-bold text-[10px] flex items-center justify-center">
+                              {crew.initials}
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-slate-900 dark:text-white">{crew.name}</p>
+                              <p className="text-[10px] text-slate-400">{crew.role}</p>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                               let p = crew.phone || '';
+                               if (!p.startsWith('+')) {
+                                 const prefix = localStorage.getItem('pixeva_phone_prefix') || '+91';
+                                 p = `${prefix}${p}`;
+                               }
+                               window.open(`https://wa.me/${p.replace(/[^0-9]/g, '')}`, '_blank');
+                            }}
+                            className="p-1 rounded-md text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Deliverables Checklist */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                      Deliverables Checklist
+                    </span>
+                    <div className="space-y-1.5">
+                      {(editingProject.deliverables || []).map((deliv) => (
+                        <div
+                          key={deliv.id}
+                          onClick={() => handleToggleDeliverable(editingProject.id, deliv.id)}
+                          className={`p-2.5 rounded-lg border flex items-center space-x-2.5 transition-colors cursor-pointer ${deliv.completed
+                              ? 'bg-emerald-50/60 border-emerald-200/80 dark:bg-emerald-500/10 dark:border-emerald-500/20 text-slate-900 dark:text-white'
+                              : 'bg-slate-50/80 dark:bg-[#111827] border-slate-200/60 dark:border-white/5 text-slate-700 dark:text-slate-300'
+                            }`}
+                        >
+                          <div
+                            className={`w-3.5 h-3.5 rounded flex items-center justify-center border transition-colors ${deliv.completed
+                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                : 'border-slate-300 dark:border-white/20 bg-white dark:bg-transparent'
+                              }`}
+                          >
+                            {deliv.completed && <Check className="w-2.5 h-2.5" />}
+                          </div>
+                          <span className={`text-xs font-medium ${deliv.completed ? 'line-through text-slate-400' : ''}`}>
+                            {deliv.title}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => handleSendWhatsAppBriefing(editingProject, e)}
+                      className="w-full btn-pixeva-primary space-x-2 justify-center py-2"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>Send Call-Sheet</span>
+                    </button>
+                    <a
+                      href={`/proposal/${editingProject.id}`}
+                      target="_blank"
+                      className="btn-pixeva-secondary space-x-1.5 justify-center py-2"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Client Portal</span>
+                    </a>
+                  </div>
+                </div>
+              )}
 
               <div className="pt-3 flex items-center justify-end space-x-2 border-t border-slate-100 dark:border-white/10">
                 <button

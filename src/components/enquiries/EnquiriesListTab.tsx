@@ -71,6 +71,27 @@ export default function EnquiriesListTab({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingEnquiry, setEditingEnquiry] = useState<Enquiry | null>(null);
 
+  // Email Proposal Dispatcher Modal
+  const [emailModal, setEmailModal] = useState<{
+    isOpen: boolean;
+    enquiry: Enquiry | null;
+    recipient: string;
+    subject: string;
+    body: string;
+    isSending: boolean;
+    isSent: boolean;
+    copied: boolean;
+  }>({
+    isOpen: false,
+    enquiry: null,
+    recipient: '',
+    subject: '',
+    body: '',
+    isSending: false,
+    isSent: false,
+    copied: false,
+  });
+
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -84,7 +105,7 @@ export default function EnquiriesListTab({
     title: '',
     message: '',
     confirmText: 'Delete',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   // AWS Lambda Runner state
@@ -112,14 +133,16 @@ export default function EnquiriesListTab({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isAddModalOpen) setIsAddModalOpen(false);
-        if (isImportModalOpen) setIsImportModalOpen(false);
-        if (isEditModalOpen) setIsEditModalOpen(false);
+        setIsAddModalOpen(false);
+        setIsImportModalOpen(false);
+        setIsEditModalOpen(false);
+        setEmailModal((prev) => ({ ...prev, isOpen: false }));
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAddModalOpen, isImportModalOpen, isEditModalOpen]);
+  }, []);
 
   // Edit Form State
   const [editFormData, setEditFormData] = useState({
@@ -136,6 +159,19 @@ export default function EnquiriesListTab({
     status: 'New' as EnquiryStatus,
     notes: '',
   });
+
+  // Helper to normalize status across legacy and new formats
+  const normalizeStatus = (status?: string): string => {
+    if (!status) return 'new';
+    const s = status.toLowerCase().trim();
+    if (s.includes('proposal')) return 'proposal';
+    if (s.includes('contact') || s.includes('follow') || s.includes('meeting')) return 'contacted';
+    if (s.includes('qualif') && !s.includes('unqualif')) return 'qualified';
+    if (s.includes('book') || s.includes('confirm') || s.includes('won')) return 'booked';
+    if (s.includes('unqualif') || s.includes('lost') || s.includes('closed')) return 'unqualified';
+    if (s.includes('new')) return 'new';
+    return s;
+  };
 
   // CSV Drag State
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -154,8 +190,12 @@ export default function EnquiriesListTab({
       (enq.venue && enq.venue.toLowerCase().includes(query)) ||
       (enq.phone && enq.phone.toLowerCase().includes(query));
 
-    const matchesStatus = selectedStatus === 'all' || enq.status === selectedStatus;
-    const matchesSource = selectedSource === 'all' || enq.source === selectedSource;
+    const matchesStatus =
+      selectedStatus === 'all' ||
+      normalizeStatus(enq.status) === normalizeStatus(selectedStatus);
+    const matchesSource =
+      selectedSource === 'all' ||
+      enq.source?.toLowerCase().trim() === selectedSource.toLowerCase().trim();
 
     return matchesSearch && matchesStatus && matchesSource;
   });
@@ -682,21 +722,63 @@ export default function EnquiriesListTab({
     });
   };
 
-  const handleRunEmailLambda = async (enquiry: Enquiry) => {
-    setActiveLambdaTask(`email-${enquiry.id}`);
-    setLambdaResult(null);
+  const handleOpenEmailModal = (enquiry: Enquiry) => {
+    const proposalUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/proposal/${enquiry.id}`
+      : `https://pixeva.app/proposal/${enquiry.id}`;
 
-    const res = await invokeLambdaFunction('batch-email-service', {
-      campaignName: 'Pixeva Instant Enquiry Nurture',
-      recipients: [enquiry.email],
-    });
+    const formattedBudget = formatCurrency(enquiry.estimated_budget || 200000);
+    const subject = `✨ Pixeva Studio Proposal — ${enquiry.event_name || 'Photography & Cinematography'}`;
+    const body = `Hi ${enquiry.name},\n\nThank you for reaching out to Pixeva Studio! We are thrilled about your upcoming event (${enquiry.event_name || 'shoot'}).\n\nWe have prepared your custom photography & cinematography package proposal (${formattedBudget}).\n\n📱 View your interactive live proposal, 4K video lookbook, and contract here:\n${proposalUrl}\n\nPlease feel free to reply directly if you'd like to adjust any deliverables or customize your package.\n\nWarm regards,\nPixeva Studio Team\nhttps://pixeva.app`;
 
-    setActiveLambdaTask(null);
-    setLambdaResult({
-      type: 'email',
-      name: enquiry.name,
-      data: res,
+    setEmailModal({
+      isOpen: true,
+      enquiry,
+      recipient: enquiry.email || '',
+      subject,
+      body,
+      isSending: false,
+      isSent: false,
+      copied: false,
     });
+  };
+
+  const handleSendEmailViaLambda = async () => {
+    if (!emailModal.enquiry) return;
+    setEmailModal((prev) => ({ ...prev, isSending: true }));
+
+    try {
+      const res = await invokeLambdaFunction('batch-email-service', {
+        campaignName: 'Pixeva Instant Enquiry Proposal Dispatch',
+        recipients: [emailModal.recipient],
+        subject: emailModal.subject,
+        body: emailModal.body,
+        dealId: emailModal.enquiry.id,
+      });
+
+      // Automatically move status to proposal
+      onUpdateStatus(emailModal.enquiry.id, 'proposal');
+
+      setEmailModal((prev) => ({ ...prev, isSending: false, isSent: true }));
+    } catch (err) {
+      console.error('Error dispatching email via lambda:', err);
+      setEmailModal((prev) => ({ ...prev, isSending: false }));
+    }
+  };
+
+  const handleOpenMailClient = () => {
+    const mailto = `mailto:${encodeURIComponent(emailModal.recipient)}?subject=${encodeURIComponent(emailModal.subject)}&body=${encodeURIComponent(emailModal.body)}`;
+    window.open(mailto, '_blank');
+  };
+
+  const handleCopyProposalLink = () => {
+    if (!emailModal.enquiry) return;
+    const proposalUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/proposal/${emailModal.enquiry.id}`
+      : `https://pixeva.app/proposal/${emailModal.enquiry.id}`;
+    navigator.clipboard.writeText(proposalUrl);
+    setEmailModal((prev) => ({ ...prev, copied: true }));
+    setTimeout(() => setEmailModal((prev) => ({ ...prev, copied: false })), 2000);
   };
 
   // 1-Click WhatsApp Quick Quote & Proposal Dispatcher
@@ -708,10 +790,18 @@ export default function EnquiriesListTab({
       : `https://pixeva.app/proposal/${enquiry.id}`;
 
     const formattedBudget = formatCurrency(enquiry.estimated_budget || 200000);
-    const message = `Hi ${enquiry.name}! 👋 Thank you for reaching out to Pixeva Studio for your ${enquiry.event_name || 'upcoming shoot'}.\n\n✨ We have prepared your custom photography & cinematography package proposal (${formattedBudget}).\n\n📱 View your interactive live proposal, 4K video teaser & contract here:\n${proposalUrl}\n\nFeel free to message us back here if you'd like to customize any deliverable!`;
+    const message = `Hi *${enquiry.name}*!\n\nThank you for reaching out to *Pixeva Studio* regarding your ${enquiry.event_name || 'upcoming event'}.\n\nWe have prepared your custom photography & cinematography package proposal (*${formattedBudget}*).\n\nYou can view your interactive proposal, video teaser, and contract details here:\n\n${proposalUrl}\n\nPlease feel free to reply to this message if you have any questions or if you would like to customize your package!`;
 
-    const whatsappUrl = phone
-      ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+    let finalPhone = phone || '';
+    if (finalPhone && !finalPhone.startsWith('+')) {
+      const prefix = localStorage.getItem('pixeva_phone_prefix') || '+91';
+      finalPhone = `${prefix}${finalPhone}`.replace(/[^0-9]/g, '');
+    } else if (finalPhone) {
+      finalPhone = finalPhone.replace(/[^0-9]/g, '');
+    }
+
+    const whatsappUrl = finalPhone
+      ? `https://wa.me/${finalPhone}?text=${encodeURIComponent(message)}`
       : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, '_blank');
@@ -719,47 +809,6 @@ export default function EnquiriesListTab({
 
   return (
     <div className="space-y-4 animate-fadeIn">
-      {/* Lambda / PDF Toast Banner */}
-      {lambdaResult && (
-        <div className="p-3.5 rounded-xl pixeva-card bg-slate-50 dark:bg-[#111827] border border-slate-200 dark:border-white/10 flex items-start justify-between animate-fadeIn shadow-xs">
-          <div className="flex items-start space-x-3">
-            <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/60 dark:border-blue-500/30">
-              <Cpu className="w-4 h-4 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h4 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
-                  {lambdaResult.type === 'pdf' ? 'PDF Proposal Generated & Opened' : `AWS Lambda Execution [${lambdaResult.type.toUpperCase()}]`}
-                </h4>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-mono">
-                  {lambdaResult.data?.executionTimeMs || 45}ms
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Client: <span className="font-semibold text-slate-900 dark:text-white">{lambdaResult.name}</span> — Official Photography & Cinematography proposal created.
-              </p>
-              {lambdaResult.enquiry && (
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => openProposalPdfWindow(lambdaResult.enquiry)}
-                    className="btn-pixeva-primary px-3 py-1 text-xs flex items-center space-x-1.5"
-                  >
-                    <FileText className="w-3.5 h-3.5" />
-                    <span>View / Print Proposal PDF</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={() => setLambdaResult(null)}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
 
       {/* Control Bar: Search, Filters & Action Buttons */}
       <div className="flex items-center justify-between gap-3 overflow-x-auto scrollbar-none py-0.5">
@@ -952,9 +1001,8 @@ export default function EnquiriesListTab({
                   <tr
                     key={enq.id}
                     onClick={() => handleOpenEdit(enq)}
-                    className={`hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors group cursor-pointer ${
-                      isSelected ? 'bg-indigo-50/50 dark:bg-indigo-500/10' : ''
-                    }`}
+                    className={`hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors group cursor-pointer ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-500/10' : ''
+                      }`}
                   >
                     {/* Checkbox */}
                     <td className="w-10 px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
@@ -1036,21 +1084,20 @@ export default function EnquiriesListTab({
                     {/* Status Selector */}
                     <td className="px-3 py-3 w-[15%]" onClick={(e) => e.stopPropagation()}>
                       <select
-                        value={enq.status}
+                        value={normalizeStatus(enq.status)}
                         onChange={(e) => onUpdateStatus(enq.id, e.target.value as EnquiryStatus)}
-                        className={`border text-[11px] font-medium rounded-md px-2 py-1 focus:outline-none cursor-pointer w-full transition-all truncate ${
-                          enq.status === 'new'
+                        className={`border text-[11px] font-medium rounded-md px-2 py-1 focus:outline-none cursor-pointer w-full transition-all truncate ${normalizeStatus(enq.status) === 'new'
                             ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                            : enq.status === 'contacted'
-                            ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30'
-                            : enq.status === 'qualified'
-                            ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30'
-                            : enq.status === 'proposal'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30'
-                            : enq.status === 'booked'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30'
-                            : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30'
-                        }`}
+                            : normalizeStatus(enq.status) === 'contacted'
+                              ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30'
+                              : normalizeStatus(enq.status) === 'qualified'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30'
+                                : normalizeStatus(enq.status) === 'proposal'
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30'
+                                  : normalizeStatus(enq.status) === 'booked'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30'
+                                    : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30'
+                          }`}
                       >
                         <option value="new" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">New</option>
                         <option value="contacted" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">Contacted</option>
@@ -1093,14 +1140,17 @@ export default function EnquiriesListTab({
                           <FileText className={`w-3.5 h-3.5 ${isPdfRunning ? 'animate-spin text-blue-600' : ''}`} />
                         </button>
 
-                        {/* AWS Lambda Batch Email Trigger */}
+                        {/* Email Proposal Dispatcher */}
                         <button
-                          onClick={() => handleRunEmailLambda(enq)}
-                          disabled={Boolean(activeLambdaTask)}
-                          title="Send Email Campaign"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors disabled:opacity-50"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEmailModal(enq);
+                          }}
+                          title="Send Email Proposal or Open Client Mailer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors cursor-pointer"
                         >
-                          {isEmailRunning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                          <Mail className="w-3.5 h-3.5" />
                         </button>
 
                         {/* Delete */}
@@ -1222,13 +1272,12 @@ export default function EnquiriesListTab({
                         onChange={(e) => handleFieldChange('name', e.target.value)}
                         onBlur={() => handleFieldBlur('name')}
                         placeholder="e.g. Samantha Reynolds"
-                        className={`w-full bg-slate-50 dark:bg-[#111827] border ${
-                          formTouched.name && formErrors.name
+                        className={`w-full bg-slate-50 dark:bg-[#111827] border ${formTouched.name && formErrors.name
                             ? 'border-rose-500/80 bg-rose-50/10 focus:ring-rose-500/20 focus:border-rose-500'
                             : formTouched.name && !formErrors.name && formData.name.trim()
-                            ? 'border-emerald-500/60 focus:border-emerald-500 focus:ring-emerald-500/20'
-                            : 'border-slate-200/80 dark:border-white/10 focus:border-blue-500 focus:ring-blue-500/20'
-                        } rounded-xl pl-9 pr-9 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-all focus:outline-none focus:ring-2`}
+                              ? 'border-emerald-500/60 focus:border-emerald-500 focus:ring-emerald-500/20'
+                              : 'border-slate-200/80 dark:border-white/10 focus:border-blue-500 focus:ring-blue-500/20'
+                          } rounded-xl pl-9 pr-9 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-all focus:outline-none focus:ring-2`}
                       />
                       {formTouched.name && formErrors.name && (
                         <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-rose-500">
@@ -1272,13 +1321,12 @@ export default function EnquiriesListTab({
                           onChange={(e) => handleFieldChange('email', e.target.value)}
                           onBlur={() => handleFieldBlur('email')}
                           placeholder="client@domain.com"
-                          className={`w-full bg-slate-50 dark:bg-[#111827] border ${
-                            formTouched.email && formErrors.email
+                          className={`w-full bg-slate-50 dark:bg-[#111827] border ${formTouched.email && formErrors.email
                               ? 'border-rose-500/80 bg-rose-50/10 focus:ring-rose-500/20 focus:border-rose-500'
                               : formTouched.email && !formErrors.email && formData.email.trim()
-                              ? 'border-emerald-500/60 focus:border-emerald-500 focus:ring-emerald-500/20'
-                              : 'border-slate-200/80 dark:border-white/10 focus:border-blue-500 focus:ring-blue-500/20'
-                          } rounded-xl pl-9 pr-9 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-all focus:outline-none focus:ring-2`}
+                                ? 'border-emerald-500/60 focus:border-emerald-500 focus:ring-emerald-500/20'
+                                : 'border-slate-200/80 dark:border-white/10 focus:border-blue-500 focus:ring-blue-500/20'
+                            } rounded-xl pl-9 pr-9 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-all focus:outline-none focus:ring-2`}
                         />
                         {formTouched.email && formErrors.email && (
                           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-rose-500">
@@ -1320,13 +1368,12 @@ export default function EnquiriesListTab({
                           onChange={(e) => handleFieldChange('contact', e.target.value)}
                           onBlur={() => handleFieldBlur('contact')}
                           placeholder="+91 98765 43210"
-                          className={`w-full bg-slate-50 dark:bg-[#111827] border ${
-                            formTouched.contact && formErrors.contact
+                          className={`w-full bg-slate-50 dark:bg-[#111827] border ${formTouched.contact && formErrors.contact
                               ? 'border-rose-500/80 bg-rose-50/10 focus:ring-rose-500/20 focus:border-rose-500'
                               : formTouched.contact && !formErrors.contact && formData.contact.trim()
-                              ? 'border-emerald-500/60 focus:border-emerald-500 focus:ring-emerald-500/20'
-                              : 'border-slate-200/80 dark:border-white/10 focus:border-blue-500 focus:ring-blue-500/20'
-                          } rounded-xl pl-9 pr-9 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-all focus:outline-none focus:ring-2`}
+                                ? 'border-emerald-500/60 focus:border-emerald-500 focus:ring-emerald-500/20'
+                                : 'border-slate-200/80 dark:border-white/10 focus:border-blue-500 focus:ring-blue-500/20'
+                            } rounded-xl pl-9 pr-9 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-all focus:outline-none focus:ring-2`}
                         />
                         {formTouched.contact && formErrors.contact && (
                           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-rose-500">
@@ -1370,11 +1417,10 @@ export default function EnquiriesListTab({
                           value={formData.received_on}
                           onChange={(e) => handleFieldChange('received_on', e.target.value)}
                           onBlur={() => handleFieldBlur('received_on')}
-                          className={`w-full bg-slate-50 dark:bg-[#111827] border ${
-                            formTouched.received_on && formErrors.received_on
+                          className={`w-full bg-slate-50 dark:bg-[#111827] border ${formTouched.received_on && formErrors.received_on
                               ? 'border-rose-500/80 bg-rose-50/10 focus:ring-rose-500/20 focus:border-rose-500'
                               : 'border-slate-200/80 dark:border-white/10 focus:border-blue-500 focus:ring-blue-500/20'
-                          } rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2`}
+                            } rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2`}
                         />
                       </div>
                       {formTouched.received_on && formErrors.received_on && (
@@ -1398,7 +1444,6 @@ export default function EnquiriesListTab({
                           type="text"
                           value={formData.venue}
                           onChange={(e) => handleFieldChange('venue', e.target.value)}
-                          placeholder="e.g. Taj Lake Palace, Udaipur"
                           className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500/20 transition-all"
                         />
                       </div>
@@ -1425,11 +1470,10 @@ export default function EnquiriesListTab({
                           onChange={(e) => handleFieldChange('budget', e.target.value)}
                           onBlur={() => handleFieldBlur('budget')}
                           placeholder="e.g. 2,50,000 or $3,500"
-                          className={`w-full bg-slate-50 dark:bg-[#111827] border ${
-                            formTouched.budget && formErrors.budget
+                          className={`w-full bg-slate-50 dark:bg-[#111827] border ${formTouched.budget && formErrors.budget
                               ? 'border-rose-500/80 bg-rose-50/10 focus:ring-rose-500/20 focus:border-rose-500'
                               : 'border-slate-200/80 dark:border-white/10 focus:border-blue-500 focus:ring-blue-500/20'
-                          } rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-all focus:outline-none focus:ring-2`}
+                            } rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-all focus:outline-none focus:ring-2`}
                         />
                       </div>
                       {formTouched.budget && formErrors.budget && (
@@ -1459,11 +1503,10 @@ export default function EnquiriesListTab({
                           onChange={(e) => handleFieldChange('guests', e.target.value)}
                           onBlur={() => handleFieldBlur('guests')}
                           placeholder="e.g. 250"
-                          className={`w-full bg-slate-50 dark:bg-[#111827] border ${
-                            formTouched.guests && formErrors.guests
+                          className={`w-full bg-slate-50 dark:bg-[#111827] border ${formTouched.guests && formErrors.guests
                               ? 'border-rose-500/80 bg-rose-50/10 focus:ring-rose-500/20 focus:border-rose-500'
                               : 'border-slate-200/80 dark:border-white/10 focus:border-blue-500 focus:ring-blue-500/20'
-                          } rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-all focus:outline-none focus:ring-2`}
+                            } rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 transition-all focus:outline-none focus:ring-2`}
                         />
                       </div>
                       {formTouched.guests && formErrors.guests && (
@@ -1615,7 +1658,7 @@ export default function EnquiriesListTab({
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Upload multiple client leads via standardized spreadsheet
+                    Upload multiple client leads via standardized spreadsheet (CSV). For Apple Numbers, go to File ➞ Export To ➞ CSV.
                   </p>
                 </div>
               </div>
@@ -1661,11 +1704,10 @@ export default function EnquiriesListTab({
               {/* Drag & Drop File Area */}
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed ${
-                  csvFile
+                className={`border-2 border-dashed ${csvFile
                     ? 'border-blue-500/60 bg-blue-50/30 dark:bg-blue-950/20'
                     : 'border-slate-200/90 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500/50 bg-slate-50/50 dark:bg-white/[0.02]'
-                } rounded-2xl p-6 text-center cursor-pointer transition-all`}
+                  } rounded-2xl p-6 text-center cursor-pointer transition-all`}
               >
                 <input
                   ref={fileInputRef}
@@ -1814,7 +1856,7 @@ export default function EnquiriesListTab({
             {/* Quick Actions Strip inside Edit Modal */}
             <div className="flex flex-wrap items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-[#111827] border border-slate-200/70 dark:border-white/5 text-xs">
               <span className="font-medium text-slate-500 dark:text-slate-400 text-[11px] mr-1">Quick Actions:</span>
-              
+
               <button
                 type="button"
                 onClick={() => handleSendWhatsAppQuote(editingEnquiry)}
@@ -1895,7 +1937,6 @@ export default function EnquiriesListTab({
                     type="text"
                     value={editFormData.venue}
                     onChange={(e) => setEditFormData({ ...editFormData, venue: e.target.value })}
-                    placeholder="e.g. Taj Lake Palace, Udaipur"
                     className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -2065,6 +2106,142 @@ export default function EnquiriesListTab({
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Email Proposal Dispatcher Modal */}
+      {emailModal.isOpen && emailModal.enquiry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-2xl p-6 space-y-5 shadow-2xl animate-scaleUp">
+
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-4">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                  <Mail className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Email Proposal Dispatcher
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Send proposal to <strong className="text-slate-800 dark:text-slate-200">{emailModal.enquiry.name}</strong> with live portal & 4K teaser link.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEmailModal((prev) => ({ ...prev, isOpen: false }))}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Success Notification if Sent */}
+            {emailModal.isSent && (
+              <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-start space-x-3 text-xs text-emerald-800 dark:text-emerald-300 animate-fadeIn">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold">Email Proposal Dispatched Successfully! 🎉</p>
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                    AWS Lambda batch email worker processed the message to <strong>{emailModal.recipient}</strong>. The deal status has been moved to <strong>Proposal</strong>.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Form Fields */}
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 block mb-1">
+                  Recipient Email
+                </label>
+                <input
+                  type="email"
+                  value={emailModal.recipient}
+                  onChange={(e) => setEmailModal((prev) => ({ ...prev, recipient: e.target.value }))}
+                  placeholder="client@example.com"
+                  className="w-full bg-slate-50 dark:bg-[#070b14] border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-medium focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 block mb-1">
+                  Subject Line
+                </label>
+                <input
+                  type="text"
+                  value={emailModal.subject}
+                  onChange={(e) => setEmailModal((prev) => ({ ...prev, subject: e.target.value }))}
+                  className="w-full bg-slate-50 dark:bg-[#070b14] border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-medium focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    Email Message & Live Link
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleCopyProposalLink}
+                    className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1 cursor-pointer"
+                  >
+                    <span>{emailModal.copied ? '✓ Link Copied!' : '📋 Copy Proposal Link'}</span>
+                  </button>
+                </div>
+                <textarea
+                  rows={6}
+                  value={emailModal.body}
+                  onChange={(e) => setEmailModal((prev) => ({ ...prev, body: e.target.value }))}
+                  className="w-full bg-slate-50 dark:bg-[#070b14] border border-slate-200 dark:border-white/10 rounded-xl p-3 text-xs text-slate-900 dark:text-white font-mono leading-relaxed focus:outline-none focus:border-blue-500 resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-2 border-t border-slate-100 dark:border-white/10">
+              <button
+                type="button"
+                onClick={handleOpenMailClient}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+                title="Open in Gmail, Apple Mail or Outlook"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Open in Email App / Gmail</span>
+              </button>
+
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setEmailModal((prev) => ({ ...prev, isOpen: false }))}
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-600 dark:text-slate-300 text-xs font-bold cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  disabled={emailModal.isSending || !emailModal.recipient}
+                  onClick={handleSendEmailViaLambda}
+                  className="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-500/20 flex items-center justify-center space-x-1.5 transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {emailModal.isSending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Dispatching via AWS SES...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Send via Cloud Worker</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}

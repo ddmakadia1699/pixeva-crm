@@ -75,6 +75,17 @@ export default function BookingCalendar() {
   const [selectedType, setSelectedType] = useState<string>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // ESC key to close modal
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const [formData, setFormData] = useState({
     title: '',
     event_type: 'wedding' as Booking['event_type'],

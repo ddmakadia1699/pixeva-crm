@@ -49,6 +49,17 @@ export default function GalleryManager() {
   const [galleries, setGalleries] = useState<Gallery[]>(INITIAL_GALLERIES);
   const [activeQrModal, setActiveQrModal] = useState<Gallery | null>(null);
 
+  // ESC key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveQrModal(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   useEffect(() => {
     async function loadGalleries() {
       try {

@@ -176,6 +176,19 @@ export default function DataPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
+  // ESC key to close all modals
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsAddModalOpen(false);
+        setIsImportModalOpen(false);
+        setEditingId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Form State - New Entry
   const [formData, setFormData] = useState({
     event_name: 'Reception',

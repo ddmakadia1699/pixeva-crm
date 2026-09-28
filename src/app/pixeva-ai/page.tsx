@@ -167,6 +167,18 @@ export default function PixevaCRMAIPage() {
   const [testSentSuccess, setTestSentSuccess] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<NotificationTrigger | null>(null);
+
+  // ESC key to close modal
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowPreviewModal(false);
+        setPreviewTemplate(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   
   // Usage Counter
   const [sentCount, setSentCount] = useState(0);

@@ -161,7 +161,7 @@ export default function LandingPageTab() {
         {/* LEFT COLUMN: Controls & Settings */}
         <div className="lg:col-span-5 space-y-4">
           {/* Cover Photo */}
-          <div className="pixeva-card p-4.5 space-y-3">
+          <div className="pixeva-card p-5 space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-slate-900 dark:text-white block">
                 Cover Photo <span className="text-slate-400 font-normal">· 16:9 · max 1 MB</span>
@@ -200,7 +200,7 @@ export default function LandingPageTab() {
           </div>
 
           {/* Page Text */}
-          <div className="pixeva-card p-4.5 space-y-3">
+          <div className="pixeva-card p-5 space-y-3">
             <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Page Text</h3>
             <div className="space-y-3 text-xs">
               <div>
@@ -227,7 +227,7 @@ export default function LandingPageTab() {
           </div>
 
           {/* Optional Form Fields */}
-          <div className="pixeva-card p-4.5 space-y-3">
+          <div className="pixeva-card p-5 space-y-3">
             <div>
               <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Optional Form Fields</h3>
               <p className="text-[11px] text-slate-400 mt-0.5">
@@ -289,7 +289,7 @@ export default function LandingPageTab() {
           </div>
 
           {/* Estimate Calculator */}
-          <div className="pixeva-card p-4.5 space-y-3">
+          <div className="pixeva-card p-5 space-y-3">
             <div>
               <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Estimate Calculator</h3>
               <p className="text-[11px] text-slate-400 mt-0.5">

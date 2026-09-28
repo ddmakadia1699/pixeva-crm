@@ -116,7 +116,7 @@ export default function AnalyticsTab({ enquiries }: AnalyticsTabProps) {
       {/* Visual Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Source Distribution Chart */}
-        <div className="pixeva-card p-4.5 space-y-4">
+        <div className="pixeva-card p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
             <div className="flex items-center space-x-2">
               <PieChart className="w-4 h-4 text-slate-500" />
@@ -127,15 +127,15 @@ export default function AnalyticsTab({ enquiries }: AnalyticsTabProps) {
 
           <div className="space-y-3">
             {sourceCounts.map((src) => (
-              <div key={src.name} className="space-y-1 text-xs">
-                <div className="flex justify-between font-medium">
+              <div key={src.name} className="space-y-2 py-1.5 text-xs">
+                <div className="flex items-end justify-between font-medium">
                   <span className="text-slate-700 dark:text-slate-300">{src.name}</span>
-                  <span className="text-slate-900 dark:text-white font-mono font-semibold">{src.percentage}% ({src.count} leads)</span>
+                  <span className="text-slate-900 dark:text-white font-mono font-semibold leading-none">{src.percentage}% ({src.count} leads)</span>
                 </div>
                 <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
                   <div
                     style={{ width: `${Math.max(src.percentage, 10)}%` }}
-                    className="h-full bg-slate-800 dark:bg-slate-300 rounded-full transition-all duration-500"
+                    className="h-full bg-sky-500 dark:bg-sky-400 rounded-full transition-all duration-500 shadow-sm shadow-sky-500/20"
                   />
                 </div>
               </div>
@@ -144,7 +144,7 @@ export default function AnalyticsTab({ enquiries }: AnalyticsTabProps) {
         </div>
 
         {/* Event Type Breakdown */}
-        <div className="pixeva-card p-4.5 space-y-4">
+        <div className="pixeva-card p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-white/10 pb-3">
             <div className="flex items-center space-x-2">
               <BarChart2 className="w-4 h-4 text-slate-500" />
@@ -158,16 +158,18 @@ export default function AnalyticsTab({ enquiries }: AnalyticsTabProps) {
               const count = enquiries.filter((e) => e.event_type === et.type).length || 2;
               const pct = Math.round((count / totalEnquiries) * 100);
               return (
-                <div key={et.type} className="p-3 rounded-lg bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 space-y-1">
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block">{et.label}</span>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-lg font-bold text-slate-900 dark:text-white">{count}</span>
-                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                      {pct}%
-                    </span>
+                <div key={et.type} className="p-4 rounded-xl bg-slate-50/80 dark:bg-[#111827] border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 block leading-tight">{et.label}</span>
+                    <div className="flex items-end justify-between">
+                      <span className="text-2xl font-bold text-slate-900 dark:text-white leading-none">{count}</span>
+                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 leading-none pb-0.5">
+                        {pct}%
+                      </span>
+                    </div>
                   </div>
-                  <div className="w-full h-1.5 rounded-full bg-slate-200/70 dark:bg-white/10 mt-2 overflow-hidden">
-                    <div className="h-full bg-slate-700 dark:bg-slate-300 rounded-full" style={{ width: `${pct}%` }} />
+                  <div className="w-full h-2 rounded-full bg-slate-200/70 dark:bg-white/10 mt-4 overflow-hidden">
+                    <div className="h-full bg-sky-500 dark:bg-sky-400 rounded-full shadow-sm shadow-sky-500/20" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );

@@ -40,6 +40,51 @@ export default function EnquiriesPage() {
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
 
+  // Helper to auto-create a Shoot Project when an Enquiry is booked
+  const autoCreateProjectFromEnquiry = (enq: Enquiry) => {
+    try {
+      if (typeof window === 'undefined') return;
+      const rawProjects = localStorage.getItem('pixeva_projects');
+      let projects = rawProjects ? JSON.parse(rawProjects) : [];
+      
+      const enqEventName = enq.event_name || `${enq.name}'s Event`;
+      
+      // Prevent duplicate creation
+      const exists = projects.find((p) => p.name === enqEventName && p.client === enq.name);
+      if (!exists) {
+        const newProject = {
+          id: `proj-auto-${Date.now()}`,
+          name: enqEventName,
+          type: enq.event_type === 'wedding' ? 'Wedding' : 'Corporate',
+          client: enq.name,
+          client_phone: enq.phone || '',
+          first_event: enq.event_date || new Date().toISOString().slice(0, 10),
+          venue: enq.venue || 'TBA',
+          call_time: '08:00 AM',
+          total_amount: enq.estimated_budget || 0,
+          paid_amount: 0,
+          payment_status: 'Pending',
+          status: 'Active',
+          completeness: 'In Progress (20%)',
+          contract: 'Pending',
+          assigned_crew: [
+            { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '919876543219' },
+          ],
+          deliverables: [
+            { id: 'd1', title: 'Master Cinematic Video Cut', completed: false },
+            { id: 'd2', title: 'High-Resolution Edited Photo Album', completed: false },
+          ],
+          created_at: new Date().toISOString()
+        };
+        projects = [newProject, ...projects];
+        localStorage.setItem('pixeva_projects', JSON.stringify(projects));
+      }
+    } catch (e) {
+      console.error('Failed to auto-create project:', e);
+    }
+  };
+
+
   // Helper to update both React state AND localStorage immediately
   const updateEnquiries = (updater: Enquiry[] | ((prev: Enquiry[]) => Enquiry[])) => {
     setEnquiries((prev) => {
@@ -84,7 +129,7 @@ export default function EnquiriesPage() {
             setEnquiries(mapped);
             try {
               localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(mapped));
-            } catch {}
+            } catch { }
             setIsHydrated(true);
             return;
           }
@@ -102,11 +147,30 @@ export default function EnquiriesPage() {
             setEnquiries(parsed.filter((e) => !deletedSet.has(e.id)));
           }
         }
-      } catch {}
+      } catch { }
       setIsHydrated(true);
     }
 
     loadFromCloud();
+  }, []);
+
+  // Listen for local storage changes from other tabs (e.g. Landing Page submissions)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === ENQUIRIES_STORAGE_KEY && e.newValue) {
+        try {
+          const parsed: Enquiry[] = JSON.parse(e.newValue);
+          const deletedSet = getDeletedIds();
+          if (Array.isArray(parsed)) {
+            setEnquiries(parsed.filter((item) => !deletedSet.has(item.id)));
+          }
+        } catch (err) {
+          console.error('Failed to parse storage update:', err);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Add Single Enquiry
@@ -144,7 +208,14 @@ export default function EnquiriesPage() {
 
   // Status Change
   const handleUpdateStatus = async (id: string, status: EnquiryStatus) => {
-    updateEnquiries((prev) => prev.map((e) => (e.id === id ? { ...e, status } : e)));
+    updateEnquiries((prev) => {
+      const updated = prev.map((e) => (e.id === id ? { ...e, status } : e));
+      if (status.toLowerCase() === 'booked') {
+        const bookedEnq = updated.find((e) => e.id === id);
+        if (bookedEnq) autoCreateProjectFromEnquiry(bookedEnq);
+      }
+      return updated;
+    });
 
     try {
       await apiClient.enquiries.update(id, status);
@@ -158,6 +229,9 @@ export default function EnquiriesPage() {
     updateEnquiries((prev) =>
       prev.map((e) => (e.id === updatedEnquiry.id ? updatedEnquiry : e))
     );
+    if (updatedEnquiry.status.toLowerCase() === 'booked') {
+      autoCreateProjectFromEnquiry(updatedEnquiry);
+    }
 
     try {
       await apiClient.enquiries.update(updatedEnquiry.id, updatedEnquiry.status);

@@ -70,7 +70,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Orbs */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
@@ -81,20 +81,20 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-purple-600 shadow-lg shadow-blue-500/20 text-white mb-2">
             <Camera className="w-7 h-7" />
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-white">Pixeva CRM</h1>
-          <p className="text-xs text-[#a0a0b0]">Enterprise Photography & AI Studio Operating System</p>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">Pixeva CRM</h1>
+          <p className="text-xs text-slate-500">Enterprise Photography & AI Studio Operating System</p>
         </div>
 
         {/* Auth Card */}
-        <div className="pixeva-card rounded-2xl p-6 sm:p-8 space-y-6 border border-white/10 shadow-2xl">
+        <div className="bg-white rounded-2xl p-6 sm:p-8 space-y-6 border border-slate-200 shadow-xl">
           {/* Mode Switcher Tabs */}
-          <div className="grid grid-cols-2 gap-1 bg-[#12121a] p-1 rounded-xl border border-white/10">
+          <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
               onClick={() => { setMode('signin'); setErrorMsg(null); setSuccessMsg(null); }}
               className={`py-2 text-xs font-bold rounded-lg transition-all ${
                 mode === 'signin'
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-[#a0a0b0] hover:text-white'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               Sign In
@@ -104,7 +104,7 @@ export default function LoginPage() {
               className={`py-2 text-xs font-bold rounded-lg transition-all ${
                 mode === 'signup'
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-[#a0a0b0] hover:text-white'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               Register
@@ -113,15 +113,15 @@ export default function LoginPage() {
 
           {/* Error & Success Messages */}
           {errorMsg && (
-            <div className="p-3.5 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs flex items-center space-x-2 animate-fadeIn">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs flex items-center space-x-2 animate-fadeIn">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs flex items-center space-x-2 animate-fadeIn">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs flex items-center space-x-2 animate-fadeIn">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -131,7 +131,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full flex items-center justify-center space-x-3 py-3 px-4 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-bold text-xs transition-all shadow-md hover:shadow-lg disabled:opacity-50"
+            className="w-full flex items-center justify-center space-x-3 py-3 px-4 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs transition-all shadow-sm hover:shadow-md disabled:opacity-50"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
@@ -155,8 +155,8 @@ export default function LoginPage() {
           </button>
 
           <div className="relative flex items-center justify-center">
-            <div className="border-t border-white/10 w-full" />
-            <span className="bg-[#12121a] px-3 text-[10px] uppercase font-bold text-[#a0a0b0] tracking-wider absolute">
+            <div className="border-t border-slate-200 w-full" />
+            <span className="bg-white px-3 text-[10px] uppercase font-bold text-slate-400 tracking-wider absolute">
               OR EMAIL
             </span>
           </div>
@@ -164,36 +164,36 @@ export default function LoginPage() {
           {/* Form */}
           <form onSubmit={handleAuthSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[#a0a0b0] uppercase tracking-wider">Email Address</label>
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Email Address</label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a0a0b0]" />
+                <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="email"
                   required
                   placeholder="admin@pixeva.co"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-[#12121a] border border-white/15 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[#a0a0b0] uppercase tracking-wider">Password</label>
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Password</label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a0a0b0]" />
+                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   placeholder="••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-[#12121a] border border-white/15 rounded-xl pl-10 pr-10 py-2.5 text-xs text-white placeholder-[#a0a0b0] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#a0a0b0] hover:text-white"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -212,7 +212,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer Note */}
-        <p className="text-[11px] text-center text-[#a0a0b0]">
+        <p className="text-[11px] text-center text-slate-500">
           Protected by Supabase Enterprise Auth & Row Level Security
         </p>
       </div>

@@ -165,11 +165,11 @@ export default function CrewSchedulingPage() {
       events.map((evt) =>
         evt.id === assigningEvent.id
           ? {
-              ...evt,
-              assigned_crew: selectedCrew,
-              status: selectedCrew.length > 0 ? 'Assigned' : 'Pending',
-              is_unassigned: selectedCrew.length === 0,
-            }
+            ...evt,
+            assigned_crew: selectedCrew,
+            status: selectedCrew.length > 0 ? 'Assigned' : 'Pending',
+            is_unassigned: selectedCrew.length === 0,
+          }
           : evt
       )
     );
@@ -314,17 +314,15 @@ export default function CrewSchedulingPage() {
             return (
               <div
                 key={`${d.dateStr}-${index}`}
-                className={`min-h-[72px] md:min-h-[84px] p-2 rounded-lg border flex flex-col justify-between transition-all ${
-                  d.isCurrentMonth
+                className={`min-h-[72px] md:min-h-[84px] p-2 rounded-lg border flex flex-col justify-between transition-all ${d.isCurrentMonth
                     ? 'bg-white dark:bg-[#0f172a] border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
                     : 'bg-slate-50/50 dark:bg-slate-900/30 border-transparent opacity-40'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <span
-                    className={`text-xs font-bold ${
-                      d.isCurrentMonth ? 'text-slate-900 dark:text-white' : 'text-slate-400'
-                    }`}
+                    className={`text-xs font-bold ${d.isCurrentMonth ? 'text-slate-900 dark:text-white' : 'text-slate-400'
+                      }`}
                   >
                     {d.day}
                   </span>
@@ -478,17 +476,16 @@ export default function CrewSchedulingPage() {
                       <label
                         key={crew}
                         onClick={() => handleToggleCrew(crew)}
-                        className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
-                          isChecked
+                        className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${isChecked
                             ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-slate-900 dark:border-white shadow-xs'
                             : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center space-x-2.5">
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            onChange={() => {}} // Handled by label click
+                            onChange={() => { }} // Handled by label click
                             className="rounded border-slate-300 text-slate-900 focus:ring-0 cursor-pointer"
                           />
                           <span className="font-medium text-xs">{crew}</span>

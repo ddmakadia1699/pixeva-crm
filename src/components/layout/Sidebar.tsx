@@ -64,13 +64,21 @@ export default function Sidebar() {
         setIsUserMenuOpen(false);
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setIsUserMenuOpen(false);
+        closeMobile();
+      }
+    }
     if (isUserMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isUserMenuOpen]);
+  }, [isUserMenuOpen, closeMobile]);
 
   if (pathname === '/login' || pathname.startsWith('/enquire') || pathname.startsWith('/proposal')) {
     return null;

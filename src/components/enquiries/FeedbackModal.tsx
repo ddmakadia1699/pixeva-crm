@@ -67,9 +67,8 @@ export default function FeedbackModal() {
                         key={star}
                         type="button"
                         onClick={() => setRating(star)}
-                        className={`p-1 transition-transform cursor-pointer ${
-                          star <= rating ? 'text-amber-500 scale-105' : 'text-slate-300 dark:text-white/20 hover:text-amber-400'
-                        }`}
+                        className={`p-1 transition-transform cursor-pointer ${star <= rating ? 'text-amber-500 scale-105' : 'text-slate-300 dark:text-white/20 hover:text-amber-400'
+                          }`}
                       >
                         <Star className="w-4 h-4 fill-current" />
                       </button>

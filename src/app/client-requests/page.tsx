@@ -120,6 +120,19 @@ export default function ClientRequestsPage() {
   const [assigningItem, setAssigningItem] = useState<ClientRequestItem | null>(null);
   const [teamMemberInput, setTeamMemberInput] = useState('Dhruvi Patel');
 
+  // ESC key to close all modals
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsAddModalOpen(false);
+        setAssigningItem(null);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Form State
   const [formData, setFormData] = useState({
     project: 'Bride & Groom (Demo)',

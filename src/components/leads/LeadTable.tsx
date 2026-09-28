@@ -29,6 +29,18 @@ export default function LeadTable({ leads, onAddLead, onUpdateStatus }: LeadTabl
   const [activeLambdaTask, setActiveLambdaTask] = useState<string | null>(null);
   const [lambdaResult, setLambdaResult] = useState<any>(null);
 
+  // ESC key to close modal
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsModalOpen(false);
+        setLambdaResult(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // New Lead Form State
   const [formData, setFormData] = useState({
     first_name: '',

@@ -157,6 +157,21 @@ export default function PostProductionPage() {
   const [isStatusListOpen, setIsStatusListOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
+  // ESC key to close all modals
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setAssigningItem(null);
+        setGalleryItem(null);
+        setIsStatusListOpen(false);
+        setIsImportModalOpen(false);
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Modal Inputs
   const [memberInput, setMemberInput] = useState('Dhruvi Patel');
   const [galleryUrl, setGalleryUrl] = useState('');

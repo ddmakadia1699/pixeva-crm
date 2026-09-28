@@ -47,6 +47,17 @@ export default function ContractManager() {
   const [contracts, setContracts] = useState<Contract[]>(INITIAL_CONTRACTS);
   const [activePreview, setActivePreview] = useState<Contract | null>(null);
 
+  // ESC key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActivePreview(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   useEffect(() => {
     async function fetchContracts() {
       try {

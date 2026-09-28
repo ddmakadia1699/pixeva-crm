@@ -38,11 +38,18 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
         setIsProfileOpen(false);
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setIsProfileOpen(false);
+      }
+    }
     if (isProfileOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isProfileOpen]);
 

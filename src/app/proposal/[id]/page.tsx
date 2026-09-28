@@ -3,21 +3,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { 
-  Camera, 
-  CheckCircle2, 
-  Sparkles, 
-  Calendar, 
-  Download, 
-  Share2, 
-  ShieldCheck, 
-  FileSignature, 
-  Trash2, 
-  Check, 
-  Play, 
-  Film, 
-  Layers, 
-  PenTool, 
+import {
+  Camera,
+  CheckCircle2,
+  Sparkles,
+  Calendar,
+  Download,
+  Share2,
+  ShieldCheck,
+  FileSignature,
+  Trash2,
+  Check,
+  Play,
+  Film,
+  Layers,
+  PenTool,
   Type,
   MapPin,
   Flame,
@@ -27,11 +27,13 @@ import {
   ArrowRight,
   X
 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
-import { openProposalPdfWindow } from '@/lib/pdf/generateProposalPdf';
+import { useCurrency } from '@/context/CurrencyContext';
+import { openProposalPdfWindow, openReceiptPdfWindow } from '@/lib/pdf/generateProposalPdf';
 import { Enquiry } from '@/lib/supabase/types';
 
 export default function ClientProposalPage() {
+  const { formatCurrency } = useCurrency();
+  const [isMounted, setIsMounted] = useState(false);
   const params = useParams();
   const proposalId = (params?.id as string) || 'prop-default';
 
@@ -64,8 +66,9 @@ export default function ClientProposalPage() {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Load matching enquiry from localStorage if available
+  // Load matching enquiry from localStorage if available & mark mounted
   useEffect(() => {
+    setIsMounted(true);
     try {
       const saved = localStorage.getItem('pixeva_enquiries');
       if (saved) {
@@ -235,12 +238,12 @@ export default function ClientProposalPage() {
 
       {/* Main Content */}
       <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-16 space-y-8">
-        
+
         {/* 3D Elevated Hero Banner */}
         <div className="relative rounded-3xl bg-white/90 dark:bg-[#0e1628]/90 backdrop-blur-xl border border-white/80 dark:border-white/10 p-6 sm:p-10 shadow-[0_20px_50px_-15px_rgba(14,165,233,0.15)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] space-y-6 overflow-hidden">
           {/* Subtle Top Specular Light Highlight */}
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-sky-400/60 to-transparent" />
-          
+
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 text-xs font-extrabold uppercase tracking-wider shadow-xs">
               <Sparkles className="w-3.5 h-3.5 animate-pulse" />
@@ -382,7 +385,9 @@ export default function ClientProposalPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-5">
             <div>
               <span className="text-xs font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider">Package Investment</span>
-              <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">{formatCurrency(budget)}</h3>
+              <h3 suppressHydrationWarning className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+                {isMounted ? formatCurrency(budget) : `₹${budget.toLocaleString('en-IN')}`}
+              </h3>
             </div>
             <div className="flex items-center space-x-2 text-xs text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/10 px-3.5 py-2 rounded-2xl border border-emerald-500/20">
               <ShieldCheck className="w-4 h-4" />
@@ -394,19 +399,25 @@ export default function ClientProposalPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-5 rounded-2xl bg-slate-50/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 space-y-1.5 shadow-sm hover:border-sky-500/50 transition-colors">
               <span className="text-[11px] font-black text-sky-600 dark:text-sky-400 uppercase">1. Booking Advance (20%)</span>
-              <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{formatCurrency(advance)}</p>
+              <p suppressHydrationWarning className="text-2xl font-black text-slate-900 dark:text-white font-mono">
+                {isMounted ? formatCurrency(advance) : `₹${advance.toLocaleString('en-IN')}`}
+              </p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Secures dates & reserves studio crew</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-slate-50/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 space-y-1.5 shadow-sm hover:border-purple-500/50 transition-colors">
               <span className="text-[11px] font-black text-purple-600 dark:text-purple-400 uppercase">2. Event Day (60%)</span>
-              <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{formatCurrency(eventDay)}</p>
+              <p suppressHydrationWarning className="text-2xl font-black text-slate-900 dark:text-white font-mono">
+                {isMounted ? formatCurrency(eventDay) : `₹${eventDay.toLocaleString('en-IN')}`}
+              </p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Due on the primary shoot date</p>
             </div>
 
             <div className="p-5 rounded-2xl bg-slate-50/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 space-y-1.5 shadow-sm hover:border-emerald-500/50 transition-colors">
               <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400 uppercase">3. Final Delivery (20%)</span>
-              <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{formatCurrency(finalBal)}</p>
+              <p suppressHydrationWarning className="text-2xl font-black text-slate-900 dark:text-white font-mono">
+                {isMounted ? formatCurrency(finalBal) : `₹${finalBal.toLocaleString('en-IN')}`}
+              </p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Payable upon delivery of all assets</p>
             </div>
           </div>
@@ -430,11 +441,10 @@ export default function ClientProposalPage() {
               <button
                 type="button"
                 onClick={() => setSignatureMode('draw')}
-                className={`px-4 py-2 rounded-xl font-extrabold flex items-center space-x-1.5 transition-all ${
-                  signatureMode === 'draw'
+                className={`px-4 py-2 rounded-xl font-extrabold flex items-center space-x-1.5 transition-all ${signatureMode === 'draw'
                     ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-md'
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 <PenTool className="w-3.5 h-3.5" />
                 <span>Draw</span>
@@ -442,11 +452,10 @@ export default function ClientProposalPage() {
               <button
                 type="button"
                 onClick={() => setSignatureMode('type')}
-                className={`px-4 py-2 rounded-xl font-extrabold flex items-center space-x-1.5 transition-all ${
-                  signatureMode === 'type'
+                className={`px-4 py-2 rounded-xl font-extrabold flex items-center space-x-1.5 transition-all ${signatureMode === 'type'
                     ? 'bg-white dark:bg-sky-600 text-slate-900 dark:text-white shadow-md'
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                }`}
+                  }`}
               >
                 <Type className="w-3.5 h-3.5" />
                 <span>Type</span>
@@ -529,7 +538,9 @@ export default function ClientProposalPage() {
               className="w-full sm:w-auto px-8 py-3.5 rounded-2xl text-xs font-black text-white bg-gradient-to-r from-sky-500 via-blue-600 to-purple-600 hover:from-sky-400 hover:to-purple-500 shadow-[0_10px_25px_-5px_rgba(14,165,233,0.4)] flex items-center justify-center space-x-2 transition-all transform active:scale-95 hover:scale-[1.02] cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>Accept Proposal & Pay {formatCurrency(advance)} Advance</span>
+              <span suppressHydrationWarning>
+                Accept Proposal & Pay {isMounted ? formatCurrency(advance) : `₹${advance.toLocaleString('en-IN')}`} Advance
+              </span>
             </button>
           </div>
         </div>
@@ -540,23 +551,61 @@ export default function ClientProposalPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fadeIn">
           <div className="w-full max-w-md bg-white dark:bg-[#0e1628] border border-sky-400/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl animate-scaleUp">
             {paymentSuccess ? (
-              <div className="text-center space-y-4 py-4 animate-fadeIn">
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/40 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/25 animate-pulse">
-                  <Check className="w-8 h-8" />
+              <div className="text-center space-y-4 py-2 animate-fadeIn">
+                <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/40 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/25 animate-pulse">
+                  <Check className="w-7 h-7" />
                 </div>
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white">Booking Confirmed! 🎉</h3>
-                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                  Thank you, <strong className="text-slate-900 dark:text-white">{enquiry.name}</strong>! Your 20% advance booking deposit ({formatCurrency(advance)}) has been recorded and your shoot dates are officially locked.
-                </p>
-                <div className="pt-2">
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white">Booking Confirmed! 🎉</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Official Retainer Receipt Generated</p>
+                </div>
+
+                {/* Instant In-App Receipt Card */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-left space-y-2 text-xs">
+                  <div className="flex justify-between items-center border-b border-slate-200/80 dark:border-white/10 pb-2">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Receipt Ref</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white">REC-2026-BOOKED</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 dark:text-slate-400">Client:</span>
+                    <strong className="text-slate-900 dark:text-white">{enquiry.name}</strong>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 dark:text-slate-400">Event:</span>
+                    <span className="text-slate-700 dark:text-slate-300 font-medium truncate max-w-[180px]">{enquiry.event_name || 'Shoot'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 dark:text-slate-400">Amount Paid (20%):</span>
+                    <strong suppressHydrationWarning className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                      {isMounted ? formatCurrency(advance) : `₹${advance.toLocaleString('en-IN')}`}
+                    </strong>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 dark:text-slate-400">Remaining Balance:</span>
+                    <span suppressHydrationWarning className="font-mono text-slate-600 dark:text-slate-400">
+                      {isMounted ? formatCurrency(Math.max(0, budget - advance)) : `₹${(Math.max(0, budget - advance)).toLocaleString('en-IN')}`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
                   <button
+                    type="button"
+                    onClick={() => openReceiptPdfWindow(enquiry, advance, signatureMode === 'type' ? typedSignature : enquiry.name)}
+                    className="w-full flex-1 px-4 py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 text-white text-xs font-black shadow-lg shadow-sky-500/30 flex items-center justify-center space-x-1.5 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>View / Print Receipt PDF</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => {
                       setShowPaymentModal(false);
                       setPaymentSuccess(false);
                     }}
-                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xs font-extrabold shadow-lg shadow-sky-500/30"
+                    className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold cursor-pointer"
                   >
-                    Done & View Receipt
+                    Close
                   </button>
                 </div>
               </div>
@@ -567,8 +616,8 @@ export default function ClientProposalPage() {
                     <h3 className="font-black text-slate-900 dark:text-white text-base">Pay Booking Advance</h3>
                     <p className="text-xs text-slate-500 font-medium">Instant Retainer Deposit</p>
                   </div>
-                  <span className="font-mono font-black text-lg text-sky-600 dark:text-sky-400">
-                    {formatCurrency(advance)}
+                  <span suppressHydrationWarning className="font-mono font-black text-lg text-sky-600 dark:text-sky-400">
+                    {isMounted ? formatCurrency(advance) : `₹${advance.toLocaleString('en-IN')}`}
                   </span>
                 </div>
 
@@ -589,14 +638,31 @@ export default function ClientProposalPage() {
                   <button
                     type="button"
                     onClick={() => setShowPaymentModal(false)}
-                    className="flex-1 px-4 py-3 rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-600 dark:text-slate-300 text-xs font-bold"
+                    className="flex-1 px-4 py-3 rounded-2xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-600 dark:text-slate-300 text-xs font-bold cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPaymentSuccess(true)}
-                    className="flex-1 px-4 py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 text-white text-xs font-black shadow-lg shadow-sky-500/30"
+                    onClick={() => {
+                      setPaymentSuccess(true);
+                      // Update local storage status to booked
+                      try {
+                        const saved = localStorage.getItem('pixeva_enquiries');
+                        if (saved) {
+                          const list: Enquiry[] = JSON.parse(saved);
+                          const updated = list.map((e) =>
+                            e.id === proposalId || e.name.toLowerCase().includes(proposalId.toLowerCase())
+                              ? { ...e, status: 'booked' as const }
+                              : e
+                          );
+                          localStorage.setItem('pixeva_enquiries', JSON.stringify(updated));
+                        }
+                      } catch (err) {
+                        console.error('Error updating status:', err);
+                      }
+                    }}
+                    className="flex-1 px-4 py-3 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 text-white text-xs font-black shadow-lg shadow-sky-500/30 cursor-pointer"
                   >
                     Confirm & Pay
                   </button>
