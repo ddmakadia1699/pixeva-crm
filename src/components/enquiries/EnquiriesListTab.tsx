@@ -144,6 +144,15 @@ export default function EnquiriesListTab({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const [packages, setPackages] = useState<any[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('pixeva_packages');
+    if (saved) {
+      setPackages(JSON.parse(saved));
+    }
+  }, []);
+
   // Edit Form State
   const [editFormData, setEditFormData] = useState({
     name: '',
@@ -158,6 +167,7 @@ export default function EnquiriesListTab({
     source: 'Instagram' as EnquirySource,
     status: 'New' as EnquiryStatus,
     notes: '',
+    selected_package_id: '',
   });
 
   // Helper to normalize status across legacy and new formats
@@ -459,6 +469,7 @@ export default function EnquiriesListTab({
       source: (enq.source as EnquirySource) || 'Instagram',
       status: statusVal,
       notes: enq.notes || enq.event_details || '',
+      selected_package_id: enq.selected_package_id || '',
     });
     setIsEditModalOpen(true);
   };
@@ -487,6 +498,7 @@ export default function EnquiriesListTab({
       status: editFormData.status,
       notes: editFormData.notes,
       event_details: editFormData.notes,
+      selected_package_id: editFormData.selected_package_id,
     };
 
     if (onUpdateEnquiry) {
@@ -2001,6 +2013,36 @@ export default function EnquiriesListTab({
                     placeholder="e.g. 200000"
                     className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-semibold focus:outline-none focus:border-blue-500"
                   />
+                </div>
+              </div>
+
+              {/* Row 4b: Apply Package */}
+              <div className="grid grid-cols-1 gap-3.5">
+                <div>
+                  <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
+                    Apply Package (Optional)
+                  </label>
+                  <select
+                    value={editFormData.selected_package_id}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const pkg = packages.find(p => p.id === val);
+                      setEditFormData({
+                        ...editFormData,
+                        selected_package_id: val,
+                        budget: pkg && pkg.price ? String(pkg.price) : editFormData.budget,
+                      });
+                    }}
+                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 cursor-pointer"
+                  >
+                    <option value="">-- Custom Quote / No Package Selected --</option>
+                    {packages.map(pkg => (
+                      <option key={pkg.id} value={pkg.id}>
+                        {pkg.name} {pkg.price ? `(${currency.symbol.trim()}${pkg.price.toLocaleString('en-IN')})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-slate-500 mt-1">Selecting a package will automatically update the estimated budget.</p>
                 </div>
               </div>
 

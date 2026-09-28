@@ -53,6 +53,7 @@ export interface Enquiry {
   budget?: string;
   guests?: string;
   estimated_budget?: number;
+  selected_package_id?: string;
   source: EnquirySource;
   status: EnquiryStatus;
   notes?: string;

@@ -69,6 +69,7 @@ interface StudioPackageItem {
   name: string;
   deliverables: { id: string; name: string }[];
   otherServices: string[];
+  price?: number;
 }
 
 const INITIAL_CREW_ROLES: CrewRoleItem[] = [
@@ -126,6 +127,7 @@ const INITIAL_STUDIO_PACKAGES: StudioPackageItem[] = [
       { id: 'del-6', name: 'Premium Canvera Photo Album (40 Pages)' },
     ],
     otherServices: ['LED Screen', 'Live Streaming', 'Drone Setup'],
+    price: 150000,
   },
   {
     id: 'pkg-2',
@@ -136,6 +138,7 @@ const INITIAL_STUDIO_PACKAGES: StudioPackageItem[] = [
       { id: 'del-7', name: 'Instagram Reels / Shorts (60 Seconds Vertical)' },
     ],
     otherServices: ['Photo Booth', 'Film Camera'],
+    price: 85000,
   }
 ];
 
@@ -219,7 +222,22 @@ export default function SettingsPage() {
   const [crewRoles, setCrewRoles] = useState<CrewRoleItem[]>(INITIAL_CREW_ROLES);
   const [otherServices, setOtherServices] = useState<OtherServiceItem[]>(INITIAL_OTHER_SERVICES);
   const [deliverables, setDeliverables] = useState<DeliverableItem[]>(INITIAL_DELIVERABLES);
-  const [packages, setPackages] = useState<StudioPackageItem[]>(INITIAL_STUDIO_PACKAGES);
+  const [packages, setPackages] = useState<StudioPackageItem[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('pixeva_packages');
+    if (saved) {
+      setPackages(JSON.parse(saved));
+    } else {
+      setPackages(INITIAL_STUDIO_PACKAGES);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (packages.length > 0) {
+      localStorage.setItem('pixeva_packages', JSON.stringify(packages));
+    }
+  }, [packages]);
 
   // Payments State
   const [paymentSplits, setPaymentSplits] = useState<PaymentSplitItem[]>(DEFAULT_PAYMENT_SPLITS);
@@ -672,7 +690,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
               >
                 {/* Package Header */}
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 gap-3">
-                  <div className="flex-1 max-w-md">
+                  <div className="flex-1 max-w-md flex items-center space-x-4">
                     <input
                       type="text"
                       value={pkg.name}
@@ -683,6 +701,16 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                       placeholder="Package Name..."
                       className="text-sm font-bold text-slate-900 dark:text-white bg-transparent border-b border-transparent hover:border-slate-300 focus:border-slate-900 focus:outline-none px-1 py-0.5 w-full transition-colors"
                     />
+                    <div className="relative flex items-center group/input shrink-0">
+                      <span className="absolute left-2 text-slate-400 font-mono text-xs pointer-events-none">{symbol}</span>
+                      <input
+                        type="number"
+                        value={pkg.price || 0}
+                        onChange={(e) => setPackages(prev => prev.map(p => p.id === pkg.id ? { ...p, price: Number(e.target.value) } : p))}
+                        className="w-28 pl-6 pr-2 py-1.5 text-right bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm font-mono font-bold text-slate-900 dark:text-white hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm"
+                        placeholder="Price"
+                      />
+                    </div>
                   </div>
 
                   {packages.length > 1 && (
