@@ -50,7 +50,7 @@ export default function EnquiriesPage() {
       const enqEventName = enq.event_name || `${enq.name}'s Event`;
       
       // Prevent duplicate creation
-      const exists = projects.find((p) => p.name === enqEventName && p.client === enq.name);
+      const exists = projects.find((p: any) => p.name === enqEventName && p.client === enq.name);
       if (!exists) {
         const newProject = {
           id: `proj-auto-${Date.now()}`,
