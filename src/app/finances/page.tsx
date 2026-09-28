@@ -42,52 +42,9 @@ export interface Transaction {
   note?: string;
 }
 
-const INITIAL_PROJECT_FINANCES: ProjectFinanceItem[] = [
-  {
-    id: 'fin-proj-1',
-    project_name: 'Bride & Groom (Demo)',
-    client: 'Bride & Groom (Demo)',
-    event_date: '30 Dec 2026',
-    received: 10000,
-    balance_due: 108000,
-    team_payouts: 10000,
-    expenses: 1000,
-    created_at: new Date().toISOString(),
-  },
-];
+const INITIAL_PROJECT_FINANCES: ProjectFinanceItem[] = []; // cleared mock data;
 
-const INITIAL_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'tx-1',
-    project_name: 'Bride & Groom (Demo)',
-    type: 'Payment Received',
-    category: 'Advance Booking Fee',
-    amount: 10000,
-    date: '2026-08-10',
-    payment_mode: 'UPI',
-    note: 'Initial deposit received via UPI',
-  },
-  {
-    id: 'tx-2',
-    project_name: 'Bride & Groom (Demo)',
-    type: 'Expense',
-    category: 'Equipment Rental',
-    amount: 1000,
-    date: '2026-08-11',
-    payment_mode: 'Bank Transfer',
-    note: 'Memory card & battery rental deposit',
-  },
-  {
-    id: 'tx-3',
-    project_name: 'Bride & Groom (Demo)',
-    type: 'Team Payout',
-    category: 'Lead Photographer Advance',
-    amount: 10000,
-    date: '2026-08-11',
-    payment_mode: 'Bank Transfer',
-    note: 'Advance payout committed for shoot day',
-  },
-];
+const INITIAL_TRANSACTIONS: Transaction[] = []; // cleared mock data;
 
 import { apiClient } from '@/lib/api/apiClient';
 
@@ -124,14 +81,14 @@ export default function FinancesPage() {
       }
 
       try {
-        const savedFin = localStorage.getItem(FINANCES_STORAGE_KEY);
+        const savedFin = null /* localStorage.getItem(FINANCES_STORAGE_KEY) */;
         if (savedFin) {
           const parsed = JSON.parse(savedFin);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setProjectFinances(parsed);
           }
         }
-        const savedTx = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
+        const savedTx = null /* localStorage.getItem(TRANSACTIONS_STORAGE_KEY) */;
         if (savedTx) {
           const parsedTx = JSON.parse(savedTx);
           if (Array.isArray(parsedTx) && parsedTx.length > 0) {

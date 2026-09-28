@@ -31,35 +31,7 @@ export interface ClientRequestItem {
   created_at: string;
 }
 
-const INITIAL_REQUESTS: ClientRequestItem[] = [
-  {
-    id: 'req-1',
-    project: 'Bride & Groom (Demo)',
-    category: 'Photos',
-    details: 'Skin retouching & tone correction on 15 main stage wedding photos',
-    assign_team: null,
-    status: 'Pending',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'req-2',
-    project: 'Bride & Groom (Demo)',
-    category: 'Photos',
-    details: 'Black & White color grade for reception portrait album selections',
-    assign_team: null,
-    status: 'Pending',
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: 'req-3',
-    project: 'Bride & Groom (Demo)',
-    category: 'Video',
-    details: 'Include additional vows speech audio clip in 4-minute highlight reel',
-    assign_team: null,
-    status: 'Pending',
-    created_at: new Date(Date.now() - 7200000).toISOString(),
-  },
-];
+const INITIAL_REQUESTS: ClientRequestItem[] = []; // cleared mock data;
 
 import { apiClient } from '@/lib/api/apiClient';
 
@@ -83,7 +55,7 @@ export default function ClientRequestsPage() {
       }
 
       try {
-        const saved = localStorage.getItem(CLIENT_REQUESTS_STORAGE_KEY);
+        const saved = null /* localStorage.getItem(CLIENT_REQUESTS_STORAGE_KEY) */;
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {

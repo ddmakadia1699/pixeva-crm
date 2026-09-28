@@ -15,52 +15,7 @@ import {
 } from 'lucide-react';
 import { ScheduledEvent } from '@/lib/supabase/types';
 
-const INITIAL_EVENTS: ScheduledEvent[] = [
-  {
-    id: 'evt-1',
-    project_name: 'Bride & Groom (Demo)',
-    event_title: 'Reception',
-    date_time: '30 Dec 2026 · 18:00–22:00',
-    date_formatted: '30 Dec 2026',
-    time_formatted: '18:00–22:00',
-    status: 'Pending',
-    assigned_crew: [],
-    is_unassigned: true,
-  },
-  {
-    id: 'evt-2',
-    project_name: 'Bride & Groom (Demo)',
-    event_title: 'Wedding',
-    date_time: '31 Dec 2026 · 08:00–13:00',
-    date_formatted: '31 Dec 2026',
-    time_formatted: '08:00–13:00',
-    status: 'Pending',
-    assigned_crew: [],
-    is_unassigned: true,
-  },
-  {
-    id: 'evt-3',
-    project_name: 'Vance Corporate Annual Gala',
-    event_title: 'Corporate Gala Shoot',
-    date_time: '15 Nov 2026 · 17:00–23:00',
-    date_formatted: '15 Nov 2026',
-    time_formatted: '17:00–23:00',
-    status: 'Assigned',
-    assigned_crew: ['Alex Rivers (Lead Photog)', 'Dhruvi Patel (Second Shooter)'],
-    is_unassigned: false,
-  },
-  {
-    id: 'evt-4',
-    project_name: 'BioTech Global Summit 2026',
-    event_title: 'Keynote & Panel Sessions',
-    date_time: '20 Oct 2026 · 09:00–18:00',
-    date_formatted: '20 Oct 2026',
-    time_formatted: '09:00–18:00',
-    status: 'Assigned',
-    assigned_crew: ['Rohan Verma (Cinematographer)', 'Alex Rivers (Lead Photog)'],
-    is_unassigned: false,
-  },
-];
+const INITIAL_EVENTS: ScheduledEvent[] = []; // cleared mock data;
 
 const AVAILABLE_CREW = [
   'Alex Rivers (Lead Photographer)',
@@ -98,7 +53,7 @@ export default function CrewSchedulingPage() {
   // Load from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(CREW_STORAGE_KEY);
+      const saved = null /* localStorage.getItem(CREW_STORAGE_KEY) */;
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {

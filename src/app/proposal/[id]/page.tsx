@@ -70,7 +70,7 @@ export default function ClientProposalPage() {
   useEffect(() => {
     setIsMounted(true);
     try {
-      const saved = localStorage.getItem('pixeva_enquiries');
+      const saved = null /* localStorage.getItem('pixeva_enquiries') */;
       if (saved) {
         const list: Enquiry[] = JSON.parse(saved);
         const match = list.find((e) => e.id === proposalId || e.name.toLowerCase().includes(proposalId.toLowerCase()));
@@ -648,7 +648,7 @@ export default function ClientProposalPage() {
                       setPaymentSuccess(true);
                       // Update local storage status to booked
                       try {
-                        const saved = localStorage.getItem('pixeva_enquiries');
+                        const saved = null /* localStorage.getItem('pixeva_enquiries') */;
                         if (saved) {
                           const list: Enquiry[] = JSON.parse(saved);
                           const updated = list.map((e) =>

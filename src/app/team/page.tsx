@@ -36,41 +36,7 @@ export interface TeamMember {
 
 const TEAM_STORAGE_KEY = 'pixeva_team_members';
 
-const INITIAL_MEMBERS: TeamMember[] = [
-  {
-    id: 'team-1',
-    name: 'Alex Rivers',
-    role: 'Master Cinematographer',
-    type: 'In House',
-    phone: '+91 98234 56789',
-    is_phone_visible: true,
-    email: 'alex.rivers@pixevastudio.com',
-    day_rate: '₹25,000',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'team-2',
-    name: 'Elena Rostova',
-    role: 'Lead Candid Photographer',
-    type: 'In House',
-    phone: '+91 98765 43210',
-    is_phone_visible: true,
-    email: 'elena@pixevastudio.com',
-    day_rate: '₹22,000',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'team-3',
-    name: 'Marcus Brody',
-    role: 'FPV & Aerial Drone Pilot',
-    type: 'Freelancer',
-    phone: '+91 98450 11223',
-    is_phone_visible: false,
-    email: 'marcus.drone@freelance.io',
-    day_rate: '₹18,000',
-    created_at: new Date().toISOString(),
-  },
-];
+const INITIAL_MEMBERS: TeamMember[] = []; // cleared mock data;
 
 export default function TeamPage() {
   const { symbol } = useCurrency();
@@ -79,7 +45,7 @@ export default function TeamPage() {
   // Load from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(TEAM_STORAGE_KEY);
+      const saved = null /* localStorage.getItem(TEAM_STORAGE_KEY) */;
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {

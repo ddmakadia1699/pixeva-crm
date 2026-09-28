@@ -44,7 +44,7 @@ export default function EnquiriesPage() {
   const autoCreateProjectFromEnquiry = (enq: Enquiry) => {
     try {
       if (typeof window === 'undefined') return;
-      const rawProjects = localStorage.getItem('pixeva_projects');
+      const rawProjects = null /* localStorage.getItem('pixeva_projects') */;
       let projects = rawProjects ? JSON.parse(rawProjects) : [];
       
       const enqEventName = enq.event_name || `${enq.name}'s Event`;
@@ -138,7 +138,7 @@ export default function EnquiriesPage() {
 
       // Local storage fallback if offline
       try {
-        const saved = localStorage.getItem(ENQUIRIES_STORAGE_KEY);
+        const saved = null /* localStorage.getItem(ENQUIRIES_STORAGE_KEY) */;
         if (saved) {
           const parsed: Enquiry[] = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {

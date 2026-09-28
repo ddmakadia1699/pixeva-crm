@@ -104,7 +104,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
   // Load configuration from localStorage
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(LANDING_STORAGE_KEY);
+      const saved = null /* localStorage.getItem(LANDING_STORAGE_KEY) */;
       if (saved) {
         const config = JSON.parse(saved);
         if (config.coverPhoto) setCoverPhoto(config.coverPhoto);
@@ -172,7 +172,7 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
 
     // 1. Immediately save to CRM localStorage
     try {
-      const existingRaw = localStorage.getItem(ENQUIRIES_STORAGE_KEY);
+      const existingRaw = null /* localStorage.getItem(ENQUIRIES_STORAGE_KEY) */;
       let existingList = [];
       if (existingRaw) {
         existingList = JSON.parse(existingRaw);

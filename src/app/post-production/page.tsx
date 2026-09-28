@@ -38,73 +38,7 @@ export interface Deliverable {
   created_at: string;
 }
 
-const INITIAL_DELIVERABLES: Deliverable[] = [
-  {
-    id: 'del-1',
-    project_name: 'Bride & Groom (Demo)',
-    project_type: 'Wedding',
-    shoot_date: 'Shoot: 31 Dec 2026',
-    specs_title: 'Traditional Photos',
-    specs_subtitle: 'Unlimited • Unedited',
-    assigned_to: null,
-    status: 'Not Started',
-    gallery: null,
-    client_access: '—',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'del-2',
-    project_name: 'Bride & Groom (Demo)',
-    project_type: 'Wedding',
-    shoot_date: 'Shoot: 31 Dec 2026',
-    specs_title: 'Candid Photos',
-    specs_subtitle: '150 • Edited',
-    assigned_to: null,
-    status: 'Not Started',
-    gallery: null,
-    client_access: '—',
-    created_at: new Date(Date.now() - 1000).toISOString(),
-  },
-  {
-    id: 'del-3',
-    project_name: 'Bride & Groom (Demo)',
-    project_type: 'Wedding',
-    shoot_date: 'Shoot: 31 Dec 2026',
-    specs_title: 'Highlight Video',
-    specs_subtitle: '4 mins',
-    assigned_to: null,
-    status: 'Not Started',
-    gallery: null,
-    client_access: '—',
-    created_at: new Date(Date.now() - 2000).toISOString(),
-  },
-  {
-    id: 'del-4',
-    project_name: 'Bride & Groom (Demo)',
-    project_type: 'Wedding',
-    shoot_date: 'Shoot: 31 Dec 2026',
-    specs_title: 'Documentation Video',
-    specs_subtitle: 'No Limit',
-    assigned_to: null,
-    status: 'Not Started',
-    gallery: null,
-    client_access: '—',
-    created_at: new Date(Date.now() - 3000).toISOString(),
-  },
-  {
-    id: 'del-5',
-    project_name: 'Bride & Groom (Demo)',
-    project_type: 'Wedding',
-    shoot_date: 'Shoot: 31 Dec 2026',
-    specs_title: 'Reel',
-    specs_subtitle: '30 seconds',
-    assigned_to: null,
-    status: 'Not Started',
-    gallery: null,
-    client_access: '—',
-    created_at: new Date(Date.now() - 4000).toISOString(),
-  },
-];
+const INITIAL_DELIVERABLES: Deliverable[] = []; // cleared mock data;
 
 const POST_PROD_STORAGE_KEY = 'pixeva_post_prod_deliverables';
 
@@ -114,7 +48,7 @@ export default function PostProductionPage() {
   // Load from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(POST_PROD_STORAGE_KEY);
+      const saved = null /* localStorage.getItem(POST_PROD_STORAGE_KEY) */;
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {

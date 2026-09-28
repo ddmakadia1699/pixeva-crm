@@ -63,111 +63,7 @@ export interface ExtendedProject extends Project {
   deliverables?: ProjectDeliverable[];
 }
 
-const INITIAL_PROJECTS: ExtendedProject[] = [
-  {
-    id: 'proj-1',
-    name: "Priya & Rohan's Royal Destination Wedding",
-    type: 'Wedding',
-    client: 'Priya & Rohan Sharma',
-    client_phone: '919876543211',
-    first_event: '20 Nov 2026',
-    venue: 'Taj Lake Palace, Udaipur',
-    call_time: '07:30 AM',
-    status: 'Active',
-    completeness: 'In Progress (85%)',
-    contract: 'Accepted',
-    total_amount: 3500,
-    paid_amount: 3000,
-    payment_status: 'Partial',
-    assigned_crew: [
-      { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '919876543219' },
-      { id: 'c2', name: 'Rahul Verma', role: 'Cinematographer', initials: 'RV', phone: '919876543219' },
-      { id: 'c3', name: 'Vikram Patel', role: 'Drone Pilot', initials: 'VP', phone: '919876543219' },
-    ],
-    deliverables: [
-      { id: 'd1', title: '4K Cinematic Master Film (25 Mins)', completed: true },
-      { id: 'd2', title: 'Instagram 60-Sec Highlight Teaser', completed: true },
-      { id: 'd3', title: 'Canvera Hardcover Album (40 Sheets)', completed: false },
-      { id: 'd4', title: 'Full Color-Graded Hi-Res Photo Gallery', completed: true },
-    ],
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'proj-2',
-    name: 'Vance Corporate Annual Keynote & Gala',
-    type: 'Corporate',
-    client: 'Eleanor Vance',
-    client_phone: '919876543212',
-    first_event: '15 Nov 2026',
-    venue: 'Grand Hyatt Convention Center',
-    call_time: '08:00 AM',
-    status: 'Active',
-    completeness: 'In Progress (85%)',
-    contract: 'Accepted',
-    total_amount: 2800,
-    paid_amount: 2800,
-    payment_status: 'Paid',
-    assigned_crew: [
-      { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '919876543219' },
-      { id: 'c4', name: 'Sneha Joshi', role: 'Lead Editor', initials: 'SJ', phone: '919876543219' },
-    ],
-    deliverables: [
-      { id: 'd1', title: 'Keynote Speaker 4K Live Stream Recording', completed: true },
-      { id: 'd2', title: 'Executive Headshots (50 Staff)', completed: true },
-      { id: 'd3', title: 'Same-Day Press Highlight Reel', completed: true },
-    ],
-    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-  },
-  {
-    id: 'proj-3',
-    name: 'BioTech Global Healthcare Summit 2026',
-    type: 'Corporate',
-    client: 'Dr. Alistair Thorne',
-    client_phone: '919876543213',
-    first_event: '20 Oct 2026',
-    venue: 'Marina Expo Center, Hall 4',
-    call_time: '09:00 AM',
-    status: 'Active',
-    completeness: 'In Progress (60%)',
-    contract: 'Accepted',
-    total_amount: 4200,
-    paid_amount: 2100,
-    payment_status: 'Partial',
-    assigned_crew: [
-      { id: 'c2', name: 'Rahul Verma', role: 'Cinematographer', initials: 'RV', phone: '919876543219' },
-      { id: 'c3', name: 'Vikram Patel', role: 'Drone Pilot', initials: 'VP', phone: '919876543219' },
-    ],
-    deliverables: [
-      { id: 'd1', title: 'Product Launch 4K Multi-Cam Coverage', completed: true },
-      { id: 'd2', title: 'Panel Discussions Audio & Video Master', completed: false },
-      { id: 'd3', title: 'Social Media Promo Clips (x5)', completed: false },
-    ],
-    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
-  },
-  {
-    id: 'proj-4',
-    name: 'Heritage Museum Charity Gala & Auction',
-    type: 'Private Event',
-    client: 'Marcus Brody',
-    first_event: '18 Dec 2026',
-    venue: 'Royal Heritage Hall',
-    call_time: '06:00 PM',
-    status: 'Archived',
-    completeness: 'Complete',
-    contract: 'Accepted',
-    total_amount: 1950,
-    paid_amount: 1950,
-    payment_status: 'Paid',
-    assigned_crew: [
-      { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '919876543219' },
-    ],
-    deliverables: [
-      { id: 'd1', title: 'Auction Gala Photo Documentation', completed: true },
-      { id: 'd2', title: 'Donor Appreciation Digital Lookbook', completed: true },
-    ],
-    created_at: new Date(Date.now() - 86400000 * 10).toISOString(),
-  },
-];
+const INITIAL_PROJECTS: ExtendedProject[] = []; // cleared mock data;
 
 const PROJECT_COVERS: Record<string, string> = {
   Wedding: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
@@ -251,21 +147,7 @@ export default function ProjectsPage() {
           return;
         }
       } catch (err) {
-        console.warn('API Gateway project sync notice, falling back to local cache:', err);
-      }
-
-      try {
-        const saved = localStorage.getItem('pixeva_projects');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setProjects(parsed);
-          }
-        } else {
-          
-        }
-      } catch (e) {
-        console.error('Error reading pixeva_projects from localStorage', e);
+        console.warn('API Gateway project sync notice:', err);
       } finally {
         setIsLoaded(true);
       }

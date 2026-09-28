@@ -72,36 +72,11 @@ interface StudioPackageItem {
   price?: number;
 }
 
-const INITIAL_CREW_ROLES: CrewRoleItem[] = [
-  { id: '1', name: 'Traditional Photographer', defaultRate: 8000, active: true },
-  { id: '2', name: 'Traditional Videographer', defaultRate: 10000, active: true },
-  { id: '3', name: 'Candid Photographer', defaultRate: 15000, active: true },
-  { id: '4', name: 'Cinematic Cinematographer', defaultRate: 18000, active: true },
-  { id: '5', name: 'Drone Operator', defaultRate: 12000, active: true },
-  { id: '6', name: 'Assistant / Lightman', defaultRate: 3000, active: true },
-  { id: '7', name: 'Sound Engineer', defaultRate: 6000, active: true },
-  { id: '8', name: 'Same-day Editor', defaultRate: 14000, active: true }
-];
+const INITIAL_CREW_ROLES: CrewRoleItem[] = []; // cleared mock data;
 
-const INITIAL_OTHER_SERVICES: OtherServiceItem[] = [
-  { id: '1', name: 'Photo Booth Setup with Instant Prints', price: 25000, active: true },
-  { id: '2', name: 'LED Screen Display (8x12 ft)', price: 35000, active: true },
-  { id: '3', name: 'Live YouTube / Web Streaming', price: 20000, active: true },
-  { id: '4', name: 'Pre-Wedding Teaser Video', price: 30000, active: true },
-  { id: '5', name: 'Crane / Jib Camera Setup', price: 18000, active: true },
-  { id: '6', name: 'Spotting Light Setup', price: 8000, active: true },
-  { id: '7', name: 'Canvera Flush Mount Photo Album Printing', price: 15000, active: true }
-];
+const INITIAL_OTHER_SERVICES: OtherServiceItem[] = []; // cleared mock data;
 
-const INITIAL_DELIVERABLES: DeliverableItem[] = [
-  { id: '1', name: 'Traditional Video Full HD (Extended Cut)', estimatedDays: 45, format: 'Full HD MP4', active: true },
-  { id: '2', name: 'Cinematic Teaser (3-5 Minutes 4K)', estimatedDays: 21, format: '4K MP4 Video', active: true },
-  { id: '3', name: 'Cinematic Feature Film (20-30 Minutes 4K)', estimatedDays: 45, format: '4K Master Cut', active: true },
-  { id: '4', name: 'All Edited High-Res Photos (Google Drive / Hard Drive)', estimatedDays: 14, format: 'High-Res JPEG', active: true },
-  { id: '5', name: 'Raw Unedited Video & Photo Dump', estimatedDays: 7, format: 'RAW Files', active: true },
-  { id: '6', name: 'Premium Canvera Photo Album (40 Pages)', estimatedDays: 30, format: 'Flush Mount Hardcover', active: true },
-  { id: '7', name: 'Instagram Reels / Shorts (60 Seconds Vertical)', estimatedDays: 10, format: 'Vertical 9:16 Video', active: true }
-];
+const INITIAL_DELIVERABLES: DeliverableItem[] = []; // cleared mock data;
 
 const ALL_OTHER_SERVICES_PRESETS = [
   'LED Screen',
@@ -115,32 +90,7 @@ const ALL_OTHER_SERVICES_PRESETS = [
   'Canvera Album',
 ];
 
-const INITIAL_STUDIO_PACKAGES: StudioPackageItem[] = [
-  {
-    id: 'pkg-1',
-    name: 'Royal Grand Wedding Package',
-    deliverables: [
-      { id: 'del-1', name: 'Traditional Video Full HD (Extended Cut)' },
-      { id: 'del-2', name: 'Cinematic Teaser (3-5 Minutes 4K)' },
-      { id: 'del-3', name: 'Cinematic Feature Film (20-30 Minutes 4K)' },
-      { id: 'del-4', name: 'All Edited High-Res Photos' },
-      { id: 'del-6', name: 'Premium Canvera Photo Album (40 Pages)' },
-    ],
-    otherServices: ['LED Screen', 'Live Streaming', 'Drone Setup'],
-    price: 150000,
-  },
-  {
-    id: 'pkg-2',
-    name: 'Pre-Wedding & Engagement Special',
-    deliverables: [
-      { id: 'del-2', name: 'Cinematic Teaser (3-5 Minutes 4K)' },
-      { id: 'del-4', name: 'All Edited High-Res Photos' },
-      { id: 'del-7', name: 'Instagram Reels / Shorts (60 Seconds Vertical)' },
-    ],
-    otherServices: ['Photo Booth', 'Film Camera'],
-    price: 85000,
-  }
-];
+const INITIAL_STUDIO_PACKAGES: StudioPackageItem[] = []; // cleared mock data;
 
 interface PaymentSplitItem {
   id: string;

@@ -140,13 +140,7 @@ interface MessageLog {
   status: 'Delivered' | 'Sent' | 'Failed';
 }
 
-const INITIAL_LOGS: MessageLog[] = [
-  { id: '1', time: '10 mins ago', trigger: 'New enquiry alert (to you)', channel: 'WhatsApp', recipient: '+91 98200 00000 (Studio)', status: 'Delivered' },
-  { id: '2', time: '1 hour ago', trigger: 'Enquiry acknowledgment', channel: 'WhatsApp', recipient: 'Rahul Sharma (+91 98765 43210)', status: 'Delivered' },
-  { id: '3', time: '3 hours ago', trigger: 'Deliverable ready', channel: 'WhatsApp', recipient: 'Priya & Vikram (+91 97111 22233)', status: 'Delivered' },
-  { id: '4', time: 'Yesterday 18:45', trigger: 'Payment received', channel: 'Email', recipient: 'ananya@example.com', status: 'Delivered' },
-  { id: '5', time: 'Yesterday 14:20', trigger: 'Event assignment', channel: 'WhatsApp', recipient: 'Amit Photographer (+91 99887 76655)', status: 'Delivered' },
-];
+const INITIAL_LOGS: MessageLog[] = []; // cleared mock data;
 
 export default function PixevaCRMAIPage() {
   const [activeTab, setActiveTab] = useState<'whatsapp' | 'email' | 'log'>('whatsapp');
