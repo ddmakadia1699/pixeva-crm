@@ -49,80 +49,9 @@ interface UpcomingShoot {
   category: string;
 }
 
-const UPCOMING_SHOOTS: UpcomingShoot[] = [
-  {
-    id: 'shoot-1',
-    title: 'Vance Corporate Annual Gala',
-    date: '15 Nov 2026',
-    daysAway: 'In 6 Days',
-    location: 'Udaipur Lake Palace',
-    crewCount: 8,
-    gearStatus: '100% Prepared',
-    stage: 'Final Prep',
-    category: 'Corporate Film'
-  },
-  {
-    id: 'shoot-2',
-    title: 'Kapur & Mehta Luxury Wedding',
-    date: '28 Nov 2026',
-    daysAway: 'In 19 Days',
-    location: 'Taj Falaknuma, Hyderabad',
-    crewCount: 6,
-    gearStatus: 'Equipment Staged',
-    stage: 'Confirmed',
-    category: 'Wedding Cinema'
-  },
-  {
-    id: 'shoot-3',
-    title: 'Aura Tech Commercial Launch',
-    date: '04 Dec 2026',
-    daysAway: 'In 25 Days',
-    location: 'Studio 4, Mumbai',
-    crewCount: 4,
-    gearStatus: 'Checklist Ready',
-    stage: 'Pre-Production',
-    category: 'Brand Commercial'
-  },
-];
+const UPCOMING_SHOOTS: UpcomingShoot[] = [];
 
-const RECENT_LEADS: RecentLead[] = [
-  {
-    id: 'enq-1',
-    name: 'Eleanor Vance',
-    email: 'eleanor.vance@vancecorp.com',
-    eventType: 'Corporate Gala',
-    eventDate: '15 Nov 2026',
-    budget: 980000,
-    status: 'booked'
-  },
-  {
-    id: 'enq-2',
-    name: 'Rohan & Ananya Kapoor',
-    email: 'rohan.kapoor@gmail.com',
-    eventType: 'Destination Wedding',
-    eventDate: '28 Nov 2026',
-    budget: 1450000,
-    status: 'proposal'
-  },
-  {
-    id: 'enq-3',
-    name: 'Zara Patel',
-    email: 'zara@auramedia.co',
-    eventType: 'Fashion Editorial',
-    eventDate: '10 Dec 2026',
-    budget: 350000,
-    status: 'new'
-  },
-  {
-    id: 'enq-4',
-    name: 'Siddharth Roy',
-    email: 'sid.roy@gmail.com',
-    eventType: 'Pre-Wedding Film',
-    eventDate: '18 Dec 2026',
-    budget: 280000,
-    status: 'qualified'
-  }
-];
+const RECENT_LEADS: RecentLead[] = [];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -370,66 +299,72 @@ export default function DashboardPage() {
 
             {/* Production List Items (All Clickable Cards) */}
             <div className="space-y-3">
-              {UPCOMING_SHOOTS.map((shoot) => (
-                <Link
-                  key={shoot.id}
-                  href="/projects"
-                  className="group p-4 rounded-xl bg-slate-50/70 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-white dark:hover:bg-slate-900 shadow-2xs hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer block"
-                >
-                  <div className="flex items-start space-x-3.5 min-w-0">
-                    {/* Date Block */}
-                    <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 flex flex-col items-center justify-center shrink-0 shadow-2xs group-hover:border-blue-300 dark:group-hover:border-blue-600 transition-colors">
-                      <span className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 leading-none">
-                        {shoot.date.split(' ')[1]}
-                      </span>
-                      <span className="text-base font-black text-slate-900 dark:text-white leading-tight">
-                        {shoot.date.split(' ')[0]}
-                      </span>
-                    </div>
-
-                    {/* Shoot Details */}
-                    <div className="space-y-1 min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
-                          {shoot.title}
-                        </h3>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-500/20 font-semibold shrink-0">
-                          {shoot.daysAway}
+              {UPCOMING_SHOOTS.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+                  No upcoming shoots scheduled.
+                </div>
+              ) : (
+                UPCOMING_SHOOTS.map((shoot) => (
+                  <Link
+                    key={shoot.id}
+                    href="/projects"
+                    className="group p-4 rounded-xl bg-slate-50/70 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-white dark:hover:bg-slate-900 shadow-2xs hover:shadow-md transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer block"
+                  >
+                    <div className="flex items-start space-x-3.5 min-w-0">
+                      {/* Date Block */}
+                      <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 flex flex-col items-center justify-center shrink-0 shadow-2xs group-hover:border-blue-300 dark:group-hover:border-blue-600 transition-colors">
+                        <span className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 leading-none">
+                          {shoot.date.split(' ')[1]}
+                        </span>
+                        <span className="text-base font-black text-slate-900 dark:text-white leading-tight">
+                          {shoot.date.split(' ')[0]}
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-                        <span className="flex items-center space-x-1">
-                          <MapPin className="w-3 h-3 text-slate-400" />
-                          <span className="truncate">{shoot.location}</span>
-                        </span>
-                        <span>•</span>
-                        <span className="flex items-center space-x-1">
-                          <Users className="w-3 h-3 text-slate-400" />
-                          <span>{shoot.crewCount} Specialists</span>
-                        </span>
-                        <span>•</span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                          {shoot.gearStatus}
-                        </span>
+                      {/* Shoot Details */}
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center space-x-2">
+                          <h3 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                            {shoot.title}
+                          </h3>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-500/20 font-semibold shrink-0">
+                            {shoot.daysAway}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                          <span className="flex items-center space-x-1">
+                            <MapPin className="w-3 h-3 text-slate-400" />
+                            <span className="truncate">{shoot.location}</span>
+                          </span>
+                          <span>•</span>
+                          <span className="flex items-center space-x-1">
+                            <Users className="w-3 h-3 text-slate-400" />
+                            <span>{shoot.crewCount} Specialists</span>
+                          </span>
+                          <span>•</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                            {shoot.gearStatus}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Stage Badge & Action */}
-                  <div className="flex items-center space-x-3 sm:self-auto self-end">
-                    <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-700 dark:text-slate-300">
-                      {shoot.stage}
-                    </span>
-                    <span
-                      className="p-1.5 rounded-lg text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-slate-800 transition-colors"
-                      title="View Details"
-                    >
-                      <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                    </span>
-                  </div>
-                </Link>
-              ))}
+                    {/* Stage Badge & Action */}
+                    <div className="flex items-center space-x-3 sm:self-auto self-end">
+                      <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 text-slate-700 dark:text-slate-300">
+                        {shoot.stage}
+                      </span>
+                      <span
+                        className="p-1.5 rounded-lg text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 dark:group-hover:bg-slate-800 transition-colors"
+                        title="View Details"
+                      >
+                        <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                      </span>
+                    </div>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
 
@@ -476,60 +411,68 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                  {RECENT_LEADS.map((lead) => {
-                    const statusConfig = {
-                      new: { label: 'New Lead', bg: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-blue-200/50 dark:border-blue-500/20' },
-                      proposal: { label: 'Proposal Sent', bg: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400 border-indigo-200/50 dark:border-indigo-500/20' },
-                      booked: { label: 'Booked', bg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-500/20' },
-                      qualified: { label: 'Qualified', bg: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200/50 dark:border-amber-500/20' }
-                    }[lead.status];
+                  {RECENT_LEADS.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+                        No recent leads found.
+                      </td>
+                    </tr>
+                  ) : (
+                    RECENT_LEADS.map((lead) => {
+                      const statusConfig = {
+                        new: { label: 'New Lead', bg: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-blue-200/50 dark:border-blue-500/20' },
+                        proposal: { label: 'Proposal Sent', bg: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400 border-indigo-200/50 dark:border-indigo-500/20' },
+                        booked: { label: 'Booked', bg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-500/20' },
+                        qualified: { label: 'Qualified', bg: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-200/50 dark:border-amber-500/20' }
+                      }[lead.status];
 
-                    return (
-                      <tr 
-                        key={lead.id} 
-                        onClick={() => router.push('/enquiries')}
-                        className="group hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
-                      >
-                        <td className="py-3 pr-3">
-                          <div className="flex items-center space-x-2.5">
-                            <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold flex items-center justify-center text-[11px] shrink-0 border border-slate-200 dark:border-slate-700 group-hover:border-indigo-300 dark:group-hover:border-indigo-500 transition-colors">
-                              {lead.name.charAt(0)}
+                      return (
+                        <tr 
+                          key={lead.id} 
+                          onClick={() => router.push('/enquiries')}
+                          className="group hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                        >
+                          <td className="py-3 pr-3">
+                            <div className="flex items-center space-x-2.5">
+                              <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold flex items-center justify-center text-[11px] shrink-0 border border-slate-200 dark:border-slate-700 group-hover:border-indigo-300 dark:group-hover:border-indigo-500 transition-colors">
+                                {lead.name.charAt(0)}
+                              </div>
+                              <div className="truncate">
+                                <span className="font-bold text-slate-900 dark:text-white block truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                  {lead.name}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-mono truncate block">
+                                  {lead.email}
+                                </span>
+                              </div>
                             </div>
-                            <div className="truncate">
-                              <span className="font-bold text-slate-900 dark:text-white block truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                {lead.name}
-                              </span>
-                              <span className="text-[10px] text-slate-400 font-mono truncate block">
-                                {lead.email}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3 pr-3 text-slate-600 dark:text-slate-300 font-medium">
-                          {lead.eventType}
-                        </td>
-                        <td className="py-3 pr-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                          {lead.eventDate}
-                        </td>
-                        <td className="py-3 pr-3 font-mono font-bold text-slate-900 dark:text-white">
-                          {formatCurrency(lead.budget)}
-                        </td>
-                        <td className="py-3 pr-3">
-                          <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-md border ${statusConfig.bg}`}>
-                            {statusConfig.label}
-                          </span>
-                        </td>
-                        <td className="py-3 text-right">
-                          <span
-                            className="text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:underline inline-flex items-center space-x-1"
-                          >
-                            <span>View</span>
-                            <span className="group-hover:translate-x-0.5 transition-transform">→</span>
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td className="py-3 pr-3 text-slate-600 dark:text-slate-300 font-medium">
+                            {lead.eventType}
+                          </td>
+                          <td className="py-3 pr-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                            {lead.eventDate}
+                          </td>
+                          <td className="py-3 pr-3 font-mono font-bold text-slate-900 dark:text-white">
+                            {formatCurrency(lead.budget)}
+                          </td>
+                          <td className="py-3 pr-3">
+                            <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-md border ${statusConfig.bg}`}>
+                              {statusConfig.label}
+                            </span>
+                          </td>
+                          <td className="py-3 text-right">
+                            <span
+                              className="text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:underline inline-flex items-center space-x-1"
+                            >
+                              <span>View</span>
+                              <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
