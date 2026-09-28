@@ -212,7 +212,7 @@ function getCountdownText(eventDateStr: string): { text: string; isImminent: boo
 }
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<ExtendedProject[]>(INITIAL_PROJECTS);
+  const [projects, setProjects] = useState<ExtendedProject[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'cards' | 'kanban'>('table');
 
@@ -262,7 +262,7 @@ export default function ProjectsPage() {
             setProjects(parsed);
           }
         } else {
-          localStorage.setItem('pixeva_projects', JSON.stringify(INITIAL_PROJECTS));
+          
         }
       } catch (e) {
         console.error('Error reading pixeva_projects from localStorage', e);

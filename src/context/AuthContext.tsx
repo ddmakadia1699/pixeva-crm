@@ -112,6 +112,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const res = await supabase.auth.signOut();
     setUser(null);
     setSession(null);
+    
+    // Clear all local caches
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('pixeva_enquiries');
+      localStorage.removeItem('pixeva_projects');
+      localStorage.removeItem('pixeva_deleted_enquiries');
+      localStorage.removeItem('pixeva_active_account_id');
+    }
+    
     window.location.href = '/login';
     return res;
   };

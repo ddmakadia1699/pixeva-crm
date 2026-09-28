@@ -117,8 +117,8 @@ exports.handler = async (event) => {
           if (error) throw error;
           resultData = data || [];
         } catch (dbErr) {
-          console.warn('[contracts-service] Supabase query notice, serving tenant mock set:', dbErr.message);
-          resultData = SEED_CONTRACTS.filter((c) => c.account_id === accountId);
+          console.error('[contracts-service] Supabase query error:', dbErr.message);
+          resultData = [];
         }
 
         return {

@@ -181,8 +181,8 @@ exports.handler = async (event) => {
           if (error) throw error;
           resultData = data || [];
         } catch (dbErr) {
-          console.warn('[bookings-service] Supabase query notice, serving tenant mock set:', dbErr.message);
-          resultData = SEED_PROJECTS.filter((p) => p.account_id === accountId);
+          console.error('[bookings-service] Supabase query error:', dbErr.message);
+          resultData = [];
         }
 
         return {

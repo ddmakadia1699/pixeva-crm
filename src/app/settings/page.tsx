@@ -219,9 +219,9 @@ export default function SettingsPage() {
   }, []);
 
   // Services State
-  const [crewRoles, setCrewRoles] = useState<CrewRoleItem[]>(INITIAL_CREW_ROLES);
-  const [otherServices, setOtherServices] = useState<OtherServiceItem[]>(INITIAL_OTHER_SERVICES);
-  const [deliverables, setDeliverables] = useState<DeliverableItem[]>(INITIAL_DELIVERABLES);
+  const [crewRoles, setCrewRoles] = useState<CrewRoleItem[]>([]);
+  const [otherServices, setOtherServices] = useState<OtherServiceItem[]>([]);
+  const [deliverables, setDeliverables] = useState<DeliverableItem[]>([]);
   const [packages, setPackages] = useState<StudioPackageItem[]>([]);
 
   useEffect(() => {
@@ -229,7 +229,7 @@ export default function SettingsPage() {
     if (saved) {
       setPackages(JSON.parse(saved));
     } else {
-      setPackages(INITIAL_STUDIO_PACKAGES);
+      setPackages([]);
     }
   }, []);
 

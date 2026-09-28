@@ -7,7 +7,7 @@ import LandingPageTab from '@/components/enquiries/LandingPageTab';
 import AnalyticsTab from '@/components/enquiries/AnalyticsTab';
 import IntegrationsTab from '@/components/enquiries/IntegrationsTab';
 import FeedbackModal from '@/components/enquiries/FeedbackModal';
-import { MOCK_ENQUIRIES } from '@/lib/supabase/client';
+
 import { Enquiry, EnquiryStatus } from '@/lib/supabase/types';
 import { apiClient } from '@/lib/api/apiClient';
 
@@ -107,7 +107,7 @@ export default function EnquiriesPage() {
     async function loadFromCloud() {
       try {
         const cloudData = await apiClient.enquiries.list();
-        if (Array.isArray(cloudData) && cloudData.length > 0) {
+        if (Array.isArray(cloudData)) {
           const mapped: Enquiry[] = cloudData
             .map((lead: any) => ({
               id: lead.id,
@@ -125,14 +125,12 @@ export default function EnquiriesPage() {
             }))
             .filter((item: Enquiry) => !deletedSet.has(item.id));
 
-          if (mapped.length > 0) {
-            setEnquiries(mapped);
-            try {
-              localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(mapped));
-            } catch { }
-            setIsHydrated(true);
-            return;
-          }
+          setEnquiries(mapped);
+          try {
+            localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(mapped));
+          } catch { }
+          setIsHydrated(true);
+          return;
         }
       } catch (e) {
         console.warn('API Gateway sync notice, checking local cache:', e);

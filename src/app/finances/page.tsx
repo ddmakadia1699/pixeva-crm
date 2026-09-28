@@ -96,8 +96,8 @@ const TRANSACTIONS_STORAGE_KEY = 'pixeva_transactions';
 
 export default function FinancesPage() {
   const { formatCurrency, symbol } = useCurrency();
-  const [projectFinances, setProjectFinances] = useState<ProjectFinanceItem[]>(INITIAL_PROJECT_FINANCES);
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [projectFinances, setProjectFinances] = useState<ProjectFinanceItem[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   // Load from API Gateway with account scoping
   useEffect(() => {

@@ -165,7 +165,7 @@ const INITIAL_DATA_ENTRIES: ShotDataEntry[] = [
 const STORAGE_OPTIONS = ['SSD 1', 'SSD 2', 'SSD 3', 'NAS Vault', 'Cloud Server', 'Card Box A', 'Card Box B'];
 
 export default function DataPage() {
-  const [entries, setEntries] = useState<ShotDataEntry[]>(INITIAL_DATA_ENTRIES);
+  const [entries, setEntries] = useState<ShotDataEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);

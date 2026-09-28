@@ -51,64 +51,7 @@ function sanitizeStatus(statusStr) {
   return 'new';
 }
 
-const SEED_ENQUIRIES = [
-  {
-    id: 'enq-101',
-    account_id: 'user_3I2lBpsfTZcxw4L1GpKAMPCc45a',
-    first_name: 'Eleanor',
-    last_name: 'Vance',
-    email: 'eleanor@vance-events.com',
-    phone: '+1 (555) 432-8901',
-    company: 'Vance Corporate Annual Gala',
-    status: 'new',
-    estimated_value: 15000,
-    source: 'Landing Page',
-    notes: 'Looking for full team coverage + instant QR selfie tent card system.',
-    created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
-  },
-  {
-    id: 'enq-102',
-    account_id: 'user_3I2lBpsfTZcxw4L1GpKAMPCc45a',
-    first_name: 'Julian &',
-    last_name: 'Sophia',
-    email: 'sophia@designs.co',
-    phone: '+1 (555) 901-2345',
-    company: 'Julian & Sophia Luxury Destination Wedding',
-    status: 'contacted',
-    estimated_value: 28000,
-    source: 'Instagram',
-    notes: '3-day wedding package inquiry with drone coverage & pre-wedding shoot.',
-    created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
-  },
-  {
-    id: 'enq-103',
-    account_id: 'user_3I2lBpsfTZcxw4L1GpKAMPCc45a',
-    first_name: 'Dr. Alistair',
-    last_name: 'Thorne',
-    email: 'athorne@biotech.org',
-    phone: '+1 (555) 312-6789',
-    company: 'BioTech Global Summit 2026',
-    status: 'qualified',
-    estimated_value: 18500,
-    source: 'Website',
-    notes: 'Keynote & breakout room photo + video team needed.',
-    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-  },
-  {
-    id: 'enq-104',
-    account_id: 'user_3I2lBpsfTZcxw4L1GpKAMPCc45a',
-    first_name: 'Maya',
-    last_name: 'Lin',
-    email: 'maya.lin@fashionweek.io',
-    phone: '+1 (555) 789-0123',
-    company: 'Autumn Haute Couture Runway',
-    status: 'proposal',
-    estimated_value: 9500,
-    source: 'Referral',
-    notes: 'Fashion runway highlights & backstage portrait studio setup.',
-    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
-  },
-];
+
 
 exports.handler = async (event) => {
   const startTime = Date.now();
@@ -162,8 +105,8 @@ exports.handler = async (event) => {
           if (error) throw error;
           resultData = data || [];
         } catch (dbErr) {
-          console.warn('[enquiries-service] Supabase query notice, serving tenant mock set:', dbErr.message);
-          resultData = SEED_ENQUIRIES.filter((e) => e.account_id === accountId);
+          console.error('[enquiries-service] Supabase query error:', dbErr.message);
+          resultData = [];
         }
 
         return {

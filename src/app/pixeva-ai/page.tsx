@@ -188,7 +188,7 @@ export default function PixevaCRMAIPage() {
   const [studioBrandName, setStudioBrandName] = useState('Pixeva Studio');
 
   // Logs state
-  const [logs, setLogs] = useState<MessageLog[]>(INITIAL_LOGS);
+  const [logs, setLogs] = useState<MessageLog[]>([]);
   const [logFilter, setLogFilter] = useState('');
 
   const handleToggle = (id: string) => {

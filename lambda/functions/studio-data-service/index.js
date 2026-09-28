@@ -228,7 +228,7 @@ exports.handler = async (event) => {
           if (error) throw error;
           items = data || [];
         } catch (e) {
-          items = SEED_GALLERIES.filter((g) => g.account_id === accountId);
+          items = [];
         }
         return {
           statusCode: 200,
@@ -275,7 +275,7 @@ exports.handler = async (event) => {
           if (error) throw error;
           items = data || [];
         } catch (e) {
-          items = SEED_REQUESTS.filter((r) => r.account_id === accountId);
+          items = [];
         }
         return {
           statusCode: 200,
@@ -327,7 +327,7 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           success: true,
           accountId,
-          data: SEED_FINANCES,
+          data: { totalRevenue: 0, receivedRevenue: 0, pendingRevenue: 0, projectFinances: [] },
           executionTimeMs: Date.now() - startTime,
         }),
       };
@@ -335,8 +335,8 @@ exports.handler = async (event) => {
 
     // 4. DASHBOARD AGGREGATION METRICS
     if (resource === 'dashboard') {
-      let enquiriesCount = { new: 3, followUp: 4, booked: 2, total: 9 };
-      let activeProjects = 3;
+      let enquiriesCount = { new: 0, followUp: 0, booked: 0, total: 0 };
+      let activeProjects = 0;
 
       try {
         const { data: leads } = await supabase.from('leads').select('status').eq('account_id', accountId);

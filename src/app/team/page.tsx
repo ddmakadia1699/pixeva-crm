@@ -74,7 +74,7 @@ const INITIAL_MEMBERS: TeamMember[] = [
 
 export default function TeamPage() {
   const { symbol } = useCurrency();
-  const [members, setMembers] = useState<TeamMember[]>(INITIAL_MEMBERS);
+  const [members, setMembers] = useState<TeamMember[]>([]);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -85,10 +85,10 @@ export default function TeamPage() {
         if (Array.isArray(parsed) && parsed.length > 0) {
           setMembers(parsed);
         } else {
-          localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(INITIAL_MEMBERS));
+          
         }
       } else {
-        localStorage.setItem(TEAM_STORAGE_KEY, JSON.stringify(INITIAL_MEMBERS));
+        
       }
     } catch (e) {
       console.error('Error reading team members from localStorage:', e);

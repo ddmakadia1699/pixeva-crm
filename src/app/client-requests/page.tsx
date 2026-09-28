@@ -64,7 +64,7 @@ const INITIAL_REQUESTS: ClientRequestItem[] = [
 import { apiClient } from '@/lib/api/apiClient';
 
 export default function ClientRequestsPage() {
-  const [requests, setRequests] = useState<ClientRequestItem[]>(INITIAL_REQUESTS);
+  const [requests, setRequests] = useState<ClientRequestItem[]>([]);
 
   // Load from API Gateway with account scoping
   useEffect(() => {
