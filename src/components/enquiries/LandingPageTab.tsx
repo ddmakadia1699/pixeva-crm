@@ -14,12 +14,17 @@ import {
   Sparkles
 } from 'lucide-react';
 
+import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext';
+
 const STORAGE_KEY = 'pixeva_landing_page_config';
 
 export default function LandingPageTab() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [origin, setOrigin] = useState('http://localhost:3000');
+  const { accountId } = useAuth();
+  const { currencyCode } = useCurrency();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -28,7 +33,8 @@ export default function LandingPageTab() {
   }, []);
 
   // 1. Dynamic Public link (working locally on localhost:3000 and in production)
-  const publicLink = `${origin}/enquire/user_3I2lBpsfTZcxw4L1GpKAMPCc45a`;
+  // Scoped to the signed-in studio account, and priced in the studio's display currency.
+  const publicLink = `${origin}/enquire/${encodeURIComponent(accountId)}?currency=${currencyCode}`;
 
   // 2. Cover Photo
   const [coverPhoto, setCoverPhoto] = useState<string>('https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1920&q=80');

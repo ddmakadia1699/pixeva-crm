@@ -22,6 +22,9 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Enquiry } from '@/lib/supabase/types';
+import { useAuth } from '@/context/AuthContext';
+import { useCurrency } from '@/context/CurrencyContext';
+import { parseAmount } from '@/lib/utils';
 
 const ENQUIRIES_STORAGE_KEY = 'pixeva_enquiries';
 const INTEGRATIONS_STORAGE_KEY = 'pixeva_integrations_config';
@@ -37,6 +40,12 @@ const DEFAULT_SHEET_ROWS = [
 
 export default function IntegrationsTab() {
   // Google Sheets Integration State
+  const { accountId } = useAuth();
+  const { currencyCode } = useCurrency();
+  const [origin, setOrigin] = useState('');
+  useEffect(() => setOrigin(window.location.origin), []);
+  const enquiryFormUrl = `${origin}/enquire/${encodeURIComponent(accountId)}?currency=${currencyCode}`;
+
   const [isGoogleConnected, setIsGoogleConnected] = useState(true);
   const [sheetUrl, setSheetUrl] = useState('https://docs.google.com/spreadsheets/d/your-crm-leads-sheet-id/edit');
   const [isSyncing, setIsSyncing] = useState(false);
@@ -204,7 +213,7 @@ export default function IntegrationsTab() {
             email: cleanCells[2] || '',
             event_type: cleanCells[3] || 'Wedding',
             venue: cleanCells[4] || 'TBA',
-            budget: cleanCells[5] ? parseInt(cleanCells[5].replace(/[^0-9]/g, ''), 10) : 50000,
+            budget: cleanCells[5] ? parseAmount(cleanCells[5]) : 50000,
             source: cleanCells[6] || 'Website'
           };
         });
@@ -286,7 +295,7 @@ export default function IntegrationsTab() {
   };
 
   const handleCopyWebsiteCode = () => {
-    const embedCode = `<iframe src="http://localhost:3000/enquire/user_3I2lBpsfTZcxw4L1GpKAMPCc45a" width="100%" height="800" frameborder="0"></iframe>`;
+    const embedCode = `<iframe src="${enquiryFormUrl}" width="100%" height="800" frameborder="0"></iframe>`;
     navigator.clipboard.writeText(embedCode);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
@@ -470,7 +479,7 @@ export default function IntegrationsTab() {
                 Embed this responsive iframe on your booking page:
               </p>
               <div className="p-2 rounded bg-slate-900 text-slate-200 font-mono text-[10px] truncate select-all">
-                &lt;iframe src="http://localhost:3000/enquire/user_3I2lBpsfTZcxw4L1GpKAMPCc45a" width="100%" height="800"&gt;&lt;/iframe&gt;
+                &lt;iframe src="{enquiryFormUrl}" width="100%" height="800"&gt;&lt;/iframe&gt;
               </div>
             </div>
           </div>

@@ -1,90 +1,90 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { 
-  Camera, 
-  Sparkles, 
-  Calendar, 
-  MapPin, 
-  Users, 
-  DollarSign, 
-  CheckCircle2, 
-  MessageCircle, 
-  Phone, 
-  Mail, 
-  ShieldCheck, 
-  Clock, 
-  ArrowRight,
-  Calculator,
+import {
+  Camera,
   Film,
-  Video,
+  Plane,
   BookOpen,
+  Heart,
   MonitorPlay,
-  HeartHandshake,
-  Globe,
-  ChevronDown
+  Check,
+  CheckCircle2,
+  MessageCircle,
+  Phone,
+  Mail,
+  MapPin,
+  Users,
+  Clock,
+  Lock,
+  ArrowRight,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { apiClient } from '@/lib/api/apiClient';
+import { useCurrency } from '@/context/CurrencyContext';
+import { roundMoney } from '@/lib/utils';
 
-const ENQUIRIES_STORAGE_KEY = 'pixeva_enquiries';
 const LANDING_STORAGE_KEY = 'pixeva_landing_page_config';
-
-interface CurrencyOption {
-  code: string;
-  symbol: string;
-  name: string;
-  flag: string;
-  rateFromUSD: number; // Conversion rate from base USD (1 USD = rate)
-}
-
-const GLOBAL_CURRENCIES: CurrencyOption[] = [
-  { code: 'USD', symbol: '$', name: 'US Dollar', flag: '🇺🇸', rateFromUSD: 1 },
-  { code: 'INR', symbol: '₹', name: 'Indian Rupee', flag: '🇮🇳', rateFromUSD: 83.5 },
-  { code: 'AED', symbol: 'AED ', name: 'UAE Dirham', flag: '🇦🇪', rateFromUSD: 3.67 },
-  { code: 'GBP', symbol: '£', name: 'British Pound', flag: '🇬🇧', rateFromUSD: 0.79 },
-  { code: 'EUR', symbol: '€', name: 'Euro', flag: '🇪🇺', rateFromUSD: 0.92 },
-  { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar', flag: '🇨🇦', rateFromUSD: 1.36 },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', flag: '🇦🇺', rateFromUSD: 1.52 },
-  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar', flag: '🇸🇬', rateFromUSD: 1.34 },
-];
+const STUDIO_WHATSAPP = '918904832762';
 
 interface ServiceAddon {
   id: string;
   label: string;
-  icon: string;
-  usdPrice: number;
+  icon: LucideIcon;
+  priceInr: number; // Prices are held in INR (the CRM base currency) and converted for display
   selected: boolean;
 }
 
-export default function PublicEnquiryPage({ params }: { params: { id: string } }) {
-  // Default to USD for global audience
-  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyOption>(GLOBAL_CURRENCIES[0]);
+const BASE_PACKAGE_INR = 50000;
 
-  // Landing Page Configuration State
+const EVENT_TYPES: { value: string; label: string }[] = [
+  { value: 'wedding', label: 'Wedding & Celebrations' },
+  { value: 'pre-wedding', label: 'Pre-Wedding / Couple Session' },
+  { value: 'reception', label: 'Reception & Gala' },
+  { value: 'corporate', label: 'Corporate Event' },
+  { value: 'commercial', label: 'Fashion & Commercial' },
+  { value: 'birthday', label: 'Birthday & Private Event' },
+];
+
+const inputClass =
+  'w-full bg-white border border-stone-300 rounded-lg px-3.5 py-2.5 text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 focus:ring-1 focus:ring-stone-900 transition-colors';
+const labelClass = 'text-xs font-medium text-stone-600 block mb-1.5';
+
+export default function PublicEnquiryPage({ params }: { params: { id: string } }) {
+  const studioAccountId = params?.id;
+  const { currencies, currencyCode, formatCurrency } = useCurrency();
+
+  // The studio's share link carries its display currency (?currency=AED); otherwise fall back
+  // to the currency saved in this browser (e.g. the studio previewing its own page).
+  const [linkCurrency, setLinkCurrency] = useState<string | null>(null);
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('currency')?.toUpperCase();
+    if (code && currencies.some((c) => c.code === code)) setLinkCurrency(code);
+  }, [currencies]);
+  const displayCode = linkCurrency || currencyCode;
+  const money = (inr: number) => formatCurrency(inr, displayCode, 'INR', 2);
+
+  // Landing page configuration
   const [coverPhoto, setCoverPhoto] = useState<string>(
     'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1920&q=80'
   );
   const [headline, setHeadline] = useState("Let's capture your story");
-  const [subtitle, setSubtitle] = useState("Fill in your details and our production team will get back to you within 24 hours.");
+  const [subtitle, setSubtitle] = useState('Share a few details and our team will get back to you within 24 hours.');
   const [showLocation, setShowLocation] = useState(true);
   const [showGuests, setShowGuests] = useState(true);
-  const [showBudget, setShowBudget] = useState(true);
   const [showSource, setShowSource] = useState(true);
   const [showCalculator, setShowCalculator] = useState(true);
-  const [basePriceUSD, setBasePriceUSD] = useState(600); // Standard base package
 
-  // Addons for Estimate Calculator (in USD)
   const [addons, setAddons] = useState<ServiceAddon[]>([
-    { id: 'candid', label: 'Candid & Master Photography (Full Day)', icon: '📸', usdPrice: 300, selected: true },
-    { id: 'cinema', label: '4K Cinematic Highlight Film & Teaser Reel', icon: '🎬', usdPrice: 420, selected: true },
-    { id: 'drone', label: 'Licensed Aerial Drone Cinematography', icon: '🚁', usdPrice: 180, selected: true },
-    { id: 'album', label: 'Luxury Hardcover Flush-Mount Album (40 Pages)', icon: '📖', usdPrice: 220, selected: false },
-    { id: 'prewed', label: 'Pre-Wedding / Couple Concept Session', icon: '✨', usdPrice: 360, selected: false },
-    { id: 'led', label: 'Live LED Video Wall Display (8x12 ft)', icon: '🖥️', usdPrice: 420, selected: false },
+    { id: 'candid', label: 'Candid & master photography (full day)', icon: Camera, priceInr: 25000, selected: true },
+    { id: 'cinema', label: '4K cinematic highlight film & teaser', icon: Film, priceInr: 35000, selected: true },
+    { id: 'drone', label: 'Licensed aerial drone coverage', icon: Plane, priceInr: 15000, selected: true },
+    { id: 'album', label: 'Hardcover flush-mount album (40 pages)', icon: BookOpen, priceInr: 18000, selected: false },
+    { id: 'prewed', label: 'Pre-wedding / couple session', icon: Heart, priceInr: 30000, selected: false },
+    { id: 'led', label: 'Live LED video wall (8 × 12 ft)', icon: MonitorPlay, priceInr: 35000, selected: false },
   ]);
 
-  // Form State
+  // Form
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -96,12 +96,11 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
   const [source, setSource] = useState('Website');
   const [notes, setNotes] = useState('');
 
-  // Status
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [submittedLeadId, setSubmittedLeadId] = useState<string>('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [referenceId, setReferenceId] = useState('');
 
-  // Load configuration from localStorage
   useEffect(() => {
     try {
       const saved = null /* localStorage.getItem(LANDING_STORAGE_KEY) */;
@@ -112,7 +111,6 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
         if (config.subtitle) setSubtitle(config.subtitle);
         if (config.showLocation !== undefined) setShowLocation(config.showLocation);
         if (config.showGuests !== undefined) setShowGuests(config.showGuests);
-        if (config.showBudget !== undefined) setShowBudget(config.showBudget);
         if (config.showSource !== undefined) setShowSource(config.showSource);
         if (config.showCalculator !== undefined) setShowCalculator(config.showCalculator);
       }
@@ -121,532 +119,357 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
     }
   }, []);
 
-  // Format amount dynamically according to selected currency
-  const formatMoney = (usdAmount: number) => {
-    const converted = Math.round(usdAmount * selectedCurrency.rateFromUSD);
-    if (selectedCurrency.code === 'INR') {
-      return `₹${converted.toLocaleString('en-IN')}`;
-    }
-    return `${selectedCurrency.symbol}${converted.toLocaleString('en-US')}`;
-  };
-
-  // Calculate live estimate in USD
-  const totalUsdEstimate = basePriceUSD + addons.filter((a) => a.selected).reduce((sum, a) => sum + a.usdPrice, 0);
+  const selectedAddons = addons.filter((a) => a.selected);
+  const totalInr = roundMoney(BASE_PACKAGE_INR + selectedAddons.reduce((sum, a) => sum + a.priceInr, 0));
+  const eventTypeLabel = EVENT_TYPES.find((t) => t.value === eventType)?.label || eventType;
 
   const toggleAddon = (id: string) => {
-    setAddons((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, selected: !a.selected } : a))
-    );
+    setAddons((prev) => prev.map((a) => (a.id === id ? { ...a, selected: !a.selected } : a)));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!firstName || !phone || !email) {
-      alert('Please enter your Name, WhatsApp Number, and Email.');
+      setSubmitError('Please enter your name, phone number and email address.');
       return;
     }
 
+    setSubmitError(null);
     setIsSubmitting(true);
     const fullName = `${firstName} ${lastName}`.trim();
-    const tempId = `enq-${Date.now()}`;
     const formattedDate = eventDate || new Date(Date.now() + 86400000 * 30).toISOString().split('T')[0];
-    const formattedPrice = formatMoney(totalUsdEstimate);
+    const estimate = money(totalInr);
 
-    const newEnquiry = {
-      id: tempId,
+    const enquiry = {
       name: fullName,
       email: email.trim(),
       phone: phone.trim(),
       contact: phone.trim(),
-      event_name: `${fullName}'s ${eventType === 'wedding' ? 'Wedding' : eventType.charAt(0).toUpperCase() + eventType.slice(1)}`,
+      event_name: `${fullName}'s ${eventTypeLabel}`,
       event_type: eventType,
       event_date: formattedDate,
       venue: venue || 'Venue TBA',
-      estimated_budget: totalUsdEstimate * 83.5, // Normalized INR
-      budget: formattedPrice,
+      estimated_budget: totalInr,
+      budget: estimate,
       source: source || 'Landing Page',
       status: 'new',
-      notes: `Currency: ${selectedCurrency.code} (${formattedPrice}) | ${notes ? notes + ' | ' : ''}Guests: ${guests} | Addons: ${addons.filter((a) => a.selected).map((a) => a.label.split('(')[0].trim()).join(', ')}`,
-      created_at: new Date().toISOString(),
+      notes: [
+        `Estimate: ${estimate} (${displayCode})`,
+        notes.trim(),
+        `Guests: ${guests}`,
+        `Services: ${selectedAddons.map((a) => a.label).join(', ') || 'Base package only'}`,
+      ]
+        .filter(Boolean)
+        .join(' | '),
+      account_id: studioAccountId,
     };
 
-    // 1. Immediately save to CRM localStorage
     try {
-      const existingRaw = null /* localStorage.getItem(ENQUIRIES_STORAGE_KEY) */;
-      let existingList = [];
-      if (existingRaw) {
-        existingList = JSON.parse(existingRaw);
-      }
-      const updatedList = [newEnquiry, ...existingList];
-      localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(updatedList));
-    } catch (err) {
-      console.error('Failed to save public enquiry locally:', err);
+      const created = await apiClient.enquiries.create(enquiry, studioAccountId);
+      if (!created) throw new Error('No response');
+      setReferenceId(String(created.id || '').slice(0, 8).toUpperCase());
+      setIsSubmitted(true);
+    } catch {
+      setSubmitError('We could not send your enquiry just now. Please try again, or contact us on WhatsApp.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // 2. Submit to AWS Lambda backend with account scoping
-    try {
-      await apiClient.enquiries.create({
-        ...newEnquiry,
-        account_id: params?.id || 'user_3I2lBpsfTZcxw4L1GpKAMPCc45a',
-      });
-    } catch (err) {
-      console.warn('Cloud trigger offline, stored securely in CRM database.');
-    }
-
-    setSubmittedLeadId(tempId);
-    setIsSubmitting(false);
-    setIsSubmitted(true);
   };
 
   const handleOpenWhatsAppChat = () => {
-    const rawNum = phone.replace(/[^0-9]/g, '');
-    const cleanPhone = rawNum.length === 10 ? `91${rawNum}` : rawNum;
-    const msg = `Hi Pixeva Studio! 👋 I just submitted an enquiry on your portal for our ${eventType} on ${eventDate || 'an upcoming date'}.\n\nEstimated Package: ${formatMoney(totalUsdEstimate)} (${selectedCurrency.code}).\n\nLooking forward to speaking with you!`;
-    const url = `https://wa.me/918904832762?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank');
+    const msg = `Hello, I have just sent an enquiry through your website for a ${eventTypeLabel.toLowerCase()} on ${
+      eventDate || 'a date to be confirmed'
+    }. Estimated package: ${money(totalInr)}. I look forward to hearing from you.`;
+    window.open(`https://wa.me/${STUDIO_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-sky-500 selection:text-white">
-      {/* Top Studio Brand Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs px-4 sm:px-8 py-3.5">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-sky-500/20 text-white">
-              <Camera className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-1.5">
-                <span className="font-black text-xl text-slate-900 tracking-tight">Pixeva</span>
-                <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 tracking-wider">
-                  STUDIO
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium">Bespoke Cinematic & Candid Media</p>
-            </div>
+    <div className="min-h-screen bg-stone-50 text-stone-900 antialiased">
+      {/* Header */}
+      <header className="bg-white border-b border-stone-200">
+        <div className="max-w-4xl mx-auto px-4 sm:px-8 py-4 flex items-center justify-between">
+          <div>
+            <span className="font-serif text-xl tracking-tight text-stone-900">Pixeva Studio</span>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-stone-500 mt-0.5">Photography & Film</p>
           </div>
-
-          <div className="flex items-center space-x-3">
-            {/* Sleek Currency Selector Pill in Header */}
-            <div className="relative">
-              <select
-                value={selectedCurrency.code}
-                onChange={(e) => {
-                  const found = GLOBAL_CURRENCIES.find((c) => c.code === e.target.value);
-                  if (found) setSelectedCurrency(found);
-                }}
-                className="appearance-none bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 cursor-pointer transition-colors shadow-2xs"
-                title="Select Currency"
-              >
-                {GLOBAL_CURRENCIES.map((curr) => (
-                  <option key={curr.code} value={curr.code}>
-                    {curr.flag} {curr.code} ({curr.symbol.trim()})
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
-
-            <a
-              href="https://wa.me/918904832762"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-1.5 text-xs font-bold px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors shadow-2xs"
-            >
-              <MessageCircle className="w-4 h-4 text-emerald-600" />
-              <span className="hidden sm:inline">WhatsApp</span>
-            </a>
-          </div>
+          <a
+            href={`https://wa.me/${STUDIO_WHATSAPP}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100 transition-colors"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">WhatsApp</span>
+          </a>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-8">
-        {/* Hero Lookbook Card */}
-        <div className="relative rounded-3xl overflow-hidden shadow-xl border border-slate-200/80 bg-slate-900 aspect-[21/9] sm:aspect-[16/7] group">
-          <img
-            src={coverPhoto}
-            alt="Studio Lookbook Cover"
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent flex flex-col justify-end p-6 sm:p-10 text-white">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs font-bold w-fit mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-              <span>Official 2026-2027 Calendar Open</span>
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white max-w-2xl leading-tight">
-              {headline}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-200 max-w-xl mt-1.5 font-medium">
-              {subtitle}
-            </p>
+      <main className="max-w-4xl mx-auto px-4 sm:px-8 py-8 sm:py-12 space-y-8">
+        {/* Hero */}
+        <section className="relative rounded-xl overflow-hidden bg-stone-900 aspect-[16/9] sm:aspect-[21/8]">
+          <img src={coverPhoto} alt="" className="absolute inset-0 w-full h-full object-cover opacity-80" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+          <div className="relative h-full flex flex-col justify-end p-6 sm:p-10 text-white">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-stone-200 mb-2">Now booking 2026 – 2027</p>
+            <h1 className="font-serif text-2xl sm:text-4xl leading-tight max-w-2xl">{headline}</h1>
+            <p className="text-sm text-stone-200 max-w-xl mt-2">{subtitle}</p>
           </div>
-        </div>
+        </section>
 
-        {/* Confirmation Screen on Submission */}
         {isSubmitted ? (
-          <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-xl text-center space-y-6 animate-fadeIn">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
-              <CheckCircle2 className="w-10 h-10" />
-            </div>
-
+          <section className="bg-white rounded-xl border border-stone-200 p-8 sm:p-12 text-center space-y-6">
+            <CheckCircle2 className="w-10 h-10 text-stone-800 mx-auto" strokeWidth={1.5} />
             <div className="space-y-2">
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                Thank You, {firstName}!
-              </h2>
-              <p className="text-sm text-slate-600 max-w-md mx-auto">
-                Your enquiry has been received by our lead director. We have created your custom booking file and will reach out via WhatsApp & Email within 24 hours.
+              <h2 className="font-serif text-2xl sm:text-3xl">Thank you, {firstName}.</h2>
+              <p className="text-sm text-stone-600 max-w-md mx-auto">
+                We have received your enquiry and will be in touch by email or WhatsApp within 24 hours.
               </p>
             </div>
 
-            {/* Summary Box */}
-            <div className="max-w-md mx-auto p-5 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs space-y-2.5">
-              <div className="flex justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-500 font-medium">Booking Ref:</span>
-                <span className="font-mono font-bold text-sky-600">{submittedLeadId}</span>
+            <dl className="max-w-md mx-auto rounded-lg border border-stone-200 divide-y divide-stone-200 text-left text-sm">
+              {referenceId && (
+                <div className="flex justify-between px-4 py-2.5">
+                  <dt className="text-stone-500">Reference</dt>
+                  <dd className="font-mono text-stone-900">{referenceId}</dd>
+                </div>
+              )}
+              <div className="flex justify-between px-4 py-2.5">
+                <dt className="text-stone-500">Event</dt>
+                <dd className="text-stone-900">{eventTypeLabel}</dd>
               </div>
-              <div className="flex justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-500 font-medium">Event:</span>
-                <span className="font-bold text-slate-900 capitalize">{eventType} Shoot</span>
+              <div className="flex justify-between px-4 py-2.5">
+                <dt className="text-stone-500">Date</dt>
+                <dd className="text-stone-900">{eventDate || 'To be confirmed'}</dd>
               </div>
-              <div className="flex justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-500 font-medium">Event Date:</span>
-                <span className="font-bold text-slate-900">{eventDate || 'To be confirmed'}</span>
+              <div className="flex justify-between px-4 py-2.5">
+                <dt className="text-stone-500">Estimated package</dt>
+                <dd className="font-mono font-semibold text-stone-900">{money(totalInr)}</dd>
               </div>
-              <div className="flex justify-between pt-1">
-                <span className="text-slate-500 font-medium">Estimated Package:</span>
-                <span className="font-mono font-black text-emerald-600 text-base">
-                  {formatMoney(totalUsdEstimate)} {selectedCurrency.code}
-                </span>
-              </div>
-            </div>
+            </dl>
 
-            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <button
-                onClick={handleOpenWhatsAppChat}
-                className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>Chat with Director on WhatsApp</span>
-              </button>
-
-              <Link
-                href="/"
-                className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center space-x-2 transition-colors"
-              >
-                <span>Back to Pixeva Studio</span>
-              </Link>
-            </div>
-          </div>
+            <button
+              onClick={handleOpenWhatsAppChat}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium transition-colors cursor-pointer"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Continue on WhatsApp</span>
+            </button>
+          </section>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Live Estimate Calculator */}
+            {/* Estimate */}
             {showCalculator && (
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xl space-y-6">
-                
-                {/* Header with Integrated Price & Currency */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 rounded-2xl bg-sky-50 text-sky-600 border border-sky-100">
-                      <Calculator className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                        Live Estimate Calculator
-                      </h2>
-                      <p className="text-xs text-slate-500">
-                        Choose your deliverables for an instant ballpark
-                      </p>
-                    </div>
+              <section className="bg-white rounded-xl border border-stone-200 p-6 sm:p-8 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-stone-200 pb-5">
+                  <div>
+                    <h2 className="font-serif text-xl">Build your estimate</h2>
+                    <p className="text-xs text-stone-500 mt-1">
+                      Select the services you are interested in. Base package included: {money(BASE_PACKAGE_INR)}.
+                    </p>
                   </div>
-
-                  {/* Clean Estimated Package Display with Currency Switcher */}
-                  <div className="flex items-center space-x-3 self-start sm:self-auto bg-slate-50 p-2 sm:px-4 sm:py-2.5 rounded-2xl border border-slate-200/80">
-                    <div className="text-left sm:text-right">
-                      <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">
-                        Estimated Total
-                      </span>
-                      <span className="font-mono text-xl sm:text-2xl font-black text-sky-600">
-                        {formatMoney(totalUsdEstimate)}
-                      </span>
-                    </div>
-
-                    <div className="border-l border-slate-200 pl-3">
-                      <select
-                        value={selectedCurrency.code}
-                        onChange={(e) => {
-                          const found = GLOBAL_CURRENCIES.find((c) => c.code === e.target.value);
-                          if (found) setSelectedCurrency(found);
-                        }}
-                        className="bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-500 cursor-pointer shadow-2xs"
-                      >
-                        {GLOBAL_CURRENCIES.map((curr) => (
-                          <option key={curr.code} value={curr.code}>
-                            {curr.flag} {curr.code}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="sm:text-right">
+                    <span className="text-[11px] uppercase tracking-[0.15em] text-stone-500 block">Estimated total</span>
+                    <span className="font-mono text-2xl font-semibold text-stone-900">{money(totalInr)}</span>
                   </div>
                 </div>
 
-                {/* Deliverables Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {addons.map((addon) => (
-                    <div
-                      key={addon.id}
-                      onClick={() => toggleAddon(addon.id)}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${
-                        addon.selected
-                          ? 'bg-sky-50/70 border-sky-300 ring-2 ring-sky-500/20 shadow-xs'
-                          : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3 pr-2">
-                        <span className="text-xl group-hover:scale-110 transition-transform">{addon.icon}</span>
-                        <div>
-                          <p className="text-xs font-bold text-slate-900 leading-snug">{addon.label}</p>
-                          <span className="font-mono text-xs font-extrabold text-sky-600">
-                            +{formatMoney(addon.usdPrice)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div
-                        className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all shrink-0 ${
-                          addon.selected ? 'bg-sky-600 border-sky-600 text-white shadow-xs' : 'border-slate-300 bg-white'
+                  {addons.map((addon) => {
+                    const Icon = addon.icon;
+                    return (
+                      <button
+                        type="button"
+                        key={addon.id}
+                        onClick={() => toggleAddon(addon.id)}
+                        aria-pressed={addon.selected}
+                        className={`p-4 rounded-lg border text-left flex items-center justify-between gap-3 transition-colors cursor-pointer ${
+                          addon.selected
+                            ? 'border-stone-900 bg-stone-50'
+                            : 'border-stone-200 hover:border-stone-400'
                         }`}
                       >
-                        {addon.selected && <CheckCircle2 className="w-3.5 h-3.5" />}
-                      </div>
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Icon className="w-4 h-4 text-stone-500 shrink-0" strokeWidth={1.75} />
+                          <div className="min-w-0">
+                            <p className="text-sm text-stone-900 leading-snug">{addon.label}</p>
+                            <span className="font-mono text-xs text-stone-600">+ {money(addon.priceInr)}</span>
+                          </div>
+                        </div>
+                        <span
+                          className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 ${
+                            addon.selected ? 'bg-stone-900 border-stone-900 text-white' : 'border-stone-300 bg-white'
+                          }`}
+                        >
+                          {addon.selected && <Check className="w-3.5 h-3.5" />}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
+
+                <p className="text-[11px] text-stone-500">
+                  Prices shown in {displayCode}, converted at today&apos;s exchange rate. This is an estimate; your final
+                  quote will be confirmed by our team.
+                </p>
+              </section>
             )}
 
-            {/* Client & Shoot Details Form */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xl space-y-6">
+            {/* Details */}
+            <section className="bg-white rounded-xl border border-stone-200 p-6 sm:p-8 space-y-6">
               <div>
-                <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                  Your Contact & Event Details
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  We maintain strict privacy and will never share your personal information.
-                </p>
+                <h2 className="font-serif text-xl">Your details</h2>
+                <p className="text-xs text-stone-500 mt-1">Your information is used only to respond to your enquiry.</p>
               </div>
 
-              {/* Row 1: Name */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                    First Name <span className="text-rose-500">*</span>
+                  <label htmlFor="enq-first" className={labelClass}>
+                    First name <span className="text-stone-400">*</span>
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="e.g. Eleanor"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-medium"
-                  />
+                  <input id="enq-first" type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputClass} />
                 </div>
-
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1.5">Last Name</label>
-                  <input
-                    type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="e.g. Vance"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-medium"
-                  />
+                  <label htmlFor="enq-last" className={labelClass}>Last name</label>
+                  <input id="enq-last" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputClass} />
                 </div>
               </div>
 
-              {/* Row 2: Phone & Email */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                    WhatsApp / Phone Number <span className="text-rose-500">*</span>
+                  <label htmlFor="enq-phone" className={labelClass}>
+                    Phone / WhatsApp <span className="text-stone-400">*</span>
                   </label>
                   <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Phone className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
+                      id="enq-phone"
                       type="tel"
                       required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+1 (555) 000-0000 or +91 98765 43210"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-medium font-mono"
+                      placeholder="Include country code"
+                      className={`${inputClass} pl-9`}
                     />
                   </div>
                 </div>
-
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                    Email Address <span className="text-rose-500">*</span>
+                  <label htmlFor="enq-email" className={labelClass}>
+                    Email address <span className="text-stone-400">*</span>
                   </label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Mail className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
+                      id="enq-email"
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="client@company.com"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 font-medium font-mono"
+                      className={`${inputClass} pl-9`}
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Row 3: Event Type & Date */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                    Event / Shoot Type
-                  </label>
-                  <select
-                    value={eventType}
-                    onChange={(e) => setEventType(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-sky-500 font-bold cursor-pointer"
-                  >
-                    <option value="wedding">💍 Destination Wedding & Celebrations</option>
-                    <option value="pre-wedding">✨ Pre-Wedding / Couple Concept Session</option>
-                    <option value="reception">🥂 Reception & Cocktail Gala</option>
-                    <option value="corporate">💼 Corporate Summit & Keynote Meet</option>
-                    <option value="commercial">📸 Fashion & Commercial Campaign</option>
-                    <option value="birthday">🎉 Birthday & Private Celebration</option>
+                  <label htmlFor="enq-type" className={labelClass}>Event type</label>
+                  <select id="enq-type" value={eventType} onChange={(e) => setEventType(e.target.value)} className={`${inputClass} cursor-pointer`}>
+                    {EVENT_TYPES.map((t) => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
                   </select>
                 </div>
-
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                    Shoot / Event Date
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={eventDate}
-                      onChange={(e) => setEventDate(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-sky-500 font-medium"
-                    />
-                  </div>
+                  <label htmlFor="enq-date" className={labelClass}>Event date</label>
+                  <input id="enq-date" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} className={inputClass} />
                 </div>
               </div>
 
-              {/* Row 4: Optional Fields (Location & Guests) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {showLocation && (
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                      Venue / Destination
-                    </label>
-                    <div className="relative">
-                      <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="text"
-                        value={venue}
-                        onChange={(e) => setVenue(e.target.value)}
-                        placeholder="e.g. Paris / Beverly Hills / Dubai"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 font-medium"
-                      />
+              {(showLocation || showGuests) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {showLocation && (
+                    <div>
+                      <label htmlFor="enq-venue" className={labelClass}>Venue / city</label>
+                      <div className="relative">
+                        <MapPin className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input id="enq-venue" type="text" value={venue} onChange={(e) => setVenue(e.target.value)} className={`${inputClass} pl-9`} />
+                      </div>
                     </div>
-                  </div>
-                )}
-
-                {showGuests && (
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                      Approx. Number of Guests
-                    </label>
-                    <div className="relative">
-                      <Users className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                      <select
-                        value={guests}
-                        onChange={(e) => setGuests(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-sky-500 font-medium cursor-pointer"
-                      >
-                        <option value="Under 100">Intimate Gathering (Under 100)</option>
-                        <option value="100 - 300">100 to 300 Guests</option>
-                        <option value="300 - 500">Grand Celebration (300 to 500)</option>
-                        <option value="500+">Royal Mega Gathering (500+)</option>
-                      </select>
+                  )}
+                  {showGuests && (
+                    <div>
+                      <label htmlFor="enq-guests" className={labelClass}>Approximate guests</label>
+                      <div className="relative">
+                        <Users className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <select id="enq-guests" value={guests} onChange={(e) => setGuests(e.target.value)} className={`${inputClass} pl-9 cursor-pointer`}>
+                          <option value="Under 100">Under 100</option>
+                          <option value="100 - 300">100 – 300</option>
+                          <option value="300 - 500">300 – 500</option>
+                          <option value="500+">500+</option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
-              {/* Row 5: Source */}
               {showSource && (
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                    How did you discover Pixeva Studio?
-                  </label>
-                  <select
-                    value={source}
-                    onChange={(e) => setSource(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-sky-500 font-medium cursor-pointer"
-                  >
-                    <option value="Instagram">Instagram Reels / Post</option>
-                    <option value="Friend / Referral">Friend / Client Referral</option>
-                    <option value="Website">Official Portfolio Website</option>
-                    <option value="Google Search">Google Search</option>
-                    <option value="Wedding Planner">Event Producer Recommendation</option>
+                  <label htmlFor="enq-source" className={labelClass}>How did you hear about us?</label>
+                  <select id="enq-source" value={source} onChange={(e) => setSource(e.target.value)} className={`${inputClass} cursor-pointer`}>
+                    <option value="Instagram">Instagram</option>
+                    <option value="Friend / Referral">Friend or client referral</option>
+                    <option value="Website">Our website</option>
+                    <option value="Google Search">Google search</option>
+                    <option value="Wedding Planner">Planner recommendation</option>
                   </select>
                 </div>
               )}
 
-              {/* Row 6: Requirements / Notes */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                  Vision, Itinerary, or Creative Notes
-                </label>
+                <label htmlFor="enq-notes" className={labelClass}>Anything else we should know?</label>
                 <textarea
-                  rows={3}
+                  id="enq-notes"
+                  rows={4}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Tell us about special moments, timeline details, drone permits, or preferred visual aesthetic..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-500 font-medium"
+                  placeholder="Timeline, key moments, style preferences…"
+                  className={inputClass}
                 />
               </div>
 
-              {/* Submit CTA */}
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 via-blue-600 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-extrabold text-sm shadow-xl shadow-sky-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer disabled:opacity-50"
-                >
-                  <span>{isSubmitting ? 'Securing Your Booking File...' : `Submit Enquiry (${formatMoney(totalUsdEstimate)})`}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
+              {submitError && (
+                <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3.5 py-2.5">
+                  {submitError}
+                </p>
+              )}
 
-              {/* Trust Badges Footer */}
-              <div className="flex flex-wrap items-center justify-center gap-6 text-[11px] text-slate-500 pt-2">
-                <span className="flex items-center space-x-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>Verified 4K Production Studio</span>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3 rounded-lg bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-60"
+              >
+                <span>{isSubmitting ? 'Sending…' : 'Send enquiry'}</span>
+                {!isSubmitting && <ArrowRight className="w-4 h-4" />}
+              </button>
+
+              <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-stone-500">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  Reply within 24 hours
                 </span>
-                <span className="flex items-center space-x-1.5">
-                  <Clock className="w-4 h-4 text-sky-600" />
-                  <span>24-Hour Proposal Guarantee</span>
-                </span>
-                <span className="flex items-center space-x-1.5">
-                  <HeartHandshake className="w-4 h-4 text-rose-600" />
-                  <span>100% Date Reservation Hold</span>
+                <span className="flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5" />
+                  Your details stay private
                 </span>
               </div>
-            </div>
+            </section>
           </form>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
-        <p>© {new Date().getFullYear()} Pixeva Studio. All rights reserved. • International Cinematic & Photography Portal</p>
+      <footer className="border-t border-stone-200 bg-white py-6 text-center text-xs text-stone-500">
+        © {new Date().getFullYear()} Pixeva Studio. All rights reserved.
       </footer>
     </div>
   );

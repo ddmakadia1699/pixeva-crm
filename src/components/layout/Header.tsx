@@ -17,6 +17,7 @@ import {
 import { useTheme } from '@/context/ThemeProvider';
 import { useAuth } from '@/context/AuthContext';
 import { useSidebar } from '@/context/SidebarContext';
+import { useCurrency } from '@/context/CurrencyContext';
 import { usePathname } from 'next/navigation';
 
 interface HeaderProps {
@@ -27,6 +28,7 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
+  const { currency, exchangeRates } = useCurrency();
   const { isCollapsed, toggleCollapse, toggleMobileOpen } = useSidebar();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -56,6 +58,11 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
   if (pathname === '/login' || pathname.startsWith('/enquire') || pathname.startsWith('/proposal')) {
     return null;
   }
+
+  const openCurrencySettings = () => {
+    // Already on /settings: the page is not remounted, so tell it to switch tabs.
+    window.dispatchEvent(new CustomEvent('pixeva_open_settings_tab', { detail: 'currency' }));
+  };
 
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Studio User';
   const userEmail = user?.email || 'dhruvigovani1699@gmail.com';
@@ -105,6 +112,24 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
             <span>New Lead</span>
           </button>
         )}
+
+        {/* Active Currency -> Settings > Payments & Currency */}
+        <Link
+          href="/settings?tab=currency"
+          onClick={openCurrencySettings}
+          title={
+            currency.code === 'INR'
+              ? 'Display currency: INR (base) — click to change'
+              : `Display currency: ${currency.code} • 1 ${currency.code} = ₹${(exchangeRates[currency.code] || 1).toFixed(4)} — click to change`
+          }
+          className="flex items-center space-x-1.5 px-2 py-1 rounded-lg bg-slate-100/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 hover:bg-slate-200/80 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+        >
+          <span className="text-sm leading-none">{currency.flag}</span>
+          <span className="text-xs font-bold font-mono">{currency.symbol.trim()}</span>
+          {currency.symbol.trim() !== currency.code && (
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 hidden sm:inline">{currency.code}</span>
+          )}
+        </Link>
 
         {/* Theme Switcher */}
         <button

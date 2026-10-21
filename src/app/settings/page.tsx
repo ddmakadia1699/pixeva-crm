@@ -173,10 +173,26 @@ export default function SettingsPage() {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
       if (tab === 'payments' || tab === 'currency') {
-        setActiveTab('payments');
+        openCurrencySection();
       }
     }
+
+    // Top-bar currency chip clicked while this page is already open
+    const handleOpenTab = (e: Event) => {
+      const tab = (e as CustomEvent).detail;
+      if (tab === 'payments' || tab === 'currency') openCurrencySection();
+    };
+    window.addEventListener('pixeva_open_settings_tab', handleOpenTab);
+    return () => window.removeEventListener('pixeva_open_settings_tab', handleOpenTab);
   }, []);
+
+  function openCurrencySection() {
+    setActiveTab('payments');
+    // Wait for the tab to render before scrolling to it
+    setTimeout(() => {
+      document.getElementById('studio-currency-settings')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
 
   // Services State
   const [crewRoles, setCrewRoles] = useState<CrewRoleItem[]>([]);
@@ -848,7 +864,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
       {activeTab === 'payments' && (
         <div className="space-y-6 animate-fadeIn">
           {/* SECTION 1: STUDIO CURRENCY & REGIONAL LOV */}
-          <div className="p-5 rounded-xl pixeva-card space-y-5 border-2 border-blue-500/30 dark:border-blue-500/20 bg-gradient-to-br from-white via-white to-blue-50/20 dark:from-[#111827] dark:via-[#111827] dark:to-blue-950/20 shadow-sm">
+          <div id="studio-currency-settings" className="scroll-mt-20 p-5 rounded-xl pixeva-card space-y-5 border-2 border-blue-500/30 dark:border-blue-500/20 bg-gradient-to-br from-white via-white to-blue-50/20 dark:from-[#111827] dark:via-[#111827] dark:to-blue-950/20 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="space-y-0.5">
                 <div className="flex items-center space-x-2">
@@ -999,6 +1015,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                   <input
                     type="number"
                     min="0"
+                    step="0.01"
                     value={calcAmount}
                     onChange={(e) => setCalcAmount(Number(e.target.value) || 0)}
                     placeholder="Enter amount..."
@@ -1073,7 +1090,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
                       Conversion Result:
                     </div>
                     <div className="text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-center space-x-2">
-                      <span>{fromCurrencyObj.flag} {fromCurrencyObj.symbol.trim()}{calcAmount.toLocaleString()} {calcFrom}</span>
+                      <span>{fromCurrencyObj.flag} {fromCurrencyObj.symbol.trim()}{calcAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {calcFrom}</span>
                       <ArrowRight className="w-4 h-4 text-blue-500 shrink-0" />
                       <span className="text-blue-600 dark:text-blue-400 font-mono">
                         {toCurrencyObj.flag} {formatCurrency(calcAmount, calcTo, calcFrom, 2)} {calcTo}

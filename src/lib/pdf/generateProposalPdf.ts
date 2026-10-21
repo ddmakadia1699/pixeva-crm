@@ -1,5 +1,5 @@
 import { Enquiry } from '@/lib/supabase/types';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, roundMoney } from '@/lib/utils';
 
 export function generateProposalHtml(enquiry: Enquiry): string {
   const proposalId = `PIX-${Date.now().toString().slice(-6)}`;
@@ -9,9 +9,9 @@ export function generateProposalHtml(enquiry: Enquiry): string {
     year: 'numeric',
   });
   const budget = enquiry.estimated_budget || 200000;
-  const advance = Math.round(budget * 0.2);
-  const eventDay = Math.round(budget * 0.6);
-  const finalBal = Math.round(budget * 0.2);
+  const advance = roundMoney(budget * 0.2);
+  const eventDay = roundMoney(budget * 0.6);
+  const finalBal = roundMoney(budget - advance - eventDay);
 
   return `
 <!DOCTYPE html>

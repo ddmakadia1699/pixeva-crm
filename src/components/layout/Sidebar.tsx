@@ -36,7 +36,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Enquiries', href: '/enquiries', icon: Inbox },
   { label: 'Projects', href: '/projects', icon: Briefcase },
   { label: 'Crew Scheduling', href: '/crew-scheduling', icon: CalendarDays },

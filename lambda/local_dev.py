@@ -58,6 +58,15 @@ if FUNCTIONS_DIR.exists():
             alias = entry.name.replace("-service", "")
             functions_map[alias] = str(entry / "index.js")
 
+# Register domain aliases
+if "bookings" in functions_map:
+    functions_map["projects"] = functions_map["bookings"]
+if "studio-data" in functions_map:
+    functions_map["galleries"] = functions_map["studio-data"]
+    functions_map["client-requests"] = functions_map["studio-data"]
+    functions_map["finances"] = functions_map["studio-data"]
+    functions_map["dashboard"] = functions_map["studio-data"]
+
 print(f"[local_dev.py] Registered Lambda functions: {list(set(functions_map.keys()))}")
 
 # ─── Invoke JS Lambda function via Node runner ───────────────────────────────
@@ -126,8 +135,9 @@ def build_api_gateway_event(method, path, query_string, headers, body_bytes, con
 # ─── HTTP Request Handler ─────────────────────────────────────────────────────
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Amz-Date, X-Api-Key",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Amz-Date, X-Api-Key, X-Amz-Security-Token, x-account-id, X-Account-Id",
+    "Access-Control-Max-Age": "86400",
 }
 
 class LambdaProxyHandler(BaseHTTPRequestHandler):

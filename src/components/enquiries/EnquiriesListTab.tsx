@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { openProposalPdfWindow } from '@/lib/pdf/generateProposalPdf';
+import { parseAmount, roundMoney } from '@/lib/utils';
 
 interface EnquiriesListTabProps {
   enquiries: Enquiry[];
@@ -61,8 +62,8 @@ export default function EnquiriesListTab({
 }: EnquiriesListTabProps) {
   const { formatCurrency, currency, convertAmount } = useCurrency();
   // Budgets are stored in INR; the form fields are entered in the active display currency.
-  const toStoredBudget = (displayAmount: number) => Math.round(convertAmount(displayAmount, currency.code, 'INR'));
-  const toDisplayBudget = (storedAmount: number) => String(Math.round(convertAmount(storedAmount, 'INR', currency.code)));
+  const toStoredBudget = (displayAmount: number) => roundMoney(convertAmount(displayAmount, currency.code, 'INR'));
+  const toDisplayBudget = (storedAmount: number) => String(roundMoney(convertAmount(storedAmount, 'INR', currency.code)));
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedSource, setSelectedSource] = useState<string>('all');
@@ -311,8 +312,7 @@ export default function EnquiriesListTab({
       }
       case 'budget': {
         if (value.trim()) {
-          const raw = value.replace(/[^0-9]/g, '');
-          if (!raw || Number(raw) <= 0) return 'Budget must be a positive amount';
+          if (parseAmount(value) <= 0) return 'Budget must be a positive amount';
         }
         return '';
       }
@@ -407,8 +407,8 @@ export default function EnquiriesListTab({
 
     setIsSubmittingAdd(true);
     try {
-      const rawBudget = formData.budget.replace(/[^0-9]/g, '');
-      const numericBudget = rawBudget ? toStoredBudget(Number(rawBudget)) : 200000;
+      const typedBudget = parseAmount(formData.budget);
+      const numericBudget = typedBudget > 0 ? toStoredBudget(typedBudget) : 200000;
 
       const emailVal = formData.email.trim();
       const phoneVal = formData.contact.trim();
@@ -482,12 +482,12 @@ export default function EnquiriesListTab({
     e.preventDefault();
     if (!editingEnquiry || !editFormData.name) return;
 
-    const rawBudget = editFormData.budget.replace(/[^0-9]/g, '');
+    const typedBudget = parseAmount(editFormData.budget);
     const budgetUnchanged =
       !!editingEnquiry.estimated_budget && editFormData.budget === toDisplayBudget(editingEnquiry.estimated_budget);
-    const numericBudget = budgetUnchanged || !rawBudget
+    const numericBudget = budgetUnchanged || typedBudget <= 0
       ? (editingEnquiry.estimated_budget || 200000)
-      : toStoredBudget(Number(rawBudget));
+      : toStoredBudget(typedBudget);
 
     const updated: Enquiry = {
       ...editingEnquiry,
@@ -675,7 +675,7 @@ export default function EnquiriesListTab({
         if (name || email) {
           const phone = (parts[phoneIdx] || '').replace(/^"|"$/g, '').trim();
           const venue = (parts[venueIdx] || '').replace(/^"|"$/g, '').trim();
-          const budgetRaw = (parts[budgetIdx] || '').replace(/[^0-9]/g, '');
+          const budgetRaw = parseAmount(parts[budgetIdx]);
           const eventName = (parts[eventNameIdx] || '').replace(/^"|"$/g, '').trim() || (name ? `${name}'s Event` : 'Event Enquiry');
           const eventType = (parts[eventTypeIdx] || 'wedding').replace(/^"|"$/g, '').trim();
           const eventDate = (parts[dateIdx] || '').replace(/^"|"$/g, '').trim() || new Date().toISOString().slice(0, 10);
@@ -692,9 +692,9 @@ export default function EnquiriesListTab({
             event_date: eventDate,
             received_on: eventDate,
             venue: venue,
-            budget: budgetRaw ? Number(budgetRaw).toLocaleString('en-IN') : '2,00,000',
+            budget: budgetRaw ? budgetRaw.toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '2,00,000',
             guests: guests,
-            estimated_budget: budgetRaw ? Number(budgetRaw) : 200000,
+            estimated_budget: budgetRaw ? roundMoney(budgetRaw) : 200000,
             source: source || 'Website',
             status: 'New',
             notes: 'Imported via CSV template batch upload',

@@ -30,6 +30,7 @@ import {
 import { useCurrency } from '@/context/CurrencyContext';
 import { openProposalPdfWindow, openReceiptPdfWindow } from '@/lib/pdf/generateProposalPdf';
 import { Enquiry } from '@/lib/supabase/types';
+import { roundMoney } from '@/lib/utils';
 
 export default function ClientProposalPage() {
   const { formatCurrency } = useCurrency();
@@ -183,9 +184,9 @@ export default function ClientProposalPage() {
   };
 
   const budget = enquiry.estimated_budget || 250000;
-  const advance = Math.round(budget * 0.2);
-  const eventDay = Math.round(budget * 0.6);
-  const finalBal = Math.round(budget * 0.2);
+  const advance = roundMoney(budget * 0.2);
+  const eventDay = roundMoney(budget * 0.6);
+  const finalBal = roundMoney(budget - advance - eventDay);
 
   const isSignatureReady = signatureMode === 'type' ? typedSignature.trim().length > 0 : hasDrawn;
 

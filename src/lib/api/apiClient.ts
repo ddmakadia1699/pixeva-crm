@@ -86,7 +86,7 @@ async function apiRequest<T = any>(
         const nextApiFallback = `/api${cleanPath}`;
         const fallbackRes = await fetch(nextApiFallback, {
           ...options,
-          headers: { ...headers, 'x-account-id': accountId },
+          headers,
         });
         if (fallbackRes.ok) {
           const json = await fallbackRes.json();
@@ -122,10 +122,13 @@ export const apiClient = {
       const res = await apiRequest('/enquiries');
       return res.data || [];
     },
-    create: async (lead: any) => {
+    // accountId: target studio account (public enquiry pages post to the studio in the URL,
+    // not the visitor's own account).
+    create: async (lead: any, accountId?: string) => {
       const res = await apiRequest('/enquiries', {
         method: 'POST',
         body: JSON.stringify(lead),
+        ...(accountId ? { headers: { 'x-account-id': accountId } } : {}),
       });
       return res.data;
     },

@@ -162,7 +162,7 @@ export function formatCurrencyDeterministic(
   currencyCode: string = 'INR',
   fromCode: string = 'INR',
   customRates?: Record<string, number>,
-  decimals: number = 0
+  decimals: number = 2
 ): string {
   if (isNaN(amount) || amount === null || amount === undefined) {
     amount = 0;
@@ -342,7 +342,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     return convertCurrency(amount, fromCode, toCode, exchangeRates);
   };
 
-  const formatCurrency = (amount: number, overrideCode?: string, fromCode: string = 'INR', decimals: number = 0) => {
+  const formatCurrency = (amount: number, overrideCode?: string, fromCode: string = 'INR', decimals: number = 2) => {
     return formatCurrencyDeterministic(amount, overrideCode || currencyCode, fromCode, exchangeRates, decimals);
   };
 
