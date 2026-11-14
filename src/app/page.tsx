@@ -424,7 +424,7 @@ const LIFECYCLE_STEPS = [
 
 export default function PublicHomePage() {
   const router = useRouter();
-  const { formatCurrency, currency, setCurrency } = useCurrency();
+  const { formatCurrency, currency, setCurrencyCode: setCurrency } = useCurrency();
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
 

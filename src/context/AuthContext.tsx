@@ -13,7 +13,7 @@ interface AuthContextType {
   loading: boolean;
   signInWithEmail: (email: string, password: string) => Promise<{ error: any }>;
   signUpWithEmail: (email: string, password: string) => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ data?: any; error: any }>;
   signOut: () => Promise<{ error: any }>;
 }
 
