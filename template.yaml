@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Pixeva CRM AWS SAM Serverless Backend
+Description: Pixeva CRM AWS SAM Serverless Backend (Python 3.14)
 
 Parameters:
   SupabaseUrl:
@@ -20,7 +20,11 @@ Globals:
   Function:
     Timeout: 15
     MemorySize: 256
-    Runtime: nodejs22.x
+    Runtime: python3.14
+    Architectures:
+      - x86_64
+    # All six functions share one package (lambda/src): common/ helpers + handlers/ entry points.
+    CodeUri: lambda/src/
     Environment:
       Variables:
         NEXT_PUBLIC_SUPABASE_URL: !Ref SupabaseUrl
@@ -49,15 +53,13 @@ Resources:
           - Content-Type
           - Authorization
           - X-Requested-With
-          - x-account-id
         MaxAge: 600
 
   # 1. Enquiries Microservice
   EnquiriesServiceFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambda/functions/enquiries-service/dist/
-      Handler: index.handler
+      Handler: handlers.enquiries_service.handler
       Events:
         EnquiriesApi:
           Type: HttpApi
@@ -70,8 +72,7 @@ Resources:
   ContractsServiceFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambda/functions/contracts-service/dist/
-      Handler: index.handler
+      Handler: handlers.contracts_service.handler
       Events:
         ContractsApi:
           Type: HttpApi
@@ -84,8 +85,7 @@ Resources:
   BookingsServiceFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambda/functions/bookings-service/dist/
-      Handler: index.handler
+      Handler: handlers.bookings_service.handler
       Events:
         BookingsApi:
           Type: HttpApi
@@ -98,8 +98,7 @@ Resources:
   PdfGeneratorServiceFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambda/functions/pdf-generator/dist/
-      Handler: index.handler
+      Handler: handlers.pdf_generator.handler
       Events:
         PdfApi:
           Type: HttpApi
@@ -112,8 +111,7 @@ Resources:
   BatchEmailServiceFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambda/functions/batch-email/dist/
-      Handler: index.handler
+      Handler: handlers.batch_email.handler
       Events:
         BatchEmailApi:
           Type: HttpApi
@@ -127,8 +125,7 @@ Resources:
   StudioDataServiceFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambda/functions/studio-data-service/dist/
-      Handler: index.handler
+      Handler: handlers.studio_data_service.handler
       Events:
         StudioDataApi:
           Type: HttpApi

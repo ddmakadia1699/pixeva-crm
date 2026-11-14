@@ -4,9 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:lambda": "node lambda/local_dev.js",
-    "dev:lambda:py": "python3 lambda/local_dev.py",
-    "build:lambda": "node lambda/build.js",
+    "dev:lambda": "python lambda/local_dev.py",
+    "test:lambda": "python -m unittest discover -s lambda/tests -v",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -16,7 +15,6 @@
     "@supabase/ssr": "^0.4.0",
     "@supabase/supabase-js": "^2.44.4",
     "clsx": "^2.1.1",
-    "jose": "^5.10.0",
     "lucide-react": "^0.408.0",
     "next": "^14.2.5",
     "react": "^18.3.1",
@@ -28,7 +26,6 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.19",
-    "esbuild": "^0.28.2",
     "postcss": "^8.4.39",
     "tailwindcss": "^3.4.6",
     "typescript": "^5.5.3"

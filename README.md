@@ -76,13 +76,37 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## ⚡ AWS Lambda Functions Setup
 
-Sample handlers are included under `lambda/functions/`:
-- `pdf-generator/index.js`: PDF quote and invoice generation.
-- `batch-email/index.js`: Bulk lead email campaign dispatcher.
+The backend is **Python 3.14** on AWS Lambda behind an API Gateway HTTP API (AWS SAM, see `template.yaml`).
 
-To deploy to AWS Lambda:
-1. Zip the handler code or deploy via Serverless Framework / AWS Console.
-2. Grant `AWS_ACCESS_KEY_ID` permissions for `lambda:InvokeFunction`.
+```
+lambda/
+  src/                     # packaged and deployed (CodeUri)
+    common/                # auth.py (Supabase JWT check), db.py (PostgREST client), http.py
+    handlers/              # enquiries_service, bookings_service, contracts_service,
+                           # studio_data_service, pdf_generator, batch_email
+    requirements.txt
+  tests/test_handlers.py   # auth + handler tests (no network or real login needed)
+  local_dev.py             # local HTTP server for development
+```
+
+Every route requires a Supabase login token (`Authorization: Bearer ...`); the tenant is taken from the
+verified token. The only exception is the public enquiry form (`POST /enquiries` without a token).
+
+**Run locally** (needs Python 3.14):
+```bash
+python -m venv lambda/.venv
+lambda/.venv/Scripts/python -m pip install -r lambda/src/requirements.txt
+lambda/.venv/Scripts/python lambda/local_dev.py      # http://localhost:5001
+lambda/.venv/Scripts/python -m unittest discover -s lambda/tests -v
+```
+
+**Deploy** (needs the SAM CLI; the Supabase secret key is passed as a parameter, never committed):
+```bash
+sam build
+sam deploy --stack-name pixeva-crm --resolve-s3 --region us-east-1 --capabilities CAPABILITY_IAM \
+  --parameter-overrides SupabaseServiceRoleKey=<your-supabase-secret-key>
+```
+Native dependencies are built for Linux automatically, or add `--use-container` if you have Docker.
 
 ---
 

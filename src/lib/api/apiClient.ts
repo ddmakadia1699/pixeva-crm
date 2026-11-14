@@ -38,7 +38,8 @@ export function getApiGatewayUrl(): string {
   if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
     return 'http://localhost:5001';
   }
-  return 'https://zvt3ypue5l.execute-api.us-east-1.amazonaws.com';
+  // Production default: the pixeva-crm SAM stack's HTTP API. Override with NEXT_PUBLIC_AWS_API_GATEWAY_URL.
+  return 'https://rclzv0w7kd.execute-api.us-east-1.amazonaws.com';
 }
 
 /** Current Supabase login token (auto-refreshed by supabase-js), or null when logged out. */
@@ -83,20 +84,6 @@ async function apiRequest<T = any>(
     if (timeoutId) clearTimeout(timeoutId);
 
     if (!res.ok) {
-      // If primary gateway fails, try Next.js local server proxy fallback (/api/...)
-      if (typeof window !== 'undefined' && !url.includes('/api/')) {
-        try {
-          const fallbackRes = await fetch(`/api${cleanPath}`, {
-            ...options,
-            headers,
-          });
-          if (fallbackRes.ok) {
-            const json = await fallbackRes.json();
-            return { success: json.success !== false, data: json.data !== undefined ? json.data : json, accountId };
-          }
-        } catch {}
-      }
-
       const errText = await res.text().catch(() => 'Network response was not ok');
       let parsedErr: any = null;
       try {
@@ -117,21 +104,6 @@ async function apiRequest<T = any>(
     };
   } catch (err: any) {
     if (timeoutId) clearTimeout(timeoutId);
-
-    // If primary gateway is unreachable/timed out, attempt Next.js local server proxy fallback (/api/...)
-    if (typeof window !== 'undefined' && !url.includes('/api/')) {
-      try {
-        const nextApiFallback = `/api${cleanPath}`;
-        const fallbackRes = await fetch(nextApiFallback, {
-          ...options,
-          headers,
-        });
-        if (fallbackRes.ok) {
-          const json = await fallbackRes.json();
-          return { success: json.success !== false, data: json.data !== undefined ? json.data : json, accountId };
-        }
-      } catch (fallbackErr) {}
-    }
 
     console.warn(`[apiClient] Request to ${url} failed:`, err.message);
     return {

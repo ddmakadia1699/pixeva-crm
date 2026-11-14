@@ -1,245 +1,159 @@
 """
-Pixeva CRM — Local Lambda Development Server (Python)
-======================================================
-Wraps lambda functions in a real HTTP server so you can test AWS Lambda
-microservices locally without Docker, SAM, or AWS deployment.
+Pixeva CRM - Local Lambda Development Server (Python 3.14)
+===========================================================
+Runs the Python Lambda handlers behind a real HTTP server that builds API Gateway
+(payload v2.0) events, so the frontend can be developed without deploying to AWS.
 
-Usage:
-    cd lambda
-    python local_dev.py
-    # or python3 lambda/local_dev.py
+Usage (from the repo root):
+    python -m venv lambda/.venv
+    lambda/.venv/Scripts/python -m pip install -r lambda/src/requirements.txt   # Windows
+    lambda/.venv/Scripts/python lambda/local_dev.py
 
-Default URL: http://localhost:5001
+Default URL: http://localhost:5001  (the frontend uses it automatically on localhost)
+Requests need a real Supabase login token, exactly like production.
 """
 
+from __future__ import annotations
+
+import base64
+import importlib
+import json
 import os
 import sys
-import json
-import base64
-import subprocess
 import traceback
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
 
-class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
-    """Handle each request in a separate thread."""
-    daemon_threads = True
-    allow_reuse_address = True
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-# ─── Load environment variables from .env.local or .env ──────────────────────
-root_dir = Path(__file__).resolve().parent.parent
-for env_name in [".env.local", ".env", ".env.example"]:
-    env_path = root_dir / env_name
+# --- Load environment variables from .env.local / .env -----------------------
+for env_name in (".env.local", ".env"):
+    env_path = ROOT / env_name
     if env_path.exists():
-        with open(env_path) as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    key, _, val = line.partition("=")
-                    os.environ.setdefault(key.strip(), val.strip().strip('"').strip("'"))
-        print(f"[local_dev.py] Loaded env from {env_name}")
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, _, value = line.partition("=")
+                os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+        print(f"[local_dev] Loaded environment from {env_name}")
         break
 
 os.environ.setdefault("ENVIRONMENT", "local")
-os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
-os.environ.setdefault("AWS_REGION", "us-east-1")
 os.environ.setdefault("NEXT_PUBLIC_SUPABASE_URL", "https://batspallqzaxubikuuks.supabase.co")
 
-FUNCTIONS_DIR = Path(__file__).resolve().parent / "functions"
+# First path segment -> handler module
+ROUTES = {
+    "enquiries": "enquiries_service",
+    "bookings": "bookings_service",
+    "projects": "bookings_service",
+    "contracts": "contracts_service",
+    "studio-data": "studio_data_service",
+    "galleries": "studio_data_service",
+    "client-requests": "studio_data_service",
+    "finances": "studio_data_service",
+    "dashboard": "studio_data_service",
+    "pdf-generator": "pdf_generator",
+    "batch-email": "batch_email",
+}
 
-# ─── Discover Functions ───────────────────────────────────────────────────────
-functions_map = {}
-if FUNCTIONS_DIR.exists():
-    for entry in FUNCTIONS_DIR.iterdir():
-        if entry.is_dir() and (entry / "index.js").exists():
-            functions_map[entry.name] = str(entry / "index.js")
-            alias = entry.name.replace("-service", "")
-            functions_map[alias] = str(entry / "index.js")
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    "Access-Control-Max-Age": "86400",
+}
 
-print(f"[local_dev.py] Registered Lambda functions: {list(set(functions_map.keys()))}")
 
-# ─── Invoke JS Lambda function via Node runner ───────────────────────────────
-def invoke_js_lambda(file_path, event):
-    event_json = json.dumps(event)
-    runner_script = f"""
-    const path = require('path');
-    const mod = require({json.dumps(file_path)});
-    const event = {event_json};
-    Promise.resolve(mod.handler(event, {{}}))
-      .then(res => {{
-        process.stdout.write(JSON.stringify(res));
-      }})
-      .catch(err => {{
-        process.stderr.write(err.stack || err.message);
-        process.exit(1);
-      }});
-    """
-    proc = subprocess.run(
-        ["node", "-e", runner_script],
-        capture_output=True,
-        text=True,
-        cwd=str(root_dir),
-        env=os.environ
-    )
-    if proc.returncode != 0:
-        raise RuntimeError(f"Lambda execution error: {proc.stderr}")
-    try:
-        return json.loads(proc.stdout)
-    except json.JSONDecodeError:
-        return {"statusCode": 200, "body": proc.stdout}
+def load_handler(module_name: str):
+    module = importlib.import_module(f"handlers.{module_name}")
+    return importlib.reload(module).handler  # reload so code edits apply without a restart
 
-# ─── Build API Gateway event ──────────────────────────────────────────────────
-def build_api_gateway_event(method, path, query_string, headers, body_bytes, content_type):
+
+def build_event(method: str, path: str, query: str, headers: dict, body: bytes) -> dict:
     is_base64 = False
-    body = None
-    if body_bytes:
+    text = None
+    if body:
         try:
-            body = body_bytes.decode("utf-8")
+            text = body.decode("utf-8")
         except UnicodeDecodeError:
-            body = base64.b64encode(body_bytes).decode("utf-8")
+            text = base64.b64encode(body).decode("ascii")
             is_base64 = True
-
-    query_params = None
-    if query_string:
-        parsed = parse_qs(query_string, keep_blank_values=True)
-        query_params = {k: v[0] if len(v) == 1 else v for k, v in parsed.items()}
-
+    params = {k: v[0] for k, v in parse_qs(query, keep_blank_values=True).items()} if query else None
     return {
         "version": "2.0",
         "routeKey": "$default",
         "rawPath": path,
-        "rawQueryString": query_string or "",
-        "headers": dict(headers),
-        "queryStringParameters": query_params,
-        "body": body,
+        "rawQueryString": query,
+        "headers": {k.lower(): v for k, v in headers.items()},
+        "queryStringParameters": params,
+        "requestContext": {"http": {"method": method, "path": path}, "stage": "local"},
+        "body": text,
         "isBase64Encoded": is_base64,
-        "requestContext": {
-            "http": {"method": method, "path": path},
-            "stage": "local"
-        },
-        "httpMethod": method,
-        "path": path,
     }
 
-# ─── HTTP Request Handler ─────────────────────────────────────────────────────
-CORS_HEADERS = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, X-Amz-Date, X-Api-Key",
-}
 
-class LambdaProxyHandler(BaseHTTPRequestHandler):
-    def log_message(self, fmt, *args):
+class ThreadedServer(ThreadingMixIn, HTTPServer):
+    daemon_threads = True
+    allow_reuse_address = True
+
+
+class Proxy(BaseHTTPRequestHandler):
+    def log_message(self, fmt, *args):  # silence default logging
         pass
 
-    def handle_request(self):
+    def _send(self, status: int, headers: dict, body: bytes):
+        self.send_response(status)
+        for k, v in {**CORS_HEADERS, **headers}.items():
+            self.send_header(k, v)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _json(self, status: int, payload: dict):
+        self._send(status, {"Content-Type": "application/json"}, json.dumps(payload, indent=2).encode())
+
+    def handle_any(self):
         parsed = urlparse(self.path)
         path = parsed.path.rstrip("/") or "/"
-        query_string = parsed.query
 
-        # OPTIONS Preflight
         if self.command == "OPTIONS":
-            self.send_response(200)
-            for k, v in CORS_HEADERS.items():
-                self.send_header(k, v)
-            self.send_header("Content-Length", "0")
-            self.end_headers()
-            return
-
-        headers = {k: v for k, v in self.headers.items()}
-        content_length = int(headers.get("Content-Length", headers.get("content-length", 0)) or 0)
-        body_bytes = self.rfile.read(content_length) if content_length > 0 else b""
-        content_type = headers.get("Content-Type", "")
-
-        # Health check
+            return self._send(200, {}, b"")
         if path in ("/", "/health"):
-            payload = json.dumps({
-                "status": "online",
-                "service": "Pixeva CRM Local Lambda Server (Python)",
-                "availableFunctions": list(set(functions_map.keys())),
-            }, indent=2).encode("utf-8")
-            self.send_response(200)
-            for k, v in CORS_HEADERS.items():
-                self.send_header(k, v)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(payload)))
-            self.end_headers()
-            self.wfile.write(payload)
-            return
+            return self._json(200, {"status": "online", "runtime": "python", "routes": sorted(ROUTES)})
 
-        # Determine target
-        target = None
-        if path.startswith("/invoke/"):
-            target = path.split("/invoke/")[1]
-        elif path.startswith("/2015-03-31/functions/"):
-            target = path.split("/2015-03-31/functions/")[1].split("/invocations")[0]
-        else:
-            seg = path.strip("/").split("/")[0]
-            if seg in functions_map:
-                target = seg
+        segment = path.strip("/").split("/")[0]
+        module_name = ROUTES.get(segment)
+        if not module_name:
+            return self._json(404, {"error": "NotFound", "message": f"No Lambda function for {path}"})
 
-        if not target or target not in functions_map:
-            err_body = json.dumps({"error": "NotFound", "message": f"No Lambda function for {path}"}).encode("utf-8")
-            self.send_response(404)
-            for k, v in CORS_HEADERS.items():
-                self.send_header(k, v)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(err_body)))
-            self.end_headers()
-            self.wfile.write(err_body)
-            return
-
-        event = build_api_gateway_event(self.command, path, query_string, headers, body_bytes, content_type)
+        length = int(self.headers.get("Content-Length") or 0)
+        body = self.rfile.read(length) if length else b""
+        event = build_event(self.command, path, parsed.query, dict(self.headers.items()), body)
 
         try:
-            result = invoke_js_lambda(functions_map[target], event)
-            status_code = result.get("statusCode", 200)
-            res_headers = {**CORS_HEADERS, **result.get("headers", {})}
-            body_str = result.get("body", "")
-
-            if isinstance(body_str, (dict, list)):
-                body_bytes = json.dumps(body_str).encode("utf-8")
-                res_headers["Content-Type"] = "application/json"
-            elif isinstance(body_str, str):
-                body_bytes = body_str.encode("utf-8")
-            else:
-                body_bytes = str(body_str or "").encode("utf-8")
-
-            self.send_response(status_code)
-            for k, v in res_headers.items():
-                self.send_header(k, v)
-            self.send_header("Content-Length", str(len(body_bytes)))
-            self.end_headers()
-            self.wfile.write(body_bytes)
-            print(f"[local_dev.py] [{self.command}] {path} -> {target} | {status_code}")
-        except Exception as e:
+            result = load_handler(module_name)(event, None)
+        except Exception as exc:  # noqa: BLE001
             traceback.print_exc()
-            err_body = json.dumps({"error": "LambdaExecutionError", "message": str(e)}).encode("utf-8")
-            self.send_response(500)
-            for k, v in CORS_HEADERS.items():
-                self.send_header(k, v)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(err_body)))
-            self.end_headers()
-            self.wfile.write(err_body)
+            return self._json(500, {"error": "LambdaExecutionError", "message": str(exc)})
 
-    def do_GET(self):    self.handle_request()
-    def do_POST(self):   self.handle_request()
-    def do_PUT(self):    self.handle_request()
-    def do_PATCH(self):  self.handle_request()
-    def do_DELETE(self): self.handle_request()
-    def do_OPTIONS(self):self.handle_request()
+        out = result.get("body") or ""
+        if not isinstance(out, str):
+            out = json.dumps(out)
+        self._send(result.get("statusCode", 200), result.get("headers") or {}, out.encode("utf-8"))
+        print(f"[local_dev] {self.command} {path} -> {module_name} | {result.get('statusCode', 200)}")
+
+    do_GET = do_POST = do_PUT = do_DELETE = do_OPTIONS = handle_any
+
 
 if __name__ == "__main__":
-    PORT = int(os.environ.get("PORT", os.environ.get("LAMBDA_PORT", 5001)))
-    server = ThreadedHTTPServer(("0.0.0.0", PORT), LambdaProxyHandler)
-    print(f"\n============================================================")
-    print(f"⚡ Pixeva Local Lambda Server (Python) running at http://localhost:{PORT}")
-    print(f"🩺 Health: http://localhost:{PORT}/health")
-    print(f"============================================================\n")
+    port = int(os.environ.get("PORT", os.environ.get("LAMBDA_PORT", 5001)))
+    server = ThreadedServer(("127.0.0.1", port), Proxy)
+    print(f"\nPixeva local Lambda server (Python {sys.version.split()[0]}) on http://localhost:{port}")
+    print(f"Health: http://localhost:{port}/health\n")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n[local_dev.py] Server stopped.")
+        print("\n[local_dev] Server stopped.")

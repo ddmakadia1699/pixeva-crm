@@ -45,3 +45,8 @@ response.json
 .aws-sam/
 client_secret_*.json
 
+# python
+__pycache__/
+*.pyc
+lambda/.venv/
+
