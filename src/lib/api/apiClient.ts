@@ -6,6 +6,8 @@
  * Direct Supabase database queries from the frontend are prohibited.
  */
 
+import { supabase } from '@/lib/supabase/client';
+
 export const DEFAULT_ACCOUNT_ID = 'user_3I2lBpsfTZcxw4L1GpKAMPCc45a';
 const ACCOUNT_STORAGE_KEY = 'pixeva_active_account_id';
 
@@ -39,28 +41,62 @@ export function getApiGatewayUrl(): string {
   return 'https://zvt3ypue5l.execute-api.us-east-1.amazonaws.com';
 }
 
+/** Current Supabase login token (auto-refreshed by supabase-js), or null when logged out. */
+async function getAccessToken(): Promise<string | null> {
+  try {
+    if (!supabase) return null;
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function apiRequest<T = any>(
   path: string,
-  options: RequestInit = {}
+  rawOptions: RequestInit & { skipAuth?: boolean } = {}
 ): Promise<{ success: boolean; data?: T; error?: string; accountId?: string }> {
+  // skipAuth is only for the public enquiry form, which is used by logged-out visitors.
+  const { skipAuth, ...options } = rawOptions;
   const baseUrl = getApiGatewayUrl();
   const accountId = getActiveAccountId();
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   const url = `${baseUrl}${cleanPath}`;
+  const token = skipAuth ? null : await getAccessToken();
 
+  // The server derives the tenant from the verified token; no account id is sent.
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'x-account-id': accountId,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers as Record<string, string> || {}),
   };
+
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
 
   try {
     const res = await fetch(url, {
       ...options,
       headers,
+      signal: controller ? controller.signal : undefined,
     });
+    if (timeoutId) clearTimeout(timeoutId);
 
     if (!res.ok) {
+      // If primary gateway fails, try Next.js local server proxy fallback (/api/...)
+      if (typeof window !== 'undefined' && !url.includes('/api/')) {
+        try {
+          const fallbackRes = await fetch(`/api${cleanPath}`, {
+            ...options,
+            headers,
+          });
+          if (fallbackRes.ok) {
+            const json = await fallbackRes.json();
+            return { success: json.success !== false, data: json.data !== undefined ? json.data : json, accountId };
+          }
+        } catch {}
+      }
+
       const errText = await res.text().catch(() => 'Network response was not ok');
       let parsedErr: any = null;
       try {
@@ -80,17 +116,19 @@ async function apiRequest<T = any>(
       accountId: json.accountId || accountId,
     };
   } catch (err: any) {
-    // If local 5001 is unreachable, attempt Next.js local server proxy fallback (/api/...)
-    if (baseUrl.includes('5001') && typeof window !== 'undefined') {
+    if (timeoutId) clearTimeout(timeoutId);
+
+    // If primary gateway is unreachable/timed out, attempt Next.js local server proxy fallback (/api/...)
+    if (typeof window !== 'undefined' && !url.includes('/api/')) {
       try {
         const nextApiFallback = `/api${cleanPath}`;
         const fallbackRes = await fetch(nextApiFallback, {
           ...options,
-          headers: { ...headers, 'x-account-id': accountId },
+          headers,
         });
         if (fallbackRes.ok) {
           const json = await fallbackRes.json();
-          return { success: true, data: json.data !== undefined ? json.data : json, accountId };
+          return { success: json.success !== false, data: json.data !== undefined ? json.data : json, accountId };
         }
       } catch (fallbackErr) {}
     }
@@ -126,6 +164,16 @@ export const apiClient = {
       const res = await apiRequest('/enquiries', {
         method: 'POST',
         body: JSON.stringify(lead),
+      });
+      return res.data;
+    },
+    // Public client booking form: no login, so no token is attached. The Lambda only
+    // accepts this unauthenticated path for creating an enquiry for the given studio id.
+    createPublic: async (lead: any) => {
+      const res = await apiRequest('/enquiries', {
+        method: 'POST',
+        body: JSON.stringify(lead),
+        skipAuth: true,
       });
       return res.data;
     },

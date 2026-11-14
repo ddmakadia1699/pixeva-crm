@@ -25,35 +25,82 @@ import {
   Lock,
   Clock,
   ArrowRight,
+  Edit,
+  Plus,
   X
 } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 import { openProposalPdfWindow, openReceiptPdfWindow } from '@/lib/pdf/generateProposalPdf';
 import { Enquiry } from '@/lib/supabase/types';
 
+export interface ProposalDeliverable {
+  id: string;
+  category: string;
+  badge: string;
+  title: string;
+  description: string;
+}
+
+const DEFAULT_PROPOSAL_DELIVERABLES: ProposalDeliverable[] = [
+  {
+    id: 'deliv-1',
+    category: 'Photography',
+    badge: 'All Days',
+    title: 'Candid & Traditional Photo Coverage',
+    description: 'Full-day continuous coverage capturing raw emotions, rituals, and family portraits. Delivered in high-res JPEG on private cloud gallery.'
+  },
+  {
+    id: 'deliv-2',
+    category: 'Cinematography',
+    badge: '4K UHD',
+    title: '4K Cinematic Teaser + Feature Film',
+    description: 'A 3-5 min viral highlight reel + 25-30 min cinematic narrative film featuring professional sound mixing, color grading, and licensed music.'
+  },
+  {
+    id: 'deliv-3',
+    category: 'Aerial Drone',
+    badge: 'Licensed Pilot',
+    title: 'Aerial Drone 4K Cinematography',
+    description: 'Sweeping 4K venue establishing shots, grand guest entrances, and dramatic outdoor ceremony angles.'
+  },
+  {
+    id: 'deliv-4',
+    category: 'Heirloom Print',
+    badge: 'Handcrafted',
+    title: 'Luxury Canvera Hardcover Album',
+    description: '40-page flush-mount heirloom album with archival velvet paper, custom gold foil embossed names, and luxury presentation box.'
+  }
+];
+
 export default function ClientProposalPage() {
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, currency } = useCurrency();
   const [isMounted, setIsMounted] = useState(false);
   const params = useParams();
   const proposalId = (params?.id as string) || 'prop-default';
 
   const [enquiry, setEnquiry] = useState<Enquiry>({
     id: proposalId,
-    name: 'Priya & Rohan Sharma',
+    name: 'Rahul & Priya',
     contact: '+91 98765 43210',
-    email: 'priya.rohan@weddingmail.com',
-    event_name: 'Royal Destination Wedding & Sangeet',
-    venue: 'Taj Lake Palace, Udaipur',
-    received_on: '2026-11-20',
+    email: 'client@example.com',
+    event_name: 'Wedding & Reception',
+    venue: 'Grand Palace Hotel',
+    received_on: new Date().toISOString().slice(0, 10),
     source: 'Instagram',
     estimated_budget: 250000,
     status: 'proposal',
     created_at: new Date().toISOString(),
   });
 
+  const [deliverables, setDeliverables] = useState<ProposalDeliverable[]>(DEFAULT_PROPOSAL_DELIVERABLES);
+  const [customBudget, setCustomBudget] = useState<number>(250000);
+  const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
+  const [modalBudget, setModalBudget] = useState<number>(250000);
+  const [modalDeliverables, setModalDeliverables] = useState<ProposalDeliverable[]>(DEFAULT_PROPOSAL_DELIVERABLES);
+
   // Signature States
   const [signatureMode, setSignatureMode] = useState<'draw' | 'type'>('draw');
-  const [typedSignature, setTypedSignature] = useState('Priya Sharma');
+  const [typedSignature, setTypedSignature] = useState('Rahul & Priya');
   const [hasDrawn, setHasDrawn] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [lastPoint, setLastPoint] = useState<{ x: number; y: number } | null>(null);
@@ -66,17 +113,68 @@ export default function ClientProposalPage() {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Load matching enquiry from localStorage if available & mark mounted
+  // Load matching project or enquiry from localStorage & mark mounted
   useEffect(() => {
     setIsMounted(true);
+    let matchedBudget = 250000;
+
     try {
-      const saved = null /* localStorage.getItem('pixeva_enquiries') */;
+      // 1. Check pixeva_projects first (supports links originating from /projects)
+      const savedProjects = localStorage.getItem('pixeva_projects');
+      if (savedProjects) {
+        const projList = JSON.parse(savedProjects);
+        const projMatch = projList.find(
+          (p: any) => p.id === proposalId || (p.name && p.name.toLowerCase().includes(proposalId.toLowerCase()))
+        );
+        if (projMatch) {
+          matchedBudget = Number(projMatch.total_amount) || 250000;
+          setEnquiry({
+            id: projMatch.id,
+            name: projMatch.client || projMatch.name || 'Rahul & Priya',
+            contact: projMatch.client_phone || '+91 98765 43210',
+            email: '',
+            event_name: projMatch.name || 'Wedding & Reception',
+            venue: projMatch.venue || 'Grand Palace Hotel',
+            received_on: projMatch.first_event || new Date().toISOString().slice(0, 10),
+            source: 'Website',
+            estimated_budget: matchedBudget,
+            status: 'proposal',
+            created_at: projMatch.created_at || new Date().toISOString(),
+          });
+          setTypedSignature(projMatch.client || 'Rahul & Priya');
+          setCustomBudget(matchedBudget);
+        }
+      }
+
+      // 2. Check pixeva_enquiries if no project match
+      const saved = localStorage.getItem('pixeva_enquiries');
       if (saved) {
         const list: Enquiry[] = JSON.parse(saved);
-        const match = list.find((e) => e.id === proposalId || e.name.toLowerCase().includes(proposalId.toLowerCase()));
+        const match = list.find((e) => e.id === proposalId || (e.name && e.name.toLowerCase().includes(proposalId.toLowerCase())));
         if (match) {
+          matchedBudget = match.estimated_budget || 250000;
           setEnquiry(match);
           setTypedSignature(match.name);
+          setCustomBudget(matchedBudget);
+        }
+      }
+
+      // 3. Load custom deliverables if previously saved
+      const savedDelivs = localStorage.getItem(`pixeva_proposal_deliv_${proposalId}`);
+      if (savedDelivs) {
+        const parsed = JSON.parse(savedDelivs);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setDeliverables(parsed);
+          setModalDeliverables(parsed);
+        }
+      }
+
+      const savedBudget = localStorage.getItem(`pixeva_proposal_budget_${proposalId}`);
+      if (savedBudget) {
+        const num = Number(savedBudget);
+        if (num > 0) {
+          setCustomBudget(num);
+          setModalBudget(num);
         }
       }
     } catch (e) {
@@ -182,12 +280,41 @@ export default function ClientProposalPage() {
     }
   };
 
-  const budget = enquiry.estimated_budget || 250000;
+  const budget = customBudget || enquiry.estimated_budget || 250000;
   const advance = Math.round(budget * 0.2);
   const eventDay = Math.round(budget * 0.6);
   const finalBal = Math.round(budget * 0.2);
 
   const isSignatureReady = signatureMode === 'type' ? typedSignature.trim().length > 0 : hasDrawn;
+
+  const handleSaveCustomProposal = (e: React.FormEvent) => {
+    e.preventDefault();
+    setDeliverables(modalDeliverables);
+    setCustomBudget(modalBudget);
+
+    setEnquiry((prev) => ({
+      ...prev,
+      estimated_budget: modalBudget,
+    }));
+
+    try {
+      localStorage.setItem(`pixeva_proposal_deliv_${proposalId}`, JSON.stringify(modalDeliverables));
+      localStorage.setItem(`pixeva_proposal_budget_${proposalId}`, String(modalBudget));
+
+      const savedProjects = localStorage.getItem('pixeva_projects');
+      if (savedProjects) {
+        const projList = JSON.parse(savedProjects);
+        const updated = projList.map((p: any) =>
+          p.id === proposalId ? { ...p, total_amount: modalBudget } : p
+        );
+        localStorage.setItem('pixeva_projects', JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.error('Error saving proposal customization:', err);
+    }
+
+    setIsCustomizeModalOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#07090e] text-slate-900 dark:text-slate-100 selection:bg-sky-500 selection:text-white font-sans antialiased overflow-x-hidden transition-colors duration-300">
@@ -226,8 +353,8 @@ export default function ClientProposalPage() {
             </button>
 
             <button
-              onClick={() => openProposalPdfWindow(enquiry)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-md shadow-sky-500/25 transition-all transform active:scale-95"
+              onClick={() => openProposalPdfWindow({ ...enquiry, estimated_budget: budget }, deliverables)}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-md shadow-sky-500/25 transition-all transform active:scale-95 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download PDF</span>
@@ -324,59 +451,59 @@ export default function ClientProposalPage() {
 
         {/* 3D Deliverables Grid with Hover Lift */}
         <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Layers className="w-5 h-5 text-sky-500" />
-            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">Included Services & Master Deliverables</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center space-x-2">
+              <Layers className="w-5 h-5 text-sky-500" />
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">Included Services & Master Deliverables</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setModalBudget(budget);
+                setModalDeliverables([...deliverables]);
+                setIsCustomizeModalOpen(true);
+              }}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer self-start sm:self-auto"
+            >
+              <Edit className="w-3.5 h-3.5 text-sky-500" />
+              <span>Customize Services & Pricing</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Deliverable 1 */}
-            <div className="group p-6 rounded-3xl bg-white/90 dark:bg-[#0e1628]/90 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.06)] dark:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.4)] hover:-translate-y-1.5 transition-all duration-300 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider">Photography</span>
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">All Days</span>
-              </div>
-              <h4 className="font-extrabold text-slate-900 dark:text-white text-base">Candid & Traditional Photo Coverage</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                Full-day continuous coverage capturing raw emotions, rituals, and family portraits. Delivered in high-res JPEG on private cloud gallery.
-              </p>
-            </div>
+            {deliverables.map((deliv, index) => {
+              const categoryColors: Record<string, string> = {
+                Photography: 'text-sky-600 dark:text-sky-400 bg-sky-500/10 border-sky-500/20',
+                Cinematography: 'text-purple-600 dark:text-purple-400 bg-purple-500/10 border-purple-500/20',
+                'Aerial Drone': 'text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
+                Drone: 'text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
+                'Heirloom Print': 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20',
+                Album: 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20',
+              };
+              const badgeStyle = categoryColors[deliv.category] || 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border-indigo-500/20';
 
-            {/* Deliverable 2 */}
-            <div className="group p-6 rounded-3xl bg-white/90 dark:bg-[#0e1628]/90 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.06)] dark:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.4)] hover:-translate-y-1.5 transition-all duration-300 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-purple-600 dark:text-purple-400 uppercase tracking-wider">Cinematography</span>
-                <span className="text-[10px] text-purple-600 dark:text-purple-400 font-extrabold bg-purple-500/10 px-2.5 py-0.5 rounded-full border border-purple-500/20">4K UHD</span>
-              </div>
-              <h4 className="font-extrabold text-slate-900 dark:text-white text-base">4K Cinematic Teaser + Feature Film</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                A 3-5 min viral highlight reel + 25-30 min cinematic narrative film featuring professional sound mixing, color grading, and licensed music.
-              </p>
-            </div>
-
-            {/* Deliverable 3 */}
-            <div className="group p-6 rounded-3xl bg-white/90 dark:bg-[#0e1628]/90 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.06)] dark:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.4)] hover:-translate-y-1.5 transition-all duration-300 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">Aerial Drone</span>
-                <span className="text-[10px] text-cyan-600 dark:text-cyan-400 font-extrabold bg-cyan-500/10 px-2.5 py-0.5 rounded-full border border-cyan-500/20">Licensed Pilot</span>
-              </div>
-              <h4 className="font-extrabold text-slate-900 dark:text-white text-base">Aerial Drone 4K Cinematography</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                Sweeping 4K venue establishing shots, grand guest entrances, and dramatic outdoor ceremony angles.
-              </p>
-            </div>
-
-            {/* Deliverable 4 */}
-            <div className="group p-6 rounded-3xl bg-white/90 dark:bg-[#0e1628]/90 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.06)] dark:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.4)] hover:-translate-y-1.5 transition-all duration-300 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">Heirloom Print</span>
-                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-extrabold bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">Handcrafted</span>
-              </div>
-              <h4 className="font-extrabold text-slate-900 dark:text-white text-base">Luxury Canvera Hardcover Album</h4>
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                40-page flush-mount heirloom album with archival velvet paper, custom gold foil embossed names, and luxury presentation box.
-              </p>
-            </div>
+              return (
+                <div
+                  key={deliv.id || index}
+                  className="group p-6 rounded-3xl bg-white/90 dark:bg-[#0e1628]/90 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.06)] dark:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.4)] hover:-translate-y-1.5 transition-all duration-300 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                      {deliv.category}
+                    </span>
+                    <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${badgeStyle}`}>
+                      {deliv.badge}
+                    </span>
+                  </div>
+                  <h4 className="font-extrabold text-slate-900 dark:text-white text-base">
+                    {deliv.title}
+                  </h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                    {deliv.description}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -648,7 +775,7 @@ export default function ClientProposalPage() {
                       setPaymentSuccess(true);
                       // Update local storage status to booked
                       try {
-                        const saved = null /* localStorage.getItem('pixeva_enquiries') */;
+                        const saved = localStorage.getItem('pixeva_enquiries');
                         if (saved) {
                           const list: Enquiry[] = JSON.parse(saved);
                           const updated = list.map((e) =>
@@ -669,6 +796,191 @@ export default function ClientProposalPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* CUSTOMIZE PROPOSAL & DELIVERABLES MODAL */}
+      {isCustomizeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-2xl bg-white dark:bg-[#0e1628] rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-white/10 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-white/10 shrink-0">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                  Customize Proposal Services & Pricing
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Edit deliverables, service descriptions, and total package investment for this client.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCustomizeModalOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCustomProposal} className="flex-1 overflow-y-auto py-5 space-y-6 custom-scrollbar text-xs">
+              {/* Total Package Investment */}
+              <div className="p-4 rounded-2xl bg-sky-50/70 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 space-y-2">
+                <label className="font-bold text-slate-900 dark:text-white block">
+                  Total Package Investment ({currency.symbol.trim()})
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={modalBudget}
+                    onChange={(e) => setModalBudget(Number(e.target.value) || 0)}
+                    className="w-full bg-white dark:bg-[#111827] border border-sky-300 dark:border-sky-500/30 rounded-xl px-3.5 py-2.5 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    placeholder="250000"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Booking Advance (20%): {formatCurrency(Math.round(modalBudget * 0.2))} • Event Day (60%): {formatCurrency(Math.round(modalBudget * 0.6))} • Final Delivery (20%): {formatCurrency(Math.round(modalBudget * 0.2))}
+                </p>
+              </div>
+
+              {/* Deliverables List */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-sm text-slate-900 dark:text-white">
+                    Included Services ({modalDeliverables.length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalDeliverables([
+                        ...modalDeliverables,
+                        {
+                          id: `deliv-${Date.now()}`,
+                          category: 'Photography',
+                          badge: 'Included',
+                          title: 'Custom Photography / Video Deliverable',
+                          description: 'Full-day coverage and deliverables specifications.',
+                        },
+                      ]);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-500/15 text-sky-600 dark:text-sky-300 font-bold text-xs flex items-center space-x-1 cursor-pointer transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Service</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3.5">
+                  {modalDeliverables.map((deliv, idx) => (
+                    <div
+                      key={deliv.id || idx}
+                      className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 space-y-3 relative group"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-[11px] text-slate-400">
+                          Service #{idx + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModalDeliverables(modalDeliverables.filter((_, i) => i !== idx));
+                          }}
+                          className="p-1 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer"
+                          title="Remove deliverable"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="font-semibold text-slate-600 dark:text-slate-300 block mb-1">
+                            Category
+                          </label>
+                          <input
+                            type="text"
+                            value={deliv.category}
+                            onChange={(e) => {
+                              const next = [...modalDeliverables];
+                              next[idx].category = e.target.value;
+                              setModalDeliverables(next);
+                            }}
+                            placeholder="e.g. Photography, Drone, Video"
+                            className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-semibold text-slate-600 dark:text-slate-300 block mb-1">
+                            Badge / Tag
+                          </label>
+                          <input
+                            type="text"
+                            value={deliv.badge}
+                            onChange={(e) => {
+                              const next = [...modalDeliverables];
+                              next[idx].badge = e.target.value;
+                              setModalDeliverables(next);
+                            }}
+                            placeholder="e.g. All Days, 4K UHD, 40 Pages"
+                            className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="font-semibold text-slate-600 dark:text-slate-300 block mb-1">
+                          Service Title
+                        </label>
+                        <input
+                          type="text"
+                          value={deliv.title}
+                          onChange={(e) => {
+                            const next = [...modalDeliverables];
+                            next[idx].title = e.target.value;
+                            setModalDeliverables(next);
+                          }}
+                          placeholder="e.g. Candid & Traditional Photo Coverage"
+                          className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-semibold focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-semibold text-slate-600 dark:text-slate-300 block mb-1">
+                          Description
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={deliv.description}
+                          onChange={(e) => {
+                            const next = [...modalDeliverables];
+                            next[idx].description = e.target.value;
+                            setModalDeliverables(next);
+                          }}
+                          placeholder="Describe what is delivered, coverage timing, resolution..."
+                          className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="pt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-end space-x-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsCustomizeModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 shadow-md shadow-sky-500/25 cursor-pointer"
+                >
+                  Save Proposal Changes
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

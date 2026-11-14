@@ -22,11 +22,14 @@ import {
   ChevronLeft, 
   ChevronRight, 
   X,
-  MoreVertical
+  MoreVertical,
+  Coins,
+  QrCode
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeProvider';
 import { useAuth } from '@/context/AuthContext';
 import { useSidebar } from '@/context/SidebarContext';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface NavItem {
   label: string;
@@ -36,12 +39,13 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Enquiries', href: '/enquiries', icon: Inbox },
   { label: 'Projects', href: '/projects', icon: Briefcase },
   { label: 'Crew Scheduling', href: '/crew-scheduling', icon: CalendarDays },
   { label: 'Finances', href: '/finances', icon: DollarSign },
   { label: 'Post Production', href: '/post-production', icon: Layers },
+  { label: 'AI Galleries', href: '/galleries', icon: QrCode },
   { label: 'Client Requests', href: '/client-requests', icon: MessageSquare },
   { label: 'Data', href: '/data', icon: HardDrive },
   { label: 'Team', href: '/team', icon: Users },
@@ -54,6 +58,7 @@ export default function Sidebar() {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { isCollapsed, isMobileOpen, toggleCollapse, closeMobile } = useSidebar();
+  const { currency } = useCurrency();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -80,7 +85,7 @@ export default function Sidebar() {
     };
   }, [isUserMenuOpen, closeMobile]);
 
-  if (pathname === '/login' || pathname.startsWith('/enquire') || pathname.startsWith('/proposal')) {
+  if (pathname === '/' || pathname === '/login' || pathname.startsWith('/enquire') || pathname.startsWith('/proposal')) {
     return null;
   }
 
@@ -111,7 +116,7 @@ export default function Sidebar() {
           {/* Brand Header */}
           <div className="flex items-center justify-between px-1.5 py-1">
             <Link
-              href="/"
+              href="/dashboard"
               className={`flex items-center space-x-2.5 group ${isCollapsed ? 'md:justify-center md:w-full' : ''}`}
             >
               <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform shrink-0">
@@ -244,6 +249,20 @@ export default function Sidebar() {
               </button>
 
               <div className="space-y-0.5 text-xs">
+                <Link
+                  href="/settings?tab=currency"
+                  onClick={() => setIsUserMenuOpen(false)}
+                  className="flex items-center justify-between px-2 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-center space-x-2">
+                    <Coins className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Currency</span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">
+                    {currency.flag} {currency.code}
+                  </span>
+                </Link>
+
                 <Link
                   href="/settings"
                   onClick={() => setIsUserMenuOpen(false)}

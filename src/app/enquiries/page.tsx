@@ -5,7 +5,6 @@ import EnquiriesHeader, { EnquiryTab } from '@/components/enquiries/EnquiriesHea
 import EnquiriesListTab from '@/components/enquiries/EnquiriesListTab';
 import LandingPageTab from '@/components/enquiries/LandingPageTab';
 import AnalyticsTab from '@/components/enquiries/AnalyticsTab';
-import IntegrationsTab from '@/components/enquiries/IntegrationsTab';
 import FeedbackModal from '@/components/enquiries/FeedbackModal';
 
 import { Enquiry, EnquiryStatus } from '@/lib/supabase/types';
@@ -44,7 +43,7 @@ export default function EnquiriesPage() {
   const autoCreateProjectFromEnquiry = (enq: Enquiry) => {
     try {
       if (typeof window === 'undefined') return;
-      const rawProjects = null /* localStorage.getItem('pixeva_projects') */;
+      const rawProjects = localStorage.getItem('pixeva_projects');
       let projects = rawProjects ? JSON.parse(rawProjects) : [];
       
       const enqEventName = enq.event_name || `${enq.name}'s Event`;
@@ -100,14 +99,28 @@ export default function EnquiriesPage() {
     });
   };
 
-  // 1. On Mount: Load via AWS API Gateway scoped to active account ID
+  // 1. On Mount: Immediately hydrate from local storage, then sync with cloud
   useEffect(() => {
     const deletedSet = getDeletedIds();
+
+    // Immediately load from localStorage so user sees saved data instantly
+    try {
+      const saved = localStorage.getItem(ENQUIRIES_STORAGE_KEY);
+      if (saved) {
+        const parsed: Enquiry[] = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setEnquiries(parsed.filter((e) => !deletedSet.has(e.id)));
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to parse local enquiries cache:', e);
+    }
+    setIsHydrated(true);
 
     async function loadFromCloud() {
       try {
         const cloudData = await apiClient.enquiries.list();
-        if (Array.isArray(cloudData)) {
+        if (Array.isArray(cloudData) && cloudData.length > 0) {
           const mapped: Enquiry[] = cloudData
             .map((lead: any) => ({
               id: lead.id,
@@ -117,7 +130,7 @@ export default function EnquiriesPage() {
               event_name: lead.company || 'Event',
               event_type: lead.notes?.includes('wedding') ? 'wedding' : 'corporate',
               event_date: lead.notes?.match(/\d{4}-\d{2}-\d{2}/)?.[0] || new Date().toISOString().split('T')[0],
-              estimated_budget: Number(lead.estimated_value) || 0,
+              estimated_budget: Number(lead.estimated_value) || undefined,
               source: lead.source || 'Website',
               status: lead.status || 'new',
               notes: lead.notes || '',
@@ -125,28 +138,21 @@ export default function EnquiriesPage() {
             }))
             .filter((item: Enquiry) => !deletedSet.has(item.id));
 
-          setEnquiries(mapped);
-          try {
-            localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(mapped));
-          } catch { }
-          setIsHydrated(true);
-          return;
-        }
-      } catch (e) {
-        console.warn('API Gateway sync notice, checking local cache:', e);
-      }
-
-      // Local storage fallback if offline
-      try {
-        const saved = null /* localStorage.getItem(ENQUIRIES_STORAGE_KEY) */;
-        if (saved) {
-          const parsed: Enquiry[] = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setEnquiries(parsed.filter((e) => !deletedSet.has(e.id)));
+          if (mapped.length > 0) {
+            setEnquiries((prev) => {
+              const cloudIds = new Set(mapped.map((m) => m.id));
+              const localOnly = prev.filter((p) => !cloudIds.has(p.id) && !deletedSet.has(p.id));
+              const merged = [...mapped, ...localOnly];
+              try {
+                localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(merged));
+              } catch { }
+              return merged;
+            });
           }
         }
-      } catch { }
-      setIsHydrated(true);
+      } catch (e) {
+        console.warn('API Gateway sync notice, using local cache:', e);
+      }
     }
 
     loadFromCloud();
@@ -295,12 +301,18 @@ export default function EnquiriesPage() {
           onDeleteEnquiry={handleDeleteEnquiry}
           onDeleteBatchEnquiries={handleDeleteBatchEnquiries}
           onClearAllEnquiries={handleClearAllEnquiries}
+          onOpenAnalytics={() => setActiveTab('analytics')}
         />
       )}
 
       {activeTab === 'landing-page' && <LandingPageTab />}
-      {activeTab === 'analytics' && <AnalyticsTab enquiries={enquiries} />}
-      {activeTab === 'integrations' && <IntegrationsTab />}
+
+      {activeTab === 'analytics' && (
+        <AnalyticsTab
+          enquiries={enquiries}
+          onBackToEnquiries={() => setActiveTab('enquiries')}
+        />
+      )}
 
       {/* Floating Feedback Modal */}
       <FeedbackModal />

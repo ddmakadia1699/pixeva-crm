@@ -20,6 +20,7 @@ export type EnquiryStatus =
   | 'qualified' 
   | 'proposal' 
   | 'booked' 
+  | 'Booked'
   | 'unqualified'
   | 'New'
   | 'Follow Up'

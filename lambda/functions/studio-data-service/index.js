@@ -27,19 +27,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, x-account-id, X-Account-Id',
 };
 
-function extractAccountId(event, payload) {
-  const headers = event?.headers || {};
-  return (
-    headers['x-account-id'] ||
-    headers['X-Account-Id'] ||
-    headers['x-accountid'] ||
-    event?.queryStringParameters?.accountId ||
-    event?.queryStringParameters?.account_id ||
-    payload?.account_id ||
-    payload?.accountId ||
-    'user_3I2lBpsfTZcxw4L1GpKAMPCc45a'
-  );
-}
+const { authenticate, authFailure } = require('../../shared/auth');
 
 const SEED_GALLERIES = [
   {
@@ -199,7 +187,10 @@ exports.handler = async (event) => {
 
   const supabase = getSupabase();
   const rawBody = typeof event.body === 'string' ? JSON.parse(event.body || '{}') : (event.body || event);
-  const accountId = extractAccountId(event, rawBody);
+  // Tenant comes ONLY from the verified Supabase JWT, never from client-supplied fields.
+  const auth = await authenticate(event);
+  if (!auth.ok) return authFailure(auth, CORS_HEADERS);
+  const accountId = auth.userId;
 
   // Identify resource type: e.g. /galleries, /client-requests, /finances
   const rawPath = event.rawPath || event.path || '';

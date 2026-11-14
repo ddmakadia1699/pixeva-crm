@@ -12,6 +12,9 @@ import {
   Download,
   Calendar,
   DollarSign,
+  IndianRupee,
+  Euro,
+  PoundSterling,
   Mail,
   Phone,
   Tag,
@@ -33,10 +36,92 @@ import {
   UserPlus,
   MapPin,
   Users,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Camera,
+  Globe,
+  Compass,
+  Clock,
+  Share2,
+  Check,
+  Copy,
+  TrendingUp,
+  Edit3,
+  SlidersHorizontal,
+  MoreHorizontal,
+  Inbox,
+  BarChart2
 } from 'lucide-react';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { openProposalPdfWindow } from '@/lib/pdf/generateProposalPdf';
+
+// Professional Options with Lucide Icons (Zero Emojis)
+const LEAD_SOURCE_OPTIONS: { value: EnquirySource; label: string; icon: React.ElementType; iconColor: string }[] = [
+  { value: 'Instagram', label: 'Instagram', icon: Camera, iconColor: 'text-pink-500' },
+  { value: 'Website', label: 'Website', icon: Globe, iconColor: 'text-blue-500' },
+  { value: 'Landing Page', label: 'Landing Page', icon: Compass, iconColor: 'text-indigo-500' },
+  { value: 'Referral', label: 'Referral / Word of Mouth', icon: Users, iconColor: 'text-emerald-500' },
+  { value: 'Google', label: 'Google Search', icon: Search, iconColor: 'text-amber-500' },
+  { value: 'Google Ads', label: 'Google Ads', icon: Search, iconColor: 'text-amber-600' },
+  { value: 'WhatsApp', label: 'WhatsApp Direct', icon: MessageSquare, iconColor: 'text-emerald-600' },
+  { value: 'Facebook', label: 'Facebook', icon: Share2, iconColor: 'text-blue-600' },
+  { value: 'Inbound API', label: 'Inbound API', icon: Cpu, iconColor: 'text-violet-500' },
+  { value: 'Other', label: 'Other', icon: Tag, iconColor: 'text-slate-400' },
+];
+
+const ADD_PIPELINE_STAGE_OPTIONS: { value: EnquiryStatus; label: string; icon: React.ElementType; iconColor: string }[] = [
+  { value: 'New', label: 'New Lead', icon: Sparkles, iconColor: 'text-blue-500' },
+  { value: 'Follow Up', label: 'Follow Up', icon: Clock, iconColor: 'text-amber-500' },
+  { value: 'Meeting Fixed', label: 'Meeting Fixed', icon: Calendar, iconColor: 'text-indigo-500' },
+  { value: 'Proposal Sent', label: 'Proposal Sent', icon: FileText, iconColor: 'text-purple-500' },
+  { value: 'Booked', label: 'Booked', icon: CheckCircle2, iconColor: 'text-emerald-500' },
+  { value: 'Closed/Lost', label: 'Closed / Lost', icon: AlertCircle, iconColor: 'text-rose-500' },
+];
+
+const EDIT_PIPELINE_STAGE_OPTIONS: { value: EnquiryStatus; label: string; icon: React.ElementType; iconColor: string }[] = [
+  { value: 'new', label: 'New (Fresh Lead)', icon: Sparkles, iconColor: 'text-blue-500' },
+  { value: 'contacted', label: 'Contacted (WhatsApp/Call)', icon: Clock, iconColor: 'text-amber-500' },
+  { value: 'qualified', label: 'Qualified (Date & Budget Match)', icon: CheckCircle2, iconColor: 'text-indigo-500' },
+  { value: 'proposal', label: 'Proposal (Quote Sent)', icon: FileText, iconColor: 'text-purple-500' },
+  { value: 'booked', label: 'Booked (Deposit Paid)', icon: CheckCircle2, iconColor: 'text-emerald-500' },
+];
+
+function getBudgetPlaceholder(currencyCode: string, symbol: string): string {
+  switch (currencyCode) {
+    case 'INR':
+      return 'e.g. ₹2,50,000';
+    case 'USD':
+      return 'e.g. $3,500';
+    case 'EUR':
+      return 'e.g. €3,000';
+    case 'GBP':
+      return 'e.g. £2,500';
+    case 'AED':
+      return 'e.g. AED 12,000';
+    case 'CAD':
+      return 'e.g. CA$4,500';
+    case 'AUD':
+      return 'e.g. A$5,000';
+    case 'SGD':
+      return 'e.g. S$4,500';
+    default:
+      return `e.g. ${symbol.trim()}3,500`;
+  }
+}
+
+function renderCurrencyIcon(code: string) {
+  switch (code) {
+    case 'INR':
+      return <IndianRupee className="w-4 h-4" />;
+    case 'EUR':
+      return <Euro className="w-4 h-4" />;
+    case 'GBP':
+      return <PoundSterling className="w-4 h-4" />;
+    case 'AED':
+      return <span className="text-[10px] font-bold font-mono tracking-tight leading-none text-slate-400">AED</span>;
+    default:
+      return <DollarSign className="w-4 h-4" />;
+  }
+}
 
 interface EnquiriesListTabProps {
   enquiries: Enquiry[];
@@ -47,6 +132,7 @@ interface EnquiriesListTabProps {
   onDeleteEnquiry: (id: string) => void;
   onDeleteBatchEnquiries?: (ids: string[]) => void;
   onClearAllEnquiries?: () => void;
+  onOpenAnalytics?: () => void;
 }
 
 export default function EnquiriesListTab({
@@ -58,6 +144,7 @@ export default function EnquiriesListTab({
   onDeleteEnquiry,
   onDeleteBatchEnquiries,
   onClearAllEnquiries,
+  onOpenAnalytics,
 }: EnquiriesListTabProps) {
   const { formatCurrency, currency } = useCurrency();
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,6 +157,37 @@ export default function EnquiriesListTab({
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingEnquiry, setEditingEnquiry] = useState<Enquiry | null>(null);
+
+  // Custom Dropdown Open States & Refs
+  const [isAddSourceOpen, setIsAddSourceOpen] = useState(false);
+  const [isAddStatusOpen, setIsAddStatusOpen] = useState(false);
+  const [isEditSourceOpen, setIsEditSourceOpen] = useState(false);
+  const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
+  const addSourceDropdownRef = useRef<HTMLDivElement>(null);
+  const addStatusDropdownRef = useRef<HTMLDivElement>(null);
+  const editSourceDropdownRef = useRef<HTMLDivElement>(null);
+  const editStatusDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (addSourceDropdownRef.current && !addSourceDropdownRef.current.contains(target)) {
+        setIsAddSourceOpen(false);
+      }
+      if (addStatusDropdownRef.current && !addStatusDropdownRef.current.contains(target)) {
+        setIsAddStatusOpen(false);
+      }
+      if (editSourceDropdownRef.current && !editSourceDropdownRef.current.contains(target)) {
+        setIsEditSourceOpen(false);
+      }
+      if (editStatusDropdownRef.current && !editStatusDropdownRef.current.contains(target)) {
+        setIsEditStatusOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Email Proposal Dispatcher Modal
   const [emailModal, setEmailModal] = useState<{
@@ -136,6 +254,10 @@ export default function EnquiriesListTab({
         setIsAddModalOpen(false);
         setIsImportModalOpen(false);
         setIsEditModalOpen(false);
+        setIsAddSourceOpen(false);
+        setIsAddStatusOpen(false);
+        setIsEditSourceOpen(false);
+        setIsEditStatusOpen(false);
         setEmailModal((prev) => ({ ...prev, isOpen: false }));
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
       }
@@ -405,7 +527,7 @@ export default function EnquiriesListTab({
     setIsSubmittingAdd(true);
     try {
       const rawBudget = formData.budget.replace(/[^0-9]/g, '');
-      const numericBudget = rawBudget ? Number(rawBudget) : 200000;
+      const numericBudget = rawBudget ? Number(rawBudget) : undefined;
 
       const emailVal = formData.email.trim();
       const phoneVal = formData.contact.trim();
@@ -423,7 +545,7 @@ export default function EnquiriesListTab({
         event_date: formData.received_on,
         received_on: formData.received_on,
         venue: formData.venue.trim(),
-        budget: formData.budget.trim() || '2,00,000',
+        budget: formData.budget.trim(),
         guests: formData.guests.trim(),
         estimated_budget: numericBudget,
         source: formData.source,
@@ -465,7 +587,7 @@ export default function EnquiriesListTab({
       event_type: enq.event_type || 'wedding',
       event_date: enq.event_date || enq.received_on || new Date().toISOString().slice(0, 10),
       venue: enq.venue || '',
-      budget: enq.estimated_budget ? String(enq.estimated_budget) : (enq.budget || '200000'),
+      budget: enq.budget?.trim() || (enq.estimated_budget ? String(enq.estimated_budget) : ''),
       source: (enq.source as EnquirySource) || 'Instagram',
       status: statusVal,
       notes: enq.notes || enq.event_details || '',
@@ -480,26 +602,30 @@ export default function EnquiriesListTab({
     if (!editingEnquiry || !editFormData.name) return;
 
     const rawBudget = editFormData.budget.replace(/[^0-9]/g, '');
-    const numericBudget = rawBudget ? Number(rawBudget) : (editingEnquiry.estimated_budget || 200000);
+    const numericBudget = rawBudget ? Number(rawBudget) : undefined;
 
     const updated: Enquiry = {
       ...editingEnquiry,
-      name: editFormData.name,
-      contact: editFormData.contact || editFormData.phone || editingEnquiry.contact,
-      email: editFormData.email,
-      phone: editFormData.phone || editFormData.contact,
-      event_name: editFormData.event_name || `${editFormData.name}'s Event`,
+      name: editFormData.name.trim(),
+      contact: editFormData.contact?.trim() || editFormData.phone?.trim() || editingEnquiry.contact,
+      email: editFormData.email.trim(),
+      phone: editFormData.phone?.trim() || editFormData.contact?.trim(),
+      event_name: editFormData.event_name.trim() || `${editFormData.name.trim()}'s Event`,
       event_type: editFormData.event_type,
       event_date: editFormData.event_date,
-      venue: editFormData.venue,
-      budget: editFormData.budget,
+      venue: editFormData.venue.trim(),
+      budget: editFormData.budget.trim(),
       estimated_budget: numericBudget,
       source: editFormData.source,
       status: editFormData.status,
-      notes: editFormData.notes,
-      event_details: editFormData.notes,
+      notes: editFormData.notes.trim(),
+      event_details: editFormData.notes.trim(),
       selected_package_id: editFormData.selected_package_id,
     };
+
+    if (numericBudget === undefined) {
+      delete (updated as any).estimated_budget;
+    }
 
     if (onUpdateEnquiry) {
       onUpdateEnquiry(updated);
@@ -685,9 +811,9 @@ export default function EnquiriesListTab({
             event_date: eventDate,
             received_on: eventDate,
             venue: venue,
-            budget: budgetRaw ? Number(budgetRaw).toLocaleString('en-IN') : '2,00,000',
+            budget: budgetRaw ? Number(budgetRaw).toLocaleString('en-IN') : '',
             guests: guests,
-            estimated_budget: budgetRaw ? Number(budgetRaw) : 200000,
+            estimated_budget: budgetRaw ? Number(budgetRaw) : undefined,
             source: source || 'Website',
             status: 'New',
             notes: 'Imported via CSV template batch upload',
@@ -739,9 +865,11 @@ export default function EnquiriesListTab({
       ? `${window.location.origin}/proposal/${enquiry.id}`
       : `https://pixeva.app/proposal/${enquiry.id}`;
 
-    const formattedBudget = formatCurrency(enquiry.estimated_budget || 200000);
-    const subject = `✨ Pixeva Studio Proposal — ${enquiry.event_name || 'Photography & Cinematography'}`;
-    const body = `Hi ${enquiry.name},\n\nThank you for reaching out to Pixeva Studio! We are thrilled about your upcoming event (${enquiry.event_name || 'shoot'}).\n\nWe have prepared your custom photography & cinematography package proposal (${formattedBudget}).\n\n📱 View your interactive live proposal, 4K video lookbook, and contract here:\n${proposalUrl}\n\nPlease feel free to reply directly if you'd like to adjust any deliverables or customize your package.\n\nWarm regards,\nPixeva Studio Team\nhttps://pixeva.app`;
+    const formattedBudget = enquiry.estimated_budget && enquiry.estimated_budget > 0
+      ? formatCurrency(enquiry.estimated_budget)
+      : (enquiry.budget?.trim() || 'Custom Quote');
+    const subject = `Pixeva Studio Proposal — ${enquiry.event_name || 'Photography & Cinematography'}`;
+    const body = `Hi ${enquiry.name},\n\nThank you for reaching out to Pixeva Studio! We are thrilled about your upcoming event (${enquiry.event_name || 'shoot'}).\n\nWe have prepared your custom photography & cinematography package proposal (${formattedBudget}).\n\nView your interactive live proposal, 4K video lookbook, and contract here:\n${proposalUrl}\n\nPlease feel free to reply directly if you'd like to adjust any deliverables or customize your package.\n\nWarm regards,\nPixeva Studio Team\nhttps://pixeva.app`;
 
     setEmailModal({
       isOpen: true,
@@ -801,7 +929,9 @@ export default function EnquiriesListTab({
       ? `${window.location.origin}/proposal/${enquiry.id}`
       : `https://pixeva.app/proposal/${enquiry.id}`;
 
-    const formattedBudget = formatCurrency(enquiry.estimated_budget || 200000);
+    const formattedBudget = enquiry.estimated_budget && enquiry.estimated_budget > 0
+      ? formatCurrency(enquiry.estimated_budget)
+      : (enquiry.budget?.trim() || 'Custom Quote');
     const message = `Hi *${enquiry.name}*!\n\nThank you for reaching out to *Pixeva Studio* regarding your ${enquiry.event_name || 'upcoming event'}.\n\nWe have prepared your custom photography & cinematography package proposal (*${formattedBudget}*).\n\nYou can view your interactive proposal, video teaser, and contract details here:\n\n${proposalUrl}\n\nPlease feel free to reply to this message if you have any questions or if you would like to customize your package!`;
 
     let finalPhone = phone || '';
@@ -819,381 +949,708 @@ export default function EnquiriesListTab({
     window.open(whatsappUrl, '_blank');
   };
 
-  return (
-    <div className="space-y-4 animate-fadeIn">
+  // Quick Pipeline KPI Metrics & Calculations
+  const totalLeadsCount = enquiries.length;
+  const newLeadsCount = enquiries.filter((e) => normalizeStatus(e.status) === 'new').length;
+  const contactedLeadsCount = enquiries.filter((e) => normalizeStatus(e.status) === 'contacted').length;
+  const qualifiedLeadsCount = enquiries.filter((e) => normalizeStatus(e.status) === 'qualified').length;
+  const proposalLeadsCount = enquiries.filter((e) => normalizeStatus(e.status) === 'proposal').length;
+  const bookedLeadsCount = enquiries.filter((e) => normalizeStatus(e.status) === 'booked').length;
+  const unqualifiedLeadsCount = enquiries.filter((e) => normalizeStatus(e.status) === 'unqualified').length;
+  const inProgressLeadsCount = contactedLeadsCount + qualifiedLeadsCount + proposalLeadsCount;
 
-      {/* Control Bar: Search, Filters & Action Buttons */}
-      <div className="flex items-center justify-between gap-3 overflow-x-auto scrollbar-none py-0.5">
-        {/* Left Side: Search + Dropdown Filters */}
-        <div className="flex items-center space-x-2 shrink-0">
+  const totalPipelineVal = enquiries.reduce((sum, e) => sum + (Number(e.estimated_budget) || 0), 0);
+  const bookedRevenueVal = enquiries
+    .filter((e) => normalizeStatus(e.status) === 'booked')
+    .reduce((sum, e) => sum + (Number(e.estimated_budget) || 0), 0);
+
+  const handleBatchUpdateStatus = (status: EnquiryStatus) => {
+    if (selectedIds.length === 0) return;
+    selectedIds.forEach((id) => onUpdateStatus(id, status));
+    setSelectedIds([]);
+  };
+
+  const AVATAR_GRADIENTS = [
+    'from-blue-600 to-indigo-600',
+    'from-indigo-600 to-purple-600',
+    'from-purple-600 to-pink-600',
+    'from-pink-600 to-rose-600',
+    'from-amber-600 to-orange-600',
+    'from-emerald-600 to-teal-600',
+    'from-teal-600 to-cyan-600',
+  ];
+
+  const getAvatarGradient = (name: string): string => {
+    let hash = 0;
+    for (let i = 0; i < (name || '').length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const idx = Math.abs(hash) % AVATAR_GRADIENTS.length;
+    return AVATAR_GRADIENTS[idx];
+  };
+
+  const getStatusBadgeConfig = (status?: string) => {
+    const norm = normalizeStatus(status);
+    switch (norm) {
+      case 'new':
+        return {
+          bg: 'bg-sky-50 dark:bg-sky-500/15',
+          text: 'text-sky-700 dark:text-sky-300',
+          border: 'border-sky-200 dark:border-sky-500/30',
+          dot: 'bg-sky-500',
+          label: 'New Lead',
+        };
+      case 'contacted':
+        return {
+          bg: 'bg-amber-50 dark:bg-amber-500/15',
+          text: 'text-amber-700 dark:text-amber-300',
+          border: 'border-amber-200 dark:border-amber-500/30',
+          dot: 'bg-amber-500',
+          label: 'Contacted',
+        };
+      case 'qualified':
+        return {
+          bg: 'bg-indigo-50 dark:bg-indigo-500/15',
+          text: 'text-indigo-700 dark:text-indigo-300',
+          border: 'border-indigo-200 dark:border-indigo-500/30',
+          dot: 'bg-indigo-500',
+          label: 'Qualified',
+        };
+      case 'proposal':
+        return {
+          bg: 'bg-purple-50 dark:bg-purple-500/15',
+          text: 'text-purple-700 dark:text-purple-300',
+          border: 'border-purple-200 dark:border-purple-500/30',
+          dot: 'bg-purple-500',
+          label: 'Proposal Sent',
+        };
+      case 'booked':
+        return {
+          bg: 'bg-emerald-50 dark:bg-emerald-500/15',
+          text: 'text-emerald-700 dark:text-emerald-300',
+          border: 'border-emerald-200 dark:border-emerald-500/30',
+          dot: 'bg-emerald-500',
+          label: 'Booked',
+        };
+      case 'unqualified':
+      default:
+        return {
+          bg: 'bg-rose-50 dark:bg-rose-500/15',
+          text: 'text-rose-700 dark:text-rose-300',
+          border: 'border-rose-200 dark:border-rose-500/30',
+          dot: 'bg-rose-500',
+          label: 'Lost / Closed',
+        };
+    }
+  };
+
+  return (
+    <div className="space-y-5 animate-fadeIn">
+      {/* 1. At-a-Glance Executive Pipeline KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* Card 1: Total Leads */}
+        <div
+          onClick={() => setSelectedStatus(selectedStatus === 'all' ? 'all' : 'all')}
+          className={`p-4 rounded-2xl bg-white dark:bg-[#111827] border transition-all cursor-pointer shadow-xs hover:shadow-md ${
+            selectedStatus === 'all'
+              ? 'border-blue-400/80 ring-2 ring-blue-500/10'
+              : 'border-slate-200/80 dark:border-white/10 hover:border-blue-300 dark:hover:border-blue-600/50'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Enquiries</span>
+            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300 flex items-center justify-center">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline space-x-2">
+            <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              {totalLeadsCount}
+            </span>
+            <span className="text-[11px] font-medium text-slate-400 truncate">
+              {formatCurrency(totalPipelineVal)} est.
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">All active & past incoming leads</p>
+        </div>
+
+        {/* Card 2: Fresh New Leads */}
+        <div
+          onClick={() => setSelectedStatus(selectedStatus === 'new' ? 'all' : 'new')}
+          className={`p-4 rounded-2xl bg-white dark:bg-[#111827] border transition-all cursor-pointer shadow-xs hover:shadow-md ${
+            selectedStatus === 'new'
+              ? 'border-sky-400 ring-2 ring-sky-500/15'
+              : 'border-slate-200/80 dark:border-white/10 hover:border-sky-300 dark:hover:border-sky-600/50'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">New & Fresh</span>
+            <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300 flex items-center justify-center">
+              <Sparkles className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline space-x-2">
+            <span className="text-2xl font-bold tracking-tight text-sky-600 dark:text-sky-400">
+              {newLeadsCount}
+            </span>
+            {newLeadsCount > 0 && (
+              <span className="inline-flex items-center px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">
+                Action needed
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">Awaiting first follow-up</p>
+        </div>
+
+        {/* Card 3: In Negotiation / Proposals Sent */}
+        <div
+          onClick={() => setSelectedStatus(selectedStatus === 'proposal' ? 'all' : 'proposal')}
+          className={`p-4 rounded-2xl bg-white dark:bg-[#111827] border transition-all cursor-pointer shadow-xs hover:shadow-md ${
+            selectedStatus === 'proposal'
+              ? 'border-purple-400 ring-2 ring-purple-500/15'
+              : 'border-slate-200/80 dark:border-white/10 hover:border-purple-300 dark:hover:border-purple-600/50'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">In Negotiation</span>
+            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300 flex items-center justify-center">
+              <FileText className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline space-x-2">
+            <span className="text-2xl font-bold tracking-tight text-purple-600 dark:text-purple-400">
+              {inProgressLeadsCount}
+            </span>
+            <span className="text-[11px] font-medium text-slate-400 truncate">
+              {proposalLeadsCount} proposals sent
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">Contacted & qualified prospects</p>
+        </div>
+
+        {/* Card 4: Confirmed & Booked */}
+        <div
+          onClick={() => setSelectedStatus(selectedStatus === 'booked' ? 'all' : 'booked')}
+          className={`p-4 rounded-2xl bg-white dark:bg-[#111827] border transition-all cursor-pointer shadow-xs hover:shadow-md ${
+            selectedStatus === 'booked'
+              ? 'border-emerald-400 ring-2 ring-emerald-500/15'
+              : 'border-slate-200/80 dark:border-white/10 hover:border-emerald-300 dark:hover:border-emerald-600/50'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Booked & Won</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300 flex items-center justify-center">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline space-x-2">
+            <span className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+              {bookedLeadsCount}
+            </span>
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 truncate">
+              {formatCurrency(bookedRevenueVal)}
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">Auto-transferred to Shoot Projects</p>
+        </div>
+      </div>
+
+      {/* 2. Pipeline Stage Quick Pills Navigation */}
+      <div className="flex items-center justify-between gap-3 overflow-x-auto scrollbar-none pb-0.5">
+        <div className="inline-flex items-center p-1 bg-slate-100/80 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-xl space-x-1 shrink-0 shadow-2xs">
+          {[
+            { id: 'all', label: 'All', count: totalLeadsCount },
+            { id: 'new', label: 'New', count: newLeadsCount, dot: 'bg-sky-500' },
+            { id: 'contacted', label: 'Contacted', count: contactedLeadsCount, dot: 'bg-amber-500' },
+            { id: 'qualified', label: 'Qualified', count: qualifiedLeadsCount, dot: 'bg-indigo-500' },
+            { id: 'proposal', label: 'Proposal Sent', count: proposalLeadsCount, dot: 'bg-purple-500' },
+            { id: 'booked', label: 'Booked', count: bookedLeadsCount, dot: 'bg-emerald-500' },
+            { id: 'unqualified', label: 'Closed / Lost', count: unqualifiedLeadsCount, dot: 'bg-rose-500' },
+          ].map((stage) => {
+            const isActive = selectedStatus === stage.id;
+            return (
+              <button
+                key={stage.id}
+                onClick={() => setSelectedStatus(stage.id)}
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs transition-all whitespace-nowrap cursor-pointer ${
+                  isActive
+                    ? 'bg-white dark:bg-[#111827] text-slate-900 dark:text-white shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-white/5 font-medium'
+                }`}
+              >
+                {stage.dot && <span className={`w-2 h-2 rounded-full ${stage.dot}`} />}
+                <span>{stage.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    isActive
+                      ? 'bg-slate-100 text-slate-900 dark:bg-white/10 dark:text-white'
+                      : 'bg-slate-200/70 text-slate-500 dark:bg-white/5 dark:text-slate-400'
+                  }`}
+                >
+                  {stage.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Filter reset helper if non-default */}
+        {(selectedStatus !== 'all' || selectedSource !== 'all' || searchTerm) && (
+          <button
+            onClick={handleResetFilters}
+            className="flex items-center space-x-1.5 text-xs text-blue-600 dark:text-blue-400 hover:underline shrink-0 font-medium px-2 py-1"
+          >
+            <RefreshCw className="w-3 h-3" />
+            <span>Reset filters</span>
+          </button>
+        )}
+      </div>
+
+      {/* 3. Streamlined Toolbar: Search, Source Filter & Primary Action CTAs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 p-2.5 rounded-2xl shadow-xs">
+        {/* Left Side: Search & Source Filter */}
+        <div className="flex items-center space-x-2 flex-1 max-w-lg">
           {/* Search Box */}
-          <div className="relative w-48 sm:w-56 lg:w-60">
+          <div className="relative flex-1">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search name, contact, event…"
+              placeholder="Search by client name, email, phone, event, or venue…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-white/10 rounded-lg pl-8 pr-7 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors shadow-2xs"
+              className="w-full bg-slate-50/80 dark:bg-white/5 border border-slate-200/90 dark:border-white/10 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white p-0.5 rounded-md"
+                title="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
 
-          {/* Status Dropdown Filter */}
-          <div className="relative">
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-white/10 text-xs font-medium rounded-lg pl-3 pr-7 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none shadow-2xs"
-            >
-              <option value="all">All Status</option>
-              <option value="new">New</option>
-              <option value="contacted">Contacted</option>
-              <option value="qualified">Qualified</option>
-              <option value="proposal">Proposal</option>
-              <option value="booked">Booked</option>
-              <option value="unqualified">Unqualified</option>
-            </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-          </div>
-
           {/* Source Dropdown Filter */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <select
               value={selectedSource}
               onChange={(e) => setSelectedSource(e.target.value)}
-              className="bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-white/10 text-xs font-medium rounded-lg pl-3 pr-7 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none shadow-2xs"
+              className="bg-slate-50/80 dark:bg-white/5 border border-slate-200/90 dark:border-white/10 text-xs font-medium rounded-xl pl-3 pr-8 py-2 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer appearance-none shadow-2xs"
             >
               <option value="all">All Sources</option>
-              <option value="Landing Page">Landing Page</option>
-              <option value="Website">Website</option>
               <option value="Instagram">Instagram</option>
+              <option value="Website">Website</option>
+              <option value="Landing Page">Landing Page</option>
               <option value="Referral">Referral</option>
               <option value="Google Ads">Google Ads</option>
+              <option value="WhatsApp">WhatsApp Direct</option>
               <option value="Inbound API">Inbound API</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
-
-          {(searchTerm || selectedStatus !== 'all' || selectedSource !== 'all') && (
-            <button
-              onClick={handleResetFilters}
-              title="Reset all filters"
-              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 transition-all shrink-0 flex items-center justify-center cursor-pointer"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-            </button>
-          )}
         </div>
 
-        {/* Right Side: Action Buttons */}
+        {/* Right Side: Primary CTA & Secondary Action Buttons */}
         <div className="flex items-center space-x-2 shrink-0">
-          {selectedIds.length > 0 && (
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-50/90 dark:bg-white/5 border border-slate-200/90 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition-all cursor-pointer shadow-2xs"
+            title="Import Leads from CSV"
+          >
+            <FileUp className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden sm:inline">Import</span>
+          </button>
+
+          <button
+            onClick={handleExportCsv}
+            disabled={filteredEnquiries.length === 0}
+            className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-50/90 dark:bg-white/5 border border-slate-200/90 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 disabled:opacity-40 transition-all cursor-pointer shadow-2xs"
+            title="Export filtered enquiries to CSV"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden sm:inline">Export</span>
+          </button>
+
+          {onOpenAnalytics && (
             <button
-              onClick={handleDeleteSelected}
-              className="flex items-center space-x-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all animate-fadeIn whitespace-nowrap cursor-pointer"
+              onClick={onOpenAnalytics}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-blue-500/10 border border-blue-200/80 dark:border-blue-500/20 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all cursor-pointer shadow-2xs"
+              title="Open Complete Analytics Dashboard"
             >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Delete Selected ({selectedIds.length})</span>
+              <BarChart2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>Analytics</span>
             </button>
           )}
 
           {enquiries.length > 0 && (
             <button
               onClick={handleClearAll}
-              className="flex items-center space-x-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-slate-100/80 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-600 border border-slate-200 transition-all whitespace-nowrap cursor-pointer"
-              title="Delete all enquiries from list"
+              className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-transparent hover:border-rose-200 dark:hover:border-rose-500/20 transition-all cursor-pointer"
+              title="Delete all enquiries"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Delete All</span>
             </button>
           )}
 
+          {/* Primary Action Button */}
           <button
             onClick={handleOpenAddModal}
-            className="btn-pixeva-primary flex items-center space-x-1.5 text-xs font-medium px-3.5 py-1.5 rounded-lg transition-all whitespace-nowrap"
+            className="flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] shadow-md shadow-blue-500/20 transition-all cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
             <span>Add Enquiry</span>
-          </button>
-
-          <button
-            onClick={() => setIsImportModalOpen(true)}
-            className="btn-pixeva-secondary flex items-center space-x-1.5 text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap"
-          >
-            <FileUp className="w-3.5 h-3.5 text-slate-500" />
-            <span>Import CSV</span>
-          </button>
-
-          <button
-            onClick={handleExportCsv}
-            disabled={filteredEnquiries.length === 0}
-            className="btn-pixeva-secondary flex items-center space-x-1.5 text-xs font-medium px-3 py-1.5 rounded-lg disabled:opacity-40 whitespace-nowrap"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
-            <span>Export CSV</span>
           </button>
         </div>
       </div>
 
-      {/* Showing Counter & Table Header Bar */}
+      {/* 4. Multi-Select Floating Batch Actions Bar */}
+      {selectedIds.length > 0 && (
+        <div className="flex items-center justify-between p-3 rounded-2xl bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 text-indigo-950 dark:text-indigo-200 animate-fadeIn shadow-sm">
+          <div className="flex items-center space-x-2 text-xs font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <span>{selectedIds.length} enquiries selected</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => handleBatchUpdateStatus('booked')}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all cursor-pointer"
+            >
+              Mark Booked
+            </button>
+            <button
+              onClick={() => handleBatchUpdateStatus('contacted')}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition-all cursor-pointer"
+            >
+              Mark Contacted
+            </button>
+            <button
+              onClick={handleDeleteSelected}
+              className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-xs transition-all cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Selected</span>
+            </button>
+            <button
+              onClick={() => setSelectedIds([])}
+              className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-white/40 dark:hover:bg-white/10 transition-all cursor-pointer"
+            >
+              Deselect
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Results Counter Bar */}
       <div className="flex items-center justify-between px-1 text-xs text-slate-500 dark:text-slate-400">
         <div className="font-medium flex items-center space-x-2">
           <span>
             Showing <span className="text-slate-900 dark:text-white font-bold">{filteredEnquiries.length}</span> of{' '}
-            <span className="text-slate-900 dark:text-white font-bold">{enquiries.length}</span>
+            <span className="text-slate-900 dark:text-white font-bold">{enquiries.length}</span> enquiries
           </span>
-          {selectedIds.length > 0 && (
-            <span className="text-sky-600 dark:text-sky-400 font-bold">
-              ({selectedIds.length} selected)
+          {selectedStatus !== 'all' && (
+            <span className="inline-flex items-center px-2 py-0.2 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">
+              Filter: {selectedStatus}
             </span>
           )}
         </div>
-        <div className="text-[11px] text-slate-400">Actions Available</div>
+        <div className="text-[11px] text-slate-400 hidden sm:block">Click any row to view & edit details</div>
       </div>
 
-      {/* Data Table */}
-      <div className="pixeva-card rounded-xl border border-slate-200/80 dark:border-white/10 overflow-x-auto shadow-subtle w-full">
-        <table className="w-full text-left text-xs min-w-[950px]">
-          <thead className="bg-slate-50/90 dark:bg-white/5 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200/80 dark:border-white/10 text-[10px]">
-            <tr>
-              <th className="w-10 px-3 py-3 text-center">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.length > 0 && selectedIds.length === filteredEnquiries.length}
-                  onChange={handleToggleSelectAll}
-                  className="rounded border-slate-300 dark:border-white/20 text-indigo-600 focus:ring-0 cursor-pointer"
-                  title="Select all"
-                />
-              </th>
-              <th className="w-[25%] min-w-[200px] px-3 py-3">Name & Contact</th>
-              <th className="w-[22%] min-w-[170px] px-3 py-3">Event & Date</th>
-              <th className="w-[12%] min-w-[100px] px-3 py-3">Source</th>
-              <th className="w-[12%] min-w-[100px] px-3 py-3">Est. Budget</th>
-              <th className="w-[16%] min-w-[130px] px-3 py-3">Status</th>
-              <th className="w-[13%] min-w-[120px] px-3 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-            {filteredEnquiries.length === 0 ? (
+      {/* 6. Elevated Leads Data Table */}
+      <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-white/10 overflow-hidden shadow-xs">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-xs min-w-[950px]">
+            <thead className="bg-slate-50/80 dark:bg-white/[0.03] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200/80 dark:border-white/10 text-[10px]">
               <tr>
-                <td colSpan={7} className="text-center py-12">
-                  <div className="max-w-xs mx-auto space-y-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center mx-auto text-slate-400">
-                      <Search className="w-5 h-5" />
-                    </div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">No enquiries match your filters.</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Try tweaking your search term or clearing active status and source filters.
-                    </p>
-                    <button
-                      onClick={handleResetFilters}
-                      className="btn-pixeva-secondary text-xs px-3 py-1.5 space-x-1.5"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      <span>Clear Filters</span>
-                    </button>
-                  </div>
-                </td>
+                <th className="w-10 px-3.5 py-3.5 text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.length > 0 && selectedIds.length === filteredEnquiries.length}
+                    onChange={handleToggleSelectAll}
+                    className="rounded border-slate-300 dark:border-white/20 text-blue-600 focus:ring-0 cursor-pointer"
+                    title="Select all"
+                  />
+                </th>
+                <th className="w-[28%] min-w-[210px] px-3 py-3.5 font-bold">Client & Contact</th>
+                <th className="w-[22%] min-w-[180px] px-3 py-3.5 font-bold">Event & Date</th>
+                <th className="w-[12%] min-w-[110px] px-3 py-3.5 font-bold">Lead Source</th>
+                <th className="w-[12%] min-w-[100px] px-3 py-3.5 font-bold">Est. Budget</th>
+                <th className="w-[14%] min-w-[130px] px-3 py-3.5 font-bold">Pipeline Stage</th>
+                <th className="w-[12%] min-w-[120px] px-3 py-3.5 text-right font-bold pr-4">Quick Actions</th>
               </tr>
-            ) : (
-              filteredEnquiries.map((enq) => {
-                const isPdfRunning = activeLambdaTask === `pdf-${enq.id}`;
-                const isEmailRunning = activeLambdaTask === `email-${enq.id}`;
-                const isSelected = selectedIds.includes(enq.id);
-
-                return (
-                  <tr
-                    key={enq.id}
-                    onClick={() => handleOpenEdit(enq)}
-                    className={`hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors group cursor-pointer ${isSelected ? 'bg-indigo-50/50 dark:bg-indigo-500/10' : ''
-                      }`}
-                  >
-                    {/* Checkbox */}
-                    <td className="w-10 px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => handleToggleSelect(enq.id)}
-                        className="rounded border-slate-300 dark:border-white/20 text-indigo-600 focus:ring-0 cursor-pointer"
-                      />
-                    </td>
-                    {/* Name & Contact */}
-                    <td className="px-3 py-3 w-[27%]">
-                      <div className="space-y-0.5 min-w-0">
-                        <div className="flex items-center space-x-1.5 flex-wrap gap-y-0.5">
-                          <span className="font-bold text-slate-900 dark:text-white text-xs truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" title={enq.name}>
-                            {enq.name}
-                          </span>
-                          {(enq.estimated_budget || 0) >= 200000 ? (
-                            <span className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-200/60 dark:border-amber-500/40">
-                              <Gem className="w-2.5 h-2.5 mr-0.5" />
-                              <span>VIP</span>
-                            </span>
-                          ) : (enq.estimated_budget || 0) >= 100000 || enq.status === 'proposal' ? (
-                            <span className="inline-flex items-center text-[9px] font-bold px-1.5 py-0.2 rounded bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-200/60 dark:border-rose-500/40">
-                              <Flame className="w-2.5 h-2.5 mr-0.5" />
-                              <span>Hot Lead</span>
-                            </span>
-                          ) : null}
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              {filteredEnquiries.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-16">
+                    <div className="max-w-sm mx-auto space-y-3">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto shadow-xs">
+                        <Inbox className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">
+                        {enquiries.length === 0 ? 'No enquiries logged yet' : 'No enquiries match your active filter'}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        {enquiries.length === 0
+                          ? 'Capture leads using your public booking form, import a CSV roster, or add a lead manually.'
+                          : 'Try modifying your search keywords or resetting the status and source filters.'}
+                      </p>
+                      {enquiries.length === 0 ? (
+                        <div className="flex items-center justify-center space-x-2 pt-2">
+                          <button
+                            onClick={handleOpenAddModal}
+                            className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-xs transition-all cursor-pointer"
+                          >
+                            Add First Enquiry
+                          </button>
                         </div>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5">
-                          <div className="flex items-center space-x-1 truncate">
-                            <Mail className="w-3 h-3 shrink-0 text-slate-400" />
-                            <span className="truncate">{enq.email}</span>
+                      ) : (
+                        <button
+                          onClick={handleResetFilters}
+                          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 transition-all cursor-pointer"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>Clear All Filters</span>
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredEnquiries.map((enq) => {
+                  const isPdfRunning = activeLambdaTask === `pdf-${enq.id}`;
+                  const isSelected = selectedIds.includes(enq.id);
+                  const avatarInitial = (enq.name || 'C').charAt(0).toUpperCase();
+                  const avatarGradient = getAvatarGradient(enq.name || '');
+                  const statusConfig = getStatusBadgeConfig(enq.status);
+
+                  return (
+                    <tr
+                      key={enq.id}
+                      onClick={() => handleOpenEdit(enq)}
+                      className={`hover:bg-slate-50/90 dark:hover:bg-white/[0.02] transition-colors group cursor-pointer ${
+                        isSelected ? 'bg-blue-50/50 dark:bg-blue-500/10' : ''
+                      }`}
+                    >
+                      {/* Checkbox */}
+                      <td className="w-10 px-3.5 py-3.5 text-center" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelect(enq.id)}
+                          className="rounded border-slate-300 dark:border-white/20 text-blue-600 focus:ring-0 cursor-pointer"
+                        />
+                      </td>
+
+                      {/* Lead & Contact */}
+                      <td className="px-3 py-3.5">
+                        <div className="flex items-center space-x-3">
+                          {/* Avatar Circle with Initial */}
+                          <div
+                            className={`w-9 h-9 rounded-xl bg-gradient-to-tr ${avatarGradient} text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs`}
+                          >
+                            {avatarInitial}
                           </div>
-                          {enq.phone && (
-                            <div className="flex items-center space-x-1 truncate text-slate-600 dark:text-slate-300 font-medium">
-                              <Phone className="w-3 h-3 shrink-0 text-slate-400" />
-                              <span className="truncate">{enq.phone}</span>
+
+                          <div className="min-w-0 flex-1 space-y-0.5">
+                            <span
+                              className="font-bold text-slate-900 dark:text-white text-xs truncate block group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
+                              title={enq.name}
+                            >
+                              {enq.name}
+                            </span>
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5">
+                              {enq.email && (
+                                <div className="flex items-center space-x-1.5 truncate">
+                                  <Mail className="w-3 h-3 shrink-0 text-slate-400" />
+                                  <span className="truncate">{enq.email}</span>
+                                </div>
+                              )}
+                              {enq.phone && (
+                                <div className="flex items-center space-x-1.5 truncate text-slate-600 dark:text-slate-300 font-medium">
+                                  <Phone className="w-3 h-3 shrink-0 text-slate-400" />
+                                  <span className="truncate">{enq.phone}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Event Details */}
+                      <td className="px-3 py-3.5">
+                        <div className="space-y-1 min-w-0">
+                          <div className="font-semibold text-slate-900 dark:text-white text-xs truncate" title={enq.event_name}>
+                            {enq.event_name || `${enq.name}'s Event`}
+                          </div>
+                          <div className="flex items-center space-x-2 text-[10px] text-slate-500 dark:text-slate-400 flex-wrap gap-y-1">
+                            <span
+                              className={`capitalize px-2 py-0.5 rounded-full font-semibold border ${
+                                enq.event_type?.toLowerCase() === 'wedding'
+                                  ? 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300 border-rose-200/80 dark:border-rose-500/20'
+                                  : enq.event_type?.toLowerCase() === 'corporate'
+                                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 border-blue-200/80 dark:border-blue-500/20'
+                                  : 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300 border-slate-200/80 dark:border-white/10'
+                              }`}
+                            >
+                              {enq.event_type || 'Event'}
+                            </span>
+                            {enq.event_date && (
+                              <span className="flex items-center space-x-1 font-mono text-slate-600 dark:text-slate-300">
+                                <Calendar className="w-3 h-3 text-slate-400" />
+                                <span>{enq.event_date}</span>
+                              </span>
+                            )}
+                          </div>
+                          {enq.venue && (
+                            <div className="flex items-center space-x-1 text-[10px] text-slate-400 truncate">
+                              <MapPin className="w-3 h-3 shrink-0" />
+                              <span className="truncate">{enq.venue}</span>
                             </div>
                           )}
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Event & Date */}
-                    <td className="px-3 py-3 w-[23%]">
-                      <div className="space-y-0.5 min-w-0">
-                        <div className="font-semibold text-slate-900 dark:text-white text-xs truncate" title={enq.event_name}>
-                          {enq.event_name}
-                        </div>
-                        <div className="flex items-center space-x-1.5 text-[10px] truncate text-slate-500 dark:text-slate-400">
-                          <span className="capitalize px-1.5 py-0.2 rounded bg-slate-100 dark:bg-white/10 font-medium text-slate-700 dark:text-slate-300 shrink-0">
-                            {enq.event_type}
-                          </span>
-                          {enq.event_date && (
-                            <span className="flex items-center space-x-1 font-mono truncate">
-                              <Calendar className="w-3 h-3 shrink-0 text-slate-400" />
-                              <span className="truncate">{enq.event_date}</span>
+                      {/* Lead Source */}
+                      <td className="px-3 py-3.5">
+                        {(() => {
+                          const srcConfig =
+                            LEAD_SOURCE_OPTIONS.find((o) => o.value.toLowerCase() === (enq.source || '').toLowerCase()) ||
+                            LEAD_SOURCE_OPTIONS[0];
+                          const SourceIcon = srcConfig.icon;
+                          return (
+                            <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200/60 dark:border-white/10 text-[11px] text-slate-700 dark:text-slate-300 font-medium">
+                              <SourceIcon className={`w-3 h-3 ${srcConfig.iconColor} shrink-0`} />
+                              <span className="truncate">{enq.source || 'Website'}</span>
                             </span>
-                          )}
+                          );
+                        })()}
+                      </td>
+
+                      {/* Est. Budget */}
+                      <td className="px-3 py-3.5">
+                        {enq.estimated_budget && enq.estimated_budget > 0 ? (
+                          <div className="space-y-0.5">
+                            <span className="font-bold text-slate-900 dark:text-white text-xs block">
+                              {formatCurrency(enq.estimated_budget)}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block font-medium">Estimated</span>
+                          </div>
+                        ) : enq.budget && enq.budget.trim() ? (
+                          <span className="font-bold text-slate-900 dark:text-white text-xs block">
+                            {enq.budget}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 dark:text-slate-500 text-xs block font-medium">
+                            —
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Pipeline Stage / Status Selector */}
+                      <td className="px-3 py-3.5" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative">
+                          <select
+                            value={normalizeStatus(enq.status)}
+                            onChange={(e) => onUpdateStatus(enq.id, e.target.value as EnquiryStatus)}
+                            className={`w-full text-xs font-semibold rounded-xl pl-3 pr-7 py-1.5 border focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer appearance-none transition-all ${statusConfig.bg} ${statusConfig.text} ${statusConfig.border}`}
+                          >
+                            <option value="new" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">New Lead</option>
+                            <option value="contacted" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">Contacted</option>
+                            <option value="qualified" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">Qualified</option>
+                            <option value="proposal" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">Proposal Sent</option>
+                            <option value="booked" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">Booked</option>
+                            <option value="unqualified" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">Closed / Lost</option>
+                          </select>
+                          <ChevronDown className="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-60" />
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Source */}
-                    <td className="px-3 py-3 w-[12%]">
-                      <span className="inline-block px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-[10px] text-slate-600 dark:text-slate-300 font-medium truncate max-w-full">
-                        {enq.source}
-                      </span>
-                    </td>
+                      {/* Actions */}
+                      <td className="px-3 py-3.5 text-right pr-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end space-x-1">
+                          {/* 1-Click WhatsApp Quick Quote */}
+                          <button
+                            onClick={() => handleSendWhatsAppQuote(enq)}
+                            title="Send 1-Click WhatsApp Quote & Link"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                          </button>
 
-                    {/* Est. Budget */}
-                    <td className="px-3 py-3 w-[12%]">
-                      <span className="font-bold text-slate-900 dark:text-white text-xs truncate block">
-                        {formatCurrency(enq.estimated_budget || 0)}
-                      </span>
-                    </td>
+                          {/* View Live Client Proposal */}
+                          <Link
+                            href={`/proposal/${enq.id}`}
+                            target="_blank"
+                            title="Open Client Proposal"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors inline-flex items-center"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Link>
 
-                    {/* Status Selector */}
-                    <td className="px-3 py-3 w-[15%]" onClick={(e) => e.stopPropagation()}>
-                      <select
-                        value={normalizeStatus(enq.status)}
-                        onChange={(e) => onUpdateStatus(enq.id, e.target.value as EnquiryStatus)}
-                        className={`border text-[11px] font-medium rounded-md px-2 py-1 focus:outline-none cursor-pointer w-full transition-all truncate ${normalizeStatus(enq.status) === 'new'
-                            ? 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
-                            : normalizeStatus(enq.status) === 'contacted'
-                              ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30'
-                              : normalizeStatus(enq.status) === 'qualified'
-                                ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30'
-                                : normalizeStatus(enq.status) === 'proposal'
-                                  ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30'
-                                  : normalizeStatus(enq.status) === 'booked'
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30'
-                                    : 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30'
-                          }`}
-                      >
-                        <option value="new" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">New</option>
-                        <option value="contacted" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">Contacted</option>
-                        <option value="qualified" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">Qualified</option>
-                        <option value="proposal" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">Proposal</option>
-                        <option value="booked" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">Booked</option>
-                        <option value="unqualified" className="bg-white dark:bg-[#111827] text-slate-900 dark:text-white">Unqualified</option>
-                      </select>
-                    </td>
+                          {/* AWS Lambda Microservice Trigger */}
+                          <button
+                            onClick={() => handleRunPdfLambda(enq)}
+                            disabled={isPdfRunning}
+                            title="Trigger AWS Lambda PDF Generator"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+                          >
+                            <FileText className={`w-4 h-4 ${isPdfRunning ? 'animate-spin text-indigo-600' : ''}`} />
+                          </button>
 
-                    {/* Actions */}
-                    <td className="px-3 py-3 w-[15%] text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end space-x-1">
-                        {/* 1-Click WhatsApp Quick Quote */}
-                        <button
-                          onClick={() => handleSendWhatsAppQuote(enq)}
-                          title="Send 1-Click WhatsApp Quote & Proposal Link"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                        </button>
+                          {/* Email Proposal Dispatcher */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenEmailModal(enq);
+                            }}
+                            title="Dispatch Email Proposal"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors cursor-pointer"
+                          >
+                            <Mail className="w-4 h-4" />
+                          </button>
 
-                        {/* View Live Client Proposal */}
-                        <Link
-                          href={`/proposal/${enq.id}`}
-                          target="_blank"
-                          title="Open Live Interactive Client Proposal"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors inline-flex items-center"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </Link>
+                          {/* Edit Details */}
+                          <button
+                            onClick={() => handleOpenEdit(enq)}
+                            title="Edit Lead Details"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
 
-                        {/* AWS Lambda Microservice Trigger */}
-                        <button
-                          onClick={() => handleRunPdfLambda(enq)}
-                          disabled={isPdfRunning}
-                          title="Trigger AWS Lambda PDF Generator Microservice"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
-                        >
-                          <FileText className={`w-3.5 h-3.5 ${isPdfRunning ? 'animate-spin text-blue-600' : ''}`} />
-                        </button>
-
-                        {/* Email Proposal Dispatcher */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenEmailModal(enq);
-                          }}
-                          title="Send Email Proposal or Open Client Mailer"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors cursor-pointer"
-                        >
-                          <Mail className="w-3.5 h-3.5" />
-                        </button>
-
-                        {/* Delete */}
-                        <button
-                          onClick={() => {
-                            setConfirmModal({
-                              isOpen: true,
-                              title: 'Delete Enquiry',
-                              message: `Are you sure you want to delete the enquiry for "${enq.name}"? This action cannot be undone.`,
-                              confirmText: 'Delete Lead',
-                              itemName: enq.name,
-                              itemType: `${enq.event_type || 'Event'} Enquiry`,
-                              onConfirm: () => {
-                                onDeleteEnquiry(enq.id);
-                                setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-                              },
-                            });
-                          }}
-                          title="Delete Enquiry"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                          {/* Delete */}
+                          <button
+                            onClick={() => {
+                              setConfirmModal({
+                                isOpen: true,
+                                title: 'Delete Enquiry',
+                                message: `Are you sure you want to delete the enquiry for "${enq.name}"? This action cannot be undone.`,
+                                confirmText: 'Delete Lead',
+                                itemName: enq.name,
+                                itemType: `${enq.event_type || 'Event'} Enquiry`,
+                                onConfirm: () => {
+                                  onDeleteEnquiry(enq.id);
+                                  setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+                                },
+                              });
+                            }}
+                            title="Delete Enquiry"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Add Enquiry Modal */}
@@ -1219,17 +1676,9 @@ export default function EnquiriesListTab({
                   <UserPlus className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg tracking-tight">
-                      Add New Enquiry
-                    </h3>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                      Cloud Pipeline
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Register incoming lead with live validation & cloud sync
-                  </p>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg tracking-tight">
+                    Add New Enquiry
+                  </h3>
                 </div>
               </div>
               <button
@@ -1469,11 +1918,11 @@ export default function EnquiriesListTab({
                         htmlFor="enquiry-input-budget"
                         className="font-semibold text-slate-700 dark:text-slate-200 text-xs block mb-1.5"
                       >
-                        Estimated Budget
+                        Estimated Budget ({currency.symbol.trim()})
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                          <DollarSign className="w-4 h-4" />
+                          {renderCurrencyIcon(currency.code)}
                         </div>
                         <input
                           id="enquiry-input-budget"
@@ -1481,7 +1930,7 @@ export default function EnquiriesListTab({
                           value={formData.budget}
                           onChange={(e) => handleFieldChange('budget', e.target.value)}
                           onBlur={() => handleFieldBlur('budget')}
-                          placeholder="e.g. 2,50,000 or $3,500"
+                          placeholder={getBudgetPlaceholder(currency.code, currency.symbol)}
                           className={`w-full bg-slate-50 dark:bg-[#111827] border ${formTouched.budget && formErrors.budget
                               ? 'border-rose-500/80 bg-rose-50/10 focus:ring-rose-500/20 focus:border-rose-500'
                               : 'border-slate-200/80 dark:border-white/10 focus:border-blue-500 focus:ring-blue-500/20'
@@ -1539,44 +1988,118 @@ export default function EnquiriesListTab({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* Source */}
-                    <div>
+                    {/* Source Dropdown */}
+                    <div ref={addSourceDropdownRef} className="relative">
                       <label className="font-semibold text-slate-700 dark:text-slate-200 text-xs block mb-1.5">
                         Lead Source
                       </label>
-                      <select
-                        value={formData.source}
-                        onChange={(e) => handleFieldChange('source', e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500/20 transition-all cursor-pointer"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddSourceOpen(!isAddSourceOpen);
+                          setIsAddStatusOpen(false);
+                        }}
+                        className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500/20 transition-all cursor-pointer"
                       >
-                        <option value="Instagram">📸 Instagram</option>
-                        <option value="Website">🌐 Website</option>
-                        <option value="Landing Page">🚀 Landing Page</option>
-                        <option value="Referral">🤝 Referral / Word of Mouth</option>
-                        <option value="Google">🔍 Google Search</option>
-                        <option value="WhatsApp">💬 WhatsApp Direct</option>
-                        <option value="Facebook">📘 Facebook</option>
-                        <option value="Other">✨ Other</option>
-                      </select>
+                        <div className="flex items-center gap-2 truncate">
+                          {(() => {
+                            const current = LEAD_SOURCE_OPTIONS.find((o) => o.value === formData.source) || LEAD_SOURCE_OPTIONS[0];
+                            const IconComponent = current.icon;
+                            return (
+                              <>
+                                <IconComponent className={`w-4 h-4 ${current.iconColor} shrink-0`} />
+                                <span className="font-medium text-slate-800 dark:text-slate-200 truncate">{current.label}</span>
+                              </>
+                            );
+                          })()}
+                        </div>
+                        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isAddSourceOpen ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {isAddSourceOpen && (
+                        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl py-1 max-h-56 overflow-y-auto custom-scrollbar animate-fadeIn">
+                          {LEAD_SOURCE_OPTIONS.map((opt) => {
+                            const IconComponent = opt.icon;
+                            const isSelected = formData.source === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => {
+                                  handleFieldChange('source', opt.value);
+                                  setIsAddSourceOpen(false);
+                                }}
+                                className={`w-full px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+                                  isSelected ? 'bg-blue-50/70 dark:bg-blue-500/10 font-semibold text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 truncate">
+                                  <IconComponent className={`w-4 h-4 ${opt.iconColor} shrink-0`} />
+                                  <span className="truncate">{opt.label}</span>
+                                </div>
+                                {isSelected && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-1" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
 
-                    {/* Status */}
-                    <div>
+                    {/* Status Dropdown */}
+                    <div ref={addStatusDropdownRef} className="relative">
                       <label className="font-semibold text-slate-700 dark:text-slate-200 text-xs block mb-1.5">
                         Initial Pipeline Stage
                       </label>
-                      <select
-                        value={formData.status}
-                        onChange={(e) => handleFieldChange('status', e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500/20 transition-all cursor-pointer"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddStatusOpen(!isAddStatusOpen);
+                          setIsAddSourceOpen(false);
+                        }}
+                        className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:ring-2 focus:border-blue-500 focus:ring-blue-500/20 transition-all cursor-pointer"
                       >
-                        <option value="New">✨ New Lead</option>
-                        <option value="Follow Up">⏳ Follow Up</option>
-                        <option value="Meeting Fixed">📅 Meeting Fixed</option>
-                        <option value="Proposal Sent">📄 Proposal Sent</option>
-                        <option value="Booked">🎉 Booked</option>
-                        <option value="Closed/Lost">❌ Closed / Lost</option>
-                      </select>
+                        <div className="flex items-center gap-2 truncate">
+                          {(() => {
+                            const current = ADD_PIPELINE_STAGE_OPTIONS.find((o) => o.value === formData.status) || ADD_PIPELINE_STAGE_OPTIONS[0];
+                            const IconComponent = current.icon;
+                            return (
+                              <>
+                                <IconComponent className={`w-4 h-4 ${current.iconColor} shrink-0`} />
+                                <span className="font-medium text-slate-800 dark:text-slate-200 truncate">{current.label}</span>
+                              </>
+                            );
+                          })()}
+                        </div>
+                        <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isAddStatusOpen ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {isAddStatusOpen && (
+                        <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl py-1 max-h-56 overflow-y-auto custom-scrollbar animate-fadeIn">
+                          {ADD_PIPELINE_STAGE_OPTIONS.map((opt) => {
+                            const IconComponent = opt.icon;
+                            const isSelected = formData.status === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => {
+                                  handleFieldChange('status', opt.value);
+                                  setIsAddStatusOpen(false);
+                                }}
+                                className={`w-full px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+                                  isSelected ? 'bg-blue-50/70 dark:bg-blue-500/10 font-semibold text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 truncate">
+                                  <IconComponent className={`w-4 h-4 ${opt.iconColor} shrink-0`} />
+                                  <span className="truncate">{opt.label}</span>
+                                </div>
+                                {isSelected && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-1" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1599,11 +2122,7 @@ export default function EnquiriesListTab({
               </div>
 
               {/* Pinned Modal Footer Actions */}
-              <div className="px-6 py-4 border-t border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-[#0c1222]/95 backdrop-blur-xs flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-                  <span>Validated & scoped for AWS API Gateway & Supabase</span>
-                </div>
+              <div className="px-6 py-4 border-t border-slate-100 dark:border-white/10 bg-slate-50/80 dark:bg-[#0c1222]/95 backdrop-blur-xs flex items-center justify-end gap-3 shrink-0">
 
                 <div className="flex items-center space-x-2.5 w-full sm:w-auto justify-end">
                   <button
@@ -2006,13 +2525,18 @@ export default function EnquiriesListTab({
                   <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
                     Estimated Budget ({currency.symbol.trim()})
                   </label>
-                  <input
-                    type="text"
-                    value={editFormData.budget}
-                    onChange={(e) => setEditFormData({ ...editFormData, budget: e.target.value })}
-                    placeholder="e.g. 200000"
-                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white font-mono font-semibold focus:outline-none focus:border-blue-500"
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                      {renderCurrencyIcon(currency.code)}
+                    </div>
+                    <input
+                      type="text"
+                      value={editFormData.budget}
+                      onChange={(e) => setEditFormData({ ...editFormData, budget: e.target.value })}
+                      placeholder={getBudgetPlaceholder(currency.code, currency.symbol)}
+                      className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-lg pl-9 pr-3 py-2 text-slate-900 dark:text-white font-mono font-semibold focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -2048,40 +2572,116 @@ export default function EnquiriesListTab({
 
               {/* Row 5: Source & Pipeline Status */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
+                <div ref={editSourceDropdownRef} className="relative">
                   <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
                     Lead Source
                   </label>
-                  <select
-                    value={editFormData.source}
-                    onChange={(e) => setEditFormData({ ...editFormData, source: e.target.value as EnquirySource })}
-                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 cursor-pointer"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditSourceOpen(!isEditSourceOpen);
+                      setIsEditStatusOpen(false);
+                    }}
+                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-blue-500 cursor-pointer"
                   >
-                    <option value="Instagram">Instagram</option>
-                    <option value="Website">Website</option>
-                    <option value="Landing Page">Landing Page</option>
-                    <option value="Referral">Referral</option>
-                    <option value="Google Ads">Google Ads</option>
-                    <option value="Inbound API">Inbound API</option>
-                  </select>
+                    <div className="flex items-center gap-2 truncate">
+                      {(() => {
+                        const current = LEAD_SOURCE_OPTIONS.find((o) => o.value === editFormData.source) || LEAD_SOURCE_OPTIONS[0];
+                        const IconComponent = current.icon;
+                        return (
+                          <>
+                            <IconComponent className={`w-4 h-4 ${current.iconColor} shrink-0`} />
+                            <span className="font-medium text-slate-900 dark:text-white truncate">{current.label}</span>
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isEditSourceOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isEditSourceOpen && (
+                    <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl py-1 max-h-56 overflow-y-auto custom-scrollbar animate-fadeIn">
+                      {LEAD_SOURCE_OPTIONS.map((opt) => {
+                        const IconComponent = opt.icon;
+                        const isSelected = editFormData.source === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              setEditFormData({ ...editFormData, source: opt.value as EnquirySource });
+                              setIsEditSourceOpen(false);
+                            }}
+                            className={`w-full px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+                              isSelected ? 'bg-blue-50/70 dark:bg-blue-500/10 font-semibold text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <IconComponent className={`w-4 h-4 ${opt.iconColor} shrink-0`} />
+                              <span className="truncate">{opt.label}</span>
+                            </div>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-1" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
-                <div>
+                <div ref={editStatusDropdownRef} className="relative">
                   <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
                     Sales Status Pipeline
                   </label>
-                  <select
-                    value={editFormData.status}
-                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as EnquiryStatus })}
-                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:border-blue-500 cursor-pointer font-semibold"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditStatusOpen(!isEditStatusOpen);
+                      setIsEditSourceOpen(false);
+                    }}
+                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white flex items-center justify-between focus:outline-none focus:border-blue-500 cursor-pointer"
                   >
-                    <option value="new">New (Fresh Lead)</option>
-                    <option value="contacted">Contacted (WhatsApp/Call)</option>
-                    <option value="qualified">Qualified (Date & Budget Match)</option>
-                    <option value="proposal">Proposal (Quote Sent)</option>
-                    <option value="booked">Booked (Deposit Paid)</option>
-                    <option value="unqualified">Unqualified</option>
-                  </select>
+                    <div className="flex items-center gap-2 truncate">
+                      {(() => {
+                        const current = EDIT_PIPELINE_STAGE_OPTIONS.find((o) => o.value === editFormData.status) || EDIT_PIPELINE_STAGE_OPTIONS[0];
+                        const IconComponent = current.icon;
+                        return (
+                          <>
+                            <IconComponent className={`w-4 h-4 ${current.iconColor} shrink-0`} />
+                            <span className="font-semibold text-slate-900 dark:text-white truncate">{current.label}</span>
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isEditStatusOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isEditStatusOpen && (
+                    <div className="absolute left-0 right-0 top-full mt-1 z-50 bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl py-1 max-h-56 overflow-y-auto custom-scrollbar animate-fadeIn">
+                      {EDIT_PIPELINE_STAGE_OPTIONS.map((opt) => {
+                        const IconComponent = opt.icon;
+                        const isSelected = editFormData.status === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => {
+                              setEditFormData({ ...editFormData, status: opt.value as EnquiryStatus });
+                              setIsEditStatusOpen(false);
+                            }}
+                            className={`w-full px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer ${
+                              isSelected ? 'bg-blue-50/70 dark:bg-blue-500/10 font-semibold text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <IconComponent className={`w-4 h-4 ${opt.iconColor} shrink-0`} />
+                              <span className="truncate">{opt.label}</span>
+                            </div>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-1" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2186,7 +2786,7 @@ export default function EnquiriesListTab({
               <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 flex items-start space-x-3 text-xs text-emerald-800 dark:text-emerald-300 animate-fadeIn">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-bold">Email Proposal Dispatched Successfully! 🎉</p>
+                  <p className="font-bold">Email Proposal Dispatched Successfully!</p>
                   <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
                     AWS Lambda batch email worker processed the message to <strong>{emailModal.recipient}</strong>. The deal status has been moved to <strong>Proposal</strong>.
                   </p>
@@ -2229,9 +2829,19 @@ export default function EnquiriesListTab({
                   <button
                     type="button"
                     onClick={handleCopyProposalLink}
-                    className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1 cursor-pointer"
+                    className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1.5 cursor-pointer"
                   >
-                    <span>{emailModal.copied ? '✓ Link Copied!' : '📋 Copy Proposal Link'}</span>
+                    {emailModal.copied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-emerald-600 dark:text-emerald-400">Link Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Proposal Link</span>
+                      </>
+                    )}
                   </button>
                 </div>
                 <textarea

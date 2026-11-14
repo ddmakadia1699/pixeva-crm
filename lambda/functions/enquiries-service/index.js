@@ -27,18 +27,17 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, x-account-id, X-Account-Id',
 };
 
-function extractAccountId(event, payload) {
-  const headers = event?.headers || {};
-  return (
-    headers['x-account-id'] ||
-    headers['X-Account-Id'] ||
-    headers['x-accountid'] ||
-    event?.queryStringParameters?.accountId ||
-    event?.queryStringParameters?.account_id ||
-    payload?.account_id ||
-    payload?.accountId ||
-    'user_3I2lBpsfTZcxw4L1GpKAMPCc45a'
-  );
+const { authenticate, authFailure, getBearerToken } = require('../../shared/auth');
+
+// The public client enquiry form (/enquire/[id]) is used by logged-out visitors, so
+// create-only requests with NO bearer token are allowed to target the studio id in the
+// URL. Everything else (list/update/delete) requires a verified Supabase login token.
+function clampStrings(obj, max = 1000) {
+  const out = {};
+  for (const [key, value] of Object.entries(obj || {})) {
+    out[key] = typeof value === 'string' ? value.slice(0, max) : value;
+  }
+  return out;
 }
 
 // Status Sanitizer for PostgreSQL CHECK constraint
@@ -89,7 +88,24 @@ exports.handler = async (event) => {
     payload = rawBody.payload || event.payload || rawBody;
   }
 
-  const accountId = extractAccountId(event, payload);
+  // Tenant comes from the verified Supabase JWT. The only exception is the public enquiry
+  // form: a create-only request with no bearer token may target the studio id it was given.
+  let accountId;
+  const isPublicCreate =
+    action === 'CREATE' &&
+    !getBearerToken(event) &&
+    typeof payload.account_id === 'string' &&
+    payload.account_id.trim().length > 0 &&
+    payload.account_id.trim().length <= 128;
+
+  if (isPublicCreate) {
+    accountId = payload.account_id.trim();
+    payload = clampStrings(payload);
+  } else {
+    const auth = await authenticate(event);
+    if (!auth.ok) return authFailure(auth, CORS_HEADERS);
+    accountId = auth.userId;
+  }
 
   try {
     switch (action) {

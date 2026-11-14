@@ -164,6 +164,14 @@ export default function SettingsPage() {
       const tab = params.get('tab');
       if (tab === 'payments' || tab === 'currency') {
         setActiveTab('payments');
+        if (tab === 'currency') {
+          setTimeout(() => {
+            const el = document.getElementById('currency-settings-section');
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }, 150);
+        }
       }
     }
   }, []);
@@ -838,7 +846,7 @@ Edited photographs and cinematic videos will be delivered within the agreed deli
       {activeTab === 'payments' && (
         <div className="space-y-6 animate-fadeIn">
           {/* SECTION 1: STUDIO CURRENCY & REGIONAL LOV */}
-          <div className="p-5 rounded-xl pixeva-card space-y-5 border-2 border-blue-500/30 dark:border-blue-500/20 bg-gradient-to-br from-white via-white to-blue-50/20 dark:from-[#111827] dark:via-[#111827] dark:to-blue-950/20 shadow-sm">
+          <div id="currency-settings-section" className="p-5 rounded-xl pixeva-card space-y-5 border-2 border-blue-500/30 dark:border-blue-500/20 bg-gradient-to-br from-white via-white to-blue-50/20 dark:from-[#111827] dark:via-[#111827] dark:to-blue-950/20 shadow-sm scroll-mt-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="space-y-0.5">
                 <div className="flex items-center space-x-2">

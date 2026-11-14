@@ -8,12 +8,13 @@ import Header from '@/components/layout/Header';
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isPublicPage = 
+    pathname === '/' ||
     pathname === '/login' || 
     pathname.startsWith('/enquire') || 
     pathname.startsWith('/proposal');
 
   if (isPublicPage) {
-    return <div className="min-h-screen w-full bg-slate-50">{children}</div>;
+    return <div className="min-h-screen w-full bg-slate-50 dark:bg-[#090d16]">{children}</div>;
   }
 
   return (

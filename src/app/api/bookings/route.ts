@@ -26,11 +26,11 @@ const lambdaClient = isAWSConfigured
 
 async function executeLambdaOrFallback(action: string, payload: any, req?: NextRequest) {
   const functionName = 'bookings-service';
-  const accountId = req?.headers?.get('x-account-id') || 'user_3I2lBpsfTZcxw4L1GpKAMPCc45a';
+  // The tenant is derived from the verified bearer token inside the handler.
   const eventPayload = {
     action,
-    payload: { ...payload, account_id: accountId },
-    headers: { 'x-account-id': accountId },
+    payload,
+    headers: { authorization: req?.headers?.get('authorization') || '' },
   };
 
   if (isAWSConfigured && lambdaClient) {

@@ -42,7 +42,7 @@ function loadEnv() {
 
   process.env.ENVIRONMENT = process.env.ENVIRONMENT || 'local';
   process.env.AWS_REGION = process.env.AWS_REGION || 'us-east-1';
-  process.env.NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://lmagwuarvxhhvoacezvl.supabase.co';
+  process.env.NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://batspallqzaxubikuuks.supabase.co';
 }
 
 loadEnv();

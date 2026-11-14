@@ -92,19 +92,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/enquiries`,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
   };
 
   const signInWithGoogle = async () => {
     if (!supabase) return { error: { message: 'Supabase client is not configured' } };
-    return await supabase.auth.signInWithOAuth({
+    const res = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/enquiries`,
+        redirectTo: `${window.location.origin}/dashboard`,
+        queryParams: {
+          prompt: 'select_account',
+          access_type: 'offline',
+        },
       },
     });
+    if (res.data?.url && typeof window !== 'undefined') {
+      window.location.href = res.data.url;
+    }
+    return res;
   };
 
   const signOut = async () => {

@@ -2,15 +2,29 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Pixeva CRM AWS SAM Serverless Backend
 
+Parameters:
+  SupabaseUrl:
+    Type: String
+    Default: https://batspallqzaxubikuuks.supabase.co
+    Description: Supabase project URL (public).
+  SupabaseServiceRoleKey:
+    Type: String
+    NoEcho: true
+    Description: Supabase secret (service-role) key. Supply at deploy time; never commit it.
+  AllowedOrigin:
+    Type: String
+    Default: '*'
+    Description: Browser origin allowed by CORS, e.g. https://your-app.vercel.app. Use '*' only while testing.
+
 Globals:
   Function:
-    Timeout: 10
-    MemorySize: 128
+    Timeout: 15
+    MemorySize: 256
     Runtime: nodejs22.x
     Environment:
       Variables:
-        NEXT_PUBLIC_SUPABASE_URL: https://lmagwuarvxhhvoacezvl.supabase.co
-        SUPABASE_SERVICE_ROLE_KEY: dummy_key_for_sam_build
+        NEXT_PUBLIC_SUPABASE_URL: !Ref SupabaseUrl
+        SUPABASE_SERVICE_ROLE_KEY: !Ref SupabaseServiceRoleKey
 
 Resources:
   # Amazon API Gateway (HTTP API)
@@ -18,9 +32,13 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: '$default'
+      # Limits abuse of the one unauthenticated route (public enquiry form).
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 40
+        ThrottlingRateLimit: 20
       CorsConfiguration:
         AllowOrigins:
-          - '*'
+          - !Ref AllowedOrigin
         AllowMethods:
           - GET
           - POST
@@ -31,6 +49,8 @@ Resources:
           - Content-Type
           - Authorization
           - X-Requested-With
+          - x-account-id
+        MaxAge: 600
 
   # 1. Enquiries Microservice
   EnquiriesServiceFunction:
@@ -102,7 +122,8 @@ Resources:
             Method: POST
             ApiId: !Ref PixevaApiGateway
 
-  # 6. Studio Data Microservice (Galleries, Finances, Client Requests)
+  # 6. Studio Data Microservice (Galleries, Finances, Client Requests, Dashboard)
+  # The handler routes by path, so every path the frontend calls maps to this function.
   StudioDataServiceFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -113,6 +134,30 @@ Resources:
           Type: HttpApi
           Properties:
             Path: /studio-data
+            Method: ANY
+            ApiId: !Ref PixevaApiGateway
+        GalleriesApi:
+          Type: HttpApi
+          Properties:
+            Path: /galleries
+            Method: ANY
+            ApiId: !Ref PixevaApiGateway
+        ClientRequestsApi:
+          Type: HttpApi
+          Properties:
+            Path: /client-requests
+            Method: ANY
+            ApiId: !Ref PixevaApiGateway
+        FinancesApi:
+          Type: HttpApi
+          Properties:
+            Path: /finances
+            Method: ANY
+            ApiId: !Ref PixevaApiGateway
+        DashboardApi:
+          Type: HttpApi
+          Properties:
+            Path: /dashboard
             Method: ANY
             ApiId: !Ref PixevaApiGateway
 

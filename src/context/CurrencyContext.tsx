@@ -184,11 +184,98 @@ const CurrencyContext = createContext<CurrencyContextType>({
   formatCurrency: (amount: number) => formatCurrencyDeterministic(amount, 'INR', 'INR'),
 });
 
+/**
+ * Automatically detects the default currency based on the system timezone and browser locale.
+ * If the location is not matched, falls back to USD as requested.
+ */
+export function detectSystemCurrency(): string {
+  if (typeof window === 'undefined') return 'USD';
+  try {
+    // 1. Check system timezone
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    if (tz) {
+      if (tz.includes('Kolkata') || tz.includes('Calcutta') || tz.includes('India')) return 'INR';
+      if (
+        tz.includes('London') ||
+        tz.includes('Belfast') ||
+        tz.includes('Europe/Jersey') ||
+        tz.includes('Europe/Guernsey') ||
+        tz.includes('Europe/Isle_of_Man')
+      ) return 'GBP';
+      if (tz.includes('Dubai') || tz.includes('Abu_Dhabi') || tz.includes('Muscat')) return 'AED';
+      if (tz.startsWith('Australia/')) return 'AUD';
+      if (tz === 'Asia/Singapore') return 'SGD';
+      if (
+        tz.includes('Toronto') ||
+        tz.includes('Vancouver') ||
+        tz.includes('Montreal') ||
+        tz.includes('Edmonton') ||
+        tz.includes('Winnipeg') ||
+        tz.includes('Halifax') ||
+        tz.includes('St_Johns') ||
+        tz.includes('Regina')
+      ) return 'CAD';
+      if (
+        tz.startsWith('Europe/') &&
+        !tz.includes('London') &&
+        !tz.includes('Kyiv') &&
+        !tz.includes('Moscow') &&
+        !tz.includes('Istanbul')
+      ) return 'EUR';
+      if (tz.startsWith('America/') || tz.startsWith('US/') || tz.startsWith('Pacific/Honolulu')) return 'USD';
+    }
+
+    // 2. Check system browser languages
+    const langs = [navigator.language, ...(navigator.languages || [])].filter(Boolean);
+    for (const lang of langs) {
+      const l = lang.toLowerCase();
+      if (
+        l.endsWith('-in') ||
+        l.startsWith('hi') ||
+        l.startsWith('gu') ||
+        l.startsWith('ta') ||
+        l.startsWith('te') ||
+        l.startsWith('mr') ||
+        l.startsWith('kn') ||
+        l.startsWith('ml') ||
+        l.startsWith('pa') ||
+        l.startsWith('bn')
+      ) {
+        return 'INR';
+      }
+      if (l.endsWith('-gb') || l.endsWith('-uk')) return 'GBP';
+      if (l.endsWith('-ae')) return 'AED';
+      if (l.endsWith('-ca')) return 'CAD';
+      if (l.endsWith('-au')) return 'AUD';
+      if (l.endsWith('-sg')) return 'SGD';
+      if (
+        l.endsWith('-de') ||
+        l.endsWith('-fr') ||
+        l.endsWith('-es') ||
+        l.endsWith('-it') ||
+        l.endsWith('-nl') ||
+        l.endsWith('-pt') ||
+        l.endsWith('-at') ||
+        l.endsWith('-be') ||
+        l.endsWith('-ie') ||
+        l.endsWith('-fi') ||
+        l.endsWith('-gr')
+      ) {
+        return 'EUR';
+      }
+      if (l.endsWith('-us')) return 'USD';
+    }
+  } catch {}
+
+  // Fallback if not found: USD
+  return 'USD';
+}
+
 export const CURRENCY_STORAGE_KEY = 'pixeva_currency_code';
 export const EXCHANGE_RATES_STORAGE_KEY = 'pixeva_exchange_rates';
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currencyCode, setCurrencyCodeState] = useState<string>('INR');
+  const [currencyCode, setCurrencyCodeState] = useState<string>('USD');
   const [exchangeRates, setExchangeRatesState] = useState<Record<string, number>>(DEFAULT_EXCHANGE_RATES);
 
   useEffect(() => {
@@ -196,6 +283,10 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       const savedCode = localStorage.getItem(CURRENCY_STORAGE_KEY);
       if (savedCode && CURRENCIES.some((c) => c.code === savedCode)) {
         setCurrencyCodeState(savedCode);
+      } else {
+        const detected = detectSystemCurrency();
+        const initialCode = CURRENCIES.some((c) => c.code === detected) ? detected : 'USD';
+        setCurrencyCodeState(initialCode);
       }
 
       const savedRates = localStorage.getItem(EXCHANGE_RATES_STORAGE_KEY);

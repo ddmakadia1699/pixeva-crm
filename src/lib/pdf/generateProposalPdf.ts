@@ -1,7 +1,7 @@
 import { Enquiry } from '@/lib/supabase/types';
 import { formatCurrency } from '@/lib/utils';
 
-export function generateProposalHtml(enquiry: Enquiry): string {
+export function generateProposalHtml(enquiry: Enquiry, customDeliverables?: any[]): string {
   const proposalId = `PIX-${Date.now().toString().slice(-6)}`;
   const dateStr = new Date().toLocaleDateString('en-US', {
     day: 'numeric',
@@ -280,6 +280,15 @@ export function generateProposalHtml(enquiry: Enquiry): string {
       </tr>
     </thead>
     <tbody>
+      ${(customDeliverables && customDeliverables.length > 0)
+        ? customDeliverables.map(d => `
+          <tr>
+            <td><strong>${d.title}</strong><br><span style="font-size: 11px; color: #64748b;">${d.description}</span></td>
+            <td>${d.badge || 'Professional Scope'}</td>
+            <td style="text-align: right;">${d.category || 'Included'}</td>
+          </tr>
+        `).join('')
+        : `
       <tr>
         <td><strong>Traditional & Candid Photography</strong><br><span style="font-size: 11px; color: #64748b;">Full high-resolution edited photo collection on private digital cloud gallery.</span></td>
         <td>High-Res JPEG / RAW</td>
@@ -305,6 +314,7 @@ export function generateProposalHtml(enquiry: Enquiry): string {
         <td>12×18 Flush Mount</td>
         <td style="text-align: right;">Delivered in 30 Days</td>
       </tr>
+      `}
     </tbody>
   </table>
 
@@ -357,8 +367,8 @@ export function generateProposalHtml(enquiry: Enquiry): string {
   `;
 }
 
-export function openProposalPdfWindow(enquiry: Enquiry) {
-  const html = generateProposalHtml(enquiry);
+export function openProposalPdfWindow(enquiry: Enquiry, customDeliverables?: any[]) {
+  const html = generateProposalHtml(enquiry, customDeliverables);
   const win = window.open('', '_blank');
   if (win) {
     win.document.write(html);

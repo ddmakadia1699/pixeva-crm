@@ -12,11 +12,13 @@ import {
   Menu,
   Settings2,
   Users,
-  ChevronDown
+  ChevronDown,
+  Coins
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeProvider';
 import { useAuth } from '@/context/AuthContext';
 import { useSidebar } from '@/context/SidebarContext';
+import { useCurrency } from '@/context/CurrencyContext';
 import { usePathname } from 'next/navigation';
 
 interface HeaderProps {
@@ -28,6 +30,7 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { isCollapsed, toggleCollapse, toggleMobileOpen } = useSidebar();
+  const { currency } = useCurrency();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -53,7 +56,7 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
     };
   }, [isProfileOpen]);
 
-  if (pathname === '/login' || pathname.startsWith('/enquire') || pathname.startsWith('/proposal')) {
+  if (pathname === '/' || pathname === '/login' || pathname.startsWith('/enquire') || pathname.startsWith('/proposal')) {
     return null;
   }
 
@@ -85,11 +88,8 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
           <input
             type="text"
             placeholder="Search leads, shoots, galleries, or ledger..."
-            className="w-full bg-slate-100/80 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-lg pl-8 pr-10 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-[#0f172a] transition-all"
+            className="w-full bg-slate-100/80 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:bg-white dark:focus:bg-[#0f172a] transition-all"
           />
-          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center space-x-0.5 text-[9px] font-mono font-medium text-slate-400 dark:text-slate-500 bg-white dark:bg-white/10 px-1 py-0.2 rounded border border-slate-200 dark:border-white/10">
-            <span>⌘K</span>
-          </div>
         </div>
       </div>
 
@@ -105,6 +105,21 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
             <span>New Lead</span>
           </button>
         )}
+
+        {/* Respective Currency Logo & Link to Currency Settings */}
+        <Link
+          href="/settings?tab=currency"
+          title={`Active Studio Currency: ${currency.name} (${currency.code}) • Click to configure in Settings`}
+          className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100/90 dark:bg-white/5 border border-slate-200/90 dark:border-white/10 hover:border-blue-500/50 hover:bg-blue-50/80 dark:hover:bg-blue-500/10 text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 text-xs font-semibold transition-all group shadow-2xs cursor-pointer"
+        >
+          <span className="text-sm shrink-0 leading-none">{currency.flag}</span>
+          <span className="font-bold font-mono text-[11px] text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+            {currency.symbol.trim()}
+          </span>
+          <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 hidden sm:inline">
+            {currency.code}
+          </span>
+        </Link>
 
         {/* Theme Switcher */}
         <button
@@ -170,6 +185,19 @@ export default function Header({ onOpenAddLeadModal }: HeaderProps) {
               </div>
 
               <div className="space-y-0.5 text-xs">
+                <Link
+                  href="/settings?tab=currency"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex items-center justify-between px-2 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex items-center space-x-2">
+                    <Coins className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Currency Settings</span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300">
+                    {currency.flag} {currency.code} ({currency.symbol.trim()})
+                  </span>
+                </Link>
                 <Link
                   href="/settings"
                   onClick={() => setIsProfileOpen(false)}

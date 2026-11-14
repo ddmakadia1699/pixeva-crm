@@ -2,8 +2,13 @@
  * AWS Lambda Function: Batch CRM Lead Campaign Engine
  * Runtime: Node.js 20.x
  */
+const { authenticate, authFailure } = require('../../shared/auth');
+
 exports.handler = async (event) => {
-  console.log('Received Batch Email event:', JSON.stringify(event, null, 2));
+  const auth = await authenticate(event);
+  if (!auth.ok) return authFailure(auth, { 'Content-Type': 'application/json' });
+  // Never log the raw event: it contains the caller's bearer token.
+  console.log('Batch email requested');
 
   const payload = typeof event.body === 'string' ? JSON.parse(event.body || '{}') : (event.body || event);
   const { campaignName, recipients, templateId } = payload;

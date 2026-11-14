@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Project, ProjectStatus, ContractStatus } from '@/lib/supabase/types';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { apiClient } from '@/lib/api/apiClient';
+import { useCurrency } from '@/context/CurrencyContext';
 import {
   Search,
   Plus,
@@ -63,7 +64,90 @@ export interface ExtendedProject extends Project {
   deliverables?: ProjectDeliverable[];
 }
 
-const INITIAL_PROJECTS: ExtendedProject[] = []; // cleared mock data;
+function normalizeStatus(rawStatus?: string): ProjectStatus {
+  const s = String(rawStatus || '').toLowerCase();
+  if (s.includes('complete') || s === 'delivered') return 'Completed';
+  if (s.includes('cancel') || s.includes('archive') || s.includes('hold')) return 'Archived';
+  return 'Active';
+}
+
+const INITIAL_PROJECTS: ExtendedProject[] = [
+  {
+    id: 'proj-101',
+    name: 'Julian & Sophia Luxury Destination Wedding',
+    type: 'Wedding',
+    client: 'Julian & Sophia',
+    client_phone: '+91 98765 43210',
+    first_event: '2026-12-04',
+    venue: 'Umaid Bhawan Palace, Jodhpur',
+    call_time: '07:30 AM',
+    total_amount: 280000,
+    paid_amount: 140000,
+    payment_status: 'Partial',
+    status: 'Active',
+    completeness: 'In Progress (40%)',
+    contract: 'Accepted',
+    assigned_crew: [
+      { id: 'c-1', name: 'Alex Rivers', role: 'Lead Photographer', initials: 'AR', phone: '+91 98765 43210' },
+      { id: 'c-2', name: 'Maya Lin', role: 'Cinematographer', initials: 'ML', phone: '+91 98765 43211' },
+      { id: 'c-3', name: 'Rohan Verma', role: 'Drone Pilot', initials: 'RV', phone: '+91 98765 43212' },
+    ],
+    deliverables: [
+      { id: 'd1', title: 'Master 4K Cinematic Cut', completed: false },
+      { id: 'd2', title: 'Canvera Flush Mount Album', completed: false },
+    ],
+    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+  },
+  {
+    id: 'proj-102',
+    name: 'Vance Corporate Annual Gala',
+    type: 'Corporate',
+    client: 'Eleanor Vance',
+    client_phone: '+91 98765 43213',
+    first_event: '2026-11-15',
+    venue: 'Taj Lands End, Mumbai',
+    call_time: '04:00 PM',
+    total_amount: 150000,
+    paid_amount: 150000,
+    payment_status: 'Paid',
+    status: 'Active',
+    completeness: 'In Progress (20%)',
+    contract: 'Accepted',
+    assigned_crew: [
+      { id: 'c-1', name: 'Alex Rivers', role: 'Lead Photographer', initials: 'AR', phone: '+91 98765 43210' },
+      { id: 'c-4', name: 'Dhruvi Patel', role: 'Lead Editor', initials: 'DP', phone: '+91 98765 43213' },
+    ],
+    deliverables: [
+      { id: 'd1', title: 'Keynote 4K Multi-Cam Coverage', completed: true },
+      { id: 'd2', title: 'Executive Headshots Gallery', completed: false },
+    ],
+    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+  },
+  {
+    id: 'proj-103',
+    name: 'BioTech Global Summit 2026',
+    type: 'Corporate',
+    client: 'Dr. Alistair Thorne',
+    client_phone: '+91 98765 43212',
+    first_event: '2026-10-20',
+    venue: 'BIEC Convention Center, Bengaluru',
+    call_time: '08:00 AM',
+    total_amount: 185000,
+    paid_amount: 90000,
+    payment_status: 'Partial',
+    status: 'Active',
+    completeness: 'In Progress (20%)',
+    contract: 'Accepted',
+    assigned_crew: [
+      { id: 'c-2', name: 'Maya Lin', role: 'Cinematographer', initials: 'ML', phone: '+91 98765 43211' },
+      { id: 'c-3', name: 'Rohan Verma', role: 'Drone Pilot', initials: 'RV', phone: '+91 98765 43212' },
+    ],
+    deliverables: [
+      { id: 'd1', title: 'Conference Highlight Reel', completed: false },
+    ],
+    created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
+  },
+];
 
 const PROJECT_COVERS: Record<string, string> = {
   Wedding: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
@@ -108,15 +192,104 @@ function getCountdownText(eventDateStr: string): { text: string; isImminent: boo
 }
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<ExtendedProject[]>([]);
+  const { currency, formatCurrency } = useCurrency();
+  const [projects, setProjects] = useState<ExtendedProject[]>(INITIAL_PROJECTS);
   const [isLoaded, setIsLoaded] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'cards' | 'kanban'>('table');
 
   // Drawer Panel for Shoot Details
   
 
-  // Load via AWS API Gateway with account scoping
+  // Hydrate from localStorage and auto-sync booked enquiries
   useEffect(() => {
+    let initialProjects: ExtendedProject[] = INITIAL_PROJECTS;
+
+    // 1. Immediately hydrate from localStorage
+    try {
+      const saved = localStorage.getItem('pixeva_projects');
+      if (saved) {
+        const parsed: ExtendedProject[] = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          initialProjects = parsed;
+          setProjects(parsed);
+        } else {
+          setProjects(INITIAL_PROJECTS);
+          localStorage.setItem('pixeva_projects', JSON.stringify(INITIAL_PROJECTS));
+        }
+      } else {
+        setProjects(INITIAL_PROJECTS);
+        localStorage.setItem('pixeva_projects', JSON.stringify(INITIAL_PROJECTS));
+      }
+    } catch (e) {
+      console.warn('Failed to parse pixeva_projects from localStorage:', e);
+      setProjects(INITIAL_PROJECTS);
+    }
+
+    // 2. Scan pixeva_enquiries to ensure any booked leads are auto-converted to projects
+    try {
+      const rawEnquiries = localStorage.getItem('pixeva_enquiries');
+      if (rawEnquiries) {
+        const enqs = JSON.parse(rawEnquiries);
+        if (Array.isArray(enqs)) {
+          const bookedEnqs = enqs.filter((e: any) => e.status && String(e.status).toLowerCase().includes('book'));
+          if (bookedEnqs.length > 0) {
+            let updated = [...initialProjects];
+            let hasNew = false;
+
+            for (const enq of bookedEnqs) {
+              const enqEventName = enq.event_name || `${enq.name}'s Event`;
+              const exists = updated.some(
+                (p) => p.name === enqEventName || (p.client === enq.name && p.venue === enq.venue)
+              );
+
+              if (!exists) {
+                hasNew = true;
+                const rawBudget = Number(enq.estimated_budget) || (enq.budget ? Number(String(enq.budget).replace(/[^0-9]/g, '')) : 0) || 250000;
+                const autoProject: ExtendedProject = {
+                  id: `proj-auto-${Date.now()}-${enq.id}`,
+                  name: enqEventName,
+                  type: enq.event_type === 'wedding' ? 'Wedding' : 'Corporate',
+                  client: enq.name,
+                  client_phone: enq.phone || enq.contact || '',
+                  first_event: enq.event_date || enq.received_on || new Date().toISOString().slice(0, 10),
+                  venue: enq.venue || 'TBA',
+                  call_time: '08:00 AM',
+                  total_amount: rawBudget,
+                  paid_amount: 0,
+                  payment_status: 'Pending',
+                  status: 'Active',
+                  completeness: 'In Progress (20%)',
+                  contract: 'Pending',
+                  assigned_crew: [
+                    { id: 'c1', name: 'Amit Sharma', role: 'Lead Photographer', initials: 'AS', phone: '919876543219' },
+                  ],
+                  deliverables: [
+                    { id: 'd1', title: 'Master Cinematic Video Cut', completed: false },
+                    { id: 'd2', title: 'High-Resolution Edited Photo Album', completed: false },
+                  ],
+                  created_at: new Date().toISOString(),
+                };
+                updated = [autoProject, ...updated];
+              }
+            }
+
+            if (hasNew) {
+              initialProjects = updated;
+              setProjects(updated);
+              try {
+                localStorage.setItem('pixeva_projects', JSON.stringify(updated));
+              } catch {}
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to auto-sync booked enquiries:', e);
+    }
+
+    setIsLoaded(true);
+
+    // 3. Sync from Cloud if available (merging, not overwriting)
     async function loadProjects() {
       try {
         const cloudData = await apiClient.projects.list();
@@ -131,29 +304,48 @@ export default function ProjectsPage() {
             call_time: p.call_time || '08:00 AM',
             total_amount: Number(p.price || p.total_amount) || 2500,
             paid_amount: Number(p.deposit_paid || p.paid_amount) || 1250,
-            payment_status: p.payment_status || (p.deposit_paid >= p.price ? 'Paid' : 'Partial'),
-            status: p.status || 'Active',
-            completeness: p.completeness || 'In Progress (50%)',
+            payment_status: p.payment_status || (Number(p.deposit_paid) >= Number(p.price) ? 'Paid' : 'Partial'),
+            status: normalizeStatus(p.status),
+            completeness: p.completeness || 'In Progress (40%)',
             contract: p.contract_status || p.contract || 'Accepted',
             assigned_crew: p.assigned_crew || [],
             deliverables: p.deliverables || [],
             created_at: p.created_at || new Date().toISOString(),
           }));
-          setProjects(mapped);
-          try {
-            localStorage.setItem('pixeva_projects', JSON.stringify(mapped));
-          } catch { }
-          setIsLoaded(true);
-          return;
+
+          setProjects((prev) => {
+            const cloudIds = new Set(mapped.map((m) => m.id));
+            const localOnly = prev.filter((p) => !cloudIds.has(p.id));
+            const merged = [...mapped, ...localOnly];
+            try {
+              localStorage.setItem('pixeva_projects', JSON.stringify(merged));
+            } catch {}
+            return merged;
+          });
         }
       } catch (err) {
         console.warn('API Gateway project sync notice:', err);
-      } finally {
-        setIsLoaded(true);
       }
     }
 
     loadProjects();
+  }, []);
+
+  // Real-time synchronization when updated from other tabs
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if ((e.key === 'pixeva_projects' || e.key === 'pixeva_enquiries') && e.newValue) {
+        try {
+          const saved = localStorage.getItem('pixeva_projects');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) setProjects(parsed);
+          }
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   const updateProjects = (updater: ExtendedProject[] | ((prev: ExtendedProject[]) => ExtendedProject[])) => {
@@ -230,8 +422,9 @@ export default function ProjectsPage() {
   // Filter & Sort Logic
   const filteredProjects = projects
     .filter((p) => {
-      if (activeTab === 'Active') return p.status === 'Active';
-      return p.status === 'Archived';
+      const isArchived = p.status === 'Archived' || p.status === 'Completed';
+      if (activeTab === 'Active') return p.status === 'Active' || !isArchived;
+      return isArchived;
     })
     .filter((p) => {
       if (!searchTerm) return true;
@@ -366,8 +559,8 @@ export default function ProjectsPage() {
       first_event: project.first_event,
       venue: project.venue || '',
       call_time: project.call_time || '08:00 AM',
-      total_amount: project.total_amount || 2500,
-      paid_amount: project.paid_amount || 1250,
+      total_amount: project.total_amount ?? 250000,
+      paid_amount: project.paid_amount ?? 0,
       status: project.status,
       stage: getStageFromCompleteness(project.completeness),
       contract: project.contract,
@@ -1383,6 +1576,35 @@ export default function ProjectsPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Financials: Total Budget & Paid Deposit */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
+                    Total Budget ({currency.symbol.trim()})
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.total_amount || ''}
+                    onChange={(e) => setFormData({ ...formData, total_amount: Number(e.target.value) })}
+                    placeholder="250000"
+                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-medium text-slate-700 dark:text-slate-300 block mb-1">
+                    Paid Amount / Deposit ({currency.symbol.trim()})
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.paid_amount || ''}
+                    onChange={(e) => setFormData({ ...formData, paid_amount: Number(e.target.value) })}
+                    placeholder="125000"
+                    className="w-full bg-slate-50 dark:bg-[#111827] border border-slate-200/80 dark:border-white/10 rounded-md px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-slate-400"
+                  />
+                </div>
               </div>
 
               

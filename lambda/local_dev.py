@@ -45,7 +45,7 @@ for env_name in [".env.local", ".env", ".env.example"]:
 os.environ.setdefault("ENVIRONMENT", "local")
 os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
 os.environ.setdefault("AWS_REGION", "us-east-1")
-os.environ.setdefault("NEXT_PUBLIC_SUPABASE_URL", "https://lmagwuarvxhhvoacezvl.supabase.co")
+os.environ.setdefault("NEXT_PUBLIC_SUPABASE_URL", "https://batspallqzaxubikuuks.supabase.co")
 
 FUNCTIONS_DIR = Path(__file__).resolve().parent / "functions"
 
