@@ -72,7 +72,7 @@ def load_handler(module_name: str):
     return importlib.reload(module).handler  # reload so code edits apply without a restart
 
 
-def build_event(method: str, path: str, query: str, headers: dict, body: bytes) -> dict:
+def build_event(method: str, path: str, query: str, headers: dict, body: bytes, source_ip: str = "127.0.0.1") -> dict:
     is_base64 = False
     text = None
     if body:
@@ -89,7 +89,7 @@ def build_event(method: str, path: str, query: str, headers: dict, body: bytes) 
         "rawQueryString": query,
         "headers": {k.lower(): v for k, v in headers.items()},
         "queryStringParameters": params,
-        "requestContext": {"http": {"method": method, "path": path}, "stage": "local"},
+        "requestContext": {"http": {"method": method, "path": path, "sourceIp": source_ip}, "stage": "local"},
         "body": text,
         "isBase64Encoded": is_base64,
     }
@@ -131,7 +131,9 @@ class Proxy(BaseHTTPRequestHandler):
 
         length = int(self.headers.get("Content-Length") or 0)
         body = self.rfile.read(length) if length else b""
-        event = build_event(self.command, path, parsed.query, dict(self.headers.items()), body)
+        event = build_event(
+            self.command, path, parsed.query, dict(self.headers.items()), body, self.client_address[0]
+        )
 
         try:
             result = load_handler(module_name)(event, None)

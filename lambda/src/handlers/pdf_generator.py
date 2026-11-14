@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from common import auth, http
+from common import auth, http, ratelimit
 
 
 def handler(event, context=None):
@@ -13,10 +13,14 @@ def handler(event, context=None):
     if not result["ok"]:
         return auth.auth_failure(result)
 
+    limited = ratelimit.guard("worker", result["user_id"])
+    if limited:
+        return limited
+
     try:
         payload = http.parse_json_body(event)
     except http.BadRequest as exc:
-        return http.respond(400, {"success": False, "error": str(exc)})
+        return http.respond(exc.status, {"success": False, "error": str(exc)})
 
     # Never log the raw event: it contains the caller's bearer token.
     print("PDF generation requested")

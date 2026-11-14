@@ -6,7 +6,7 @@ the resource is chosen from the request path (or a `resource` field in the body)
 
 from __future__ import annotations
 
-from common import auth, http
+from common import auth, http, ratelimit
 from common.db import DbError, db_table
 
 SERVICE = "studio-data-service"
@@ -87,13 +87,17 @@ def handler(event, context=None):
     try:
         body = http.parse_json_body(event)
     except http.BadRequest as exc:
-        return http.respond(400, {"success": False, "error": str(exc)})
+        return http.respond(exc.status, {"success": False, "error": str(exc)})
 
     # Tenant comes ONLY from the verified Supabase JWT, never from client-supplied fields.
     result = auth.authenticate(event)
     if not result["ok"]:
         return auth.auth_failure(result)
     account_id = result["user_id"]
+
+    limited = ratelimit.guard("read" if method == "GET" else "write", account_id)
+    if limited:
+        return limited
 
     resource = _resource(str(event.get("rawPath") or event.get("path") or ""), body)
     action = {"POST": "CREATE", "PUT": "UPDATE", "DELETE": "DELETE"}.get(method, body.get("action") or "GET")

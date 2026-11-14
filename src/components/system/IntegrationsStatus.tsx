@@ -158,12 +158,12 @@ export default function IntegrationsStatus() {
               <span className="text-slate-900 dark:text-white font-mono font-medium">us-east-1</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">SDK Client:</span>
-              <span className="text-slate-900 dark:text-white font-semibold">@aws-sdk/client-lambda</span>
+              <span className="text-slate-500">Access:</span>
+              <span className="text-slate-900 dark:text-white font-semibold">Login token + rate limits</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Handlers:</span>
-              <span className="text-slate-900 dark:text-white font-mono font-medium">`/lambda/functions`</span>
+              <span className="text-slate-900 dark:text-white font-mono font-medium">lambda/src/handlers (Python 3.14)</span>
             </div>
           </div>
         </div>

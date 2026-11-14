@@ -56,7 +56,7 @@ async function getAccessToken(): Promise<string | null> {
 async function apiRequest<T = any>(
   path: string,
   rawOptions: RequestInit & { skipAuth?: boolean } = {}
-): Promise<{ success: boolean; data?: T; error?: string; accountId?: string }> {
+): Promise<{ success: boolean; data?: T; error?: string; accountId?: string; status: number }> {
   // skipAuth is only for the public enquiry form, which is used by logged-out visitors.
   const { skipAuth, ...options } = rawOptions;
   const baseUrl = getApiGatewayUrl();
@@ -73,7 +73,8 @@ async function apiRequest<T = any>(
   };
 
   const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timeoutId = controller ? setTimeout(() => controller.abort(), 4000) : null;
+  // Generous enough for a Lambda cold start (JWKS fetch + database call) on the first request.
+  const timeoutId = controller ? setTimeout(() => controller.abort(), 10000) : null;
 
   try {
     const res = await fetch(url, {
@@ -93,6 +94,7 @@ async function apiRequest<T = any>(
         success: false,
         error: parsedErr?.error || parsedErr?.message || `HTTP ${res.status}: ${errText.slice(0, 100)}`,
         accountId,
+        status: res.status,
       };
     }
 
@@ -101,6 +103,7 @@ async function apiRequest<T = any>(
       success: json.success !== false,
       data: json.data !== undefined ? json.data : json,
       accountId: json.accountId || accountId,
+      status: res.status,
     };
   } catch (err: any) {
     if (timeoutId) clearTimeout(timeoutId);
@@ -110,6 +113,7 @@ async function apiRequest<T = any>(
       success: false,
       error: err.message || 'Network request failed',
       accountId,
+      status: 0,
     };
   }
 }
@@ -117,6 +121,12 @@ async function apiRequest<T = any>(
 export const apiClient = {
   getAccountId: getActiveAccountId,
   setAccountId: setActiveAccountId,
+
+  // 0. Background workers (PDF generation, bulk email). Authenticated + rate limited server-side.
+  workers: {
+    run: (path: string, payload: Record<string, any>) =>
+      apiRequest(path, { method: 'POST', body: JSON.stringify(payload) }),
+  },
 
   // 1. Dashboard Metrics
   dashboard: {

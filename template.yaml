@@ -11,10 +11,12 @@ Parameters:
     Type: String
     NoEcho: true
     Description: Supabase secret (service-role) key. Supply at deploy time; never commit it.
-  AllowedOrigin:
-    Type: String
+  AllowedOrigins:
+    Type: CommaDelimitedList
     Default: '*'
-    Description: Browser origin allowed by CORS, e.g. https://your-app.vercel.app. Use '*' only while testing.
+    Description: >-
+      Comma-separated browser origins allowed by CORS, e.g.
+      https://pixeva-crm.vercel.app,http://localhost:3000. Use '*' only while testing.
 
 Globals:
   Function:
@@ -29,20 +31,62 @@ Globals:
       Variables:
         NEXT_PUBLIC_SUPABASE_URL: !Ref SupabaseUrl
         SUPABASE_SERVICE_ROLE_KEY: !Ref SupabaseServiceRoleKey
+        RATE_LIMIT_TABLE: !Ref RateLimitTable
 
 Resources:
-  # Amazon API Gateway (HTTP API)
+  # ---------------------------------------------------------------------------
+  # Per-identity rate limiting (see lambda/src/common/ratelimit.py).
+  # Fixed-window counters; DynamoDB TTL deletes expired windows automatically.
+  # ---------------------------------------------------------------------------
+  RateLimitTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+
+  # Least privilege: the functions may only increment counters in this one table.
+  RateLimitAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: dynamodb:UpdateItem
+            Resource: !GetAtt RateLimitTable.Arn
+
+  # ---------------------------------------------------------------------------
+  # Amazon API Gateway (HTTP API). Layer 1 of abuse protection: gateway throttling.
+  # Per-caller budgets are enforced in the Lambdas (layer 2).
+  # ---------------------------------------------------------------------------
   PixevaApiGateway:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: '$default'
-      # Limits abuse of the one unauthenticated route (public enquiry form).
       DefaultRouteSettings:
         ThrottlingBurstLimit: 40
         ThrottlingRateLimit: 20
+      # Tighter gateway-wide caps on the expensive and the public (unauthenticated) routes.
+      RouteSettings:
+        "POST /pdf-generator":
+          ThrottlingBurstLimit: 5
+          ThrottlingRateLimit: 2
+        "POST /batch-email":
+          ThrottlingBurstLimit: 5
+          ThrottlingRateLimit: 2
+        "POST /enquiries":
+          ThrottlingBurstLimit: 20
+          ThrottlingRateLimit: 10
       CorsConfiguration:
-        AllowOrigins:
-          - !Ref AllowedOrigin
+        AllowOrigins: !Ref AllowedOrigins
         AllowMethods:
           - GET
           - POST
@@ -55,17 +99,37 @@ Resources:
           - X-Requested-With
         MaxAge: 600
 
-  # 1. Enquiries Microservice
+  # 1. Enquiries Microservice (one event per method so POST can be throttled on its own)
   EnquiriesServiceFunction:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.enquiries_service.handler
+      Policies:
+        - !Ref RateLimitAccessPolicy
       Events:
-        EnquiriesApi:
+        EnquiriesList:
           Type: HttpApi
           Properties:
             Path: /enquiries
-            Method: ANY
+            Method: GET
+            ApiId: !Ref PixevaApiGateway
+        EnquiriesCreate:
+          Type: HttpApi
+          Properties:
+            Path: /enquiries
+            Method: POST
+            ApiId: !Ref PixevaApiGateway
+        EnquiriesUpdate:
+          Type: HttpApi
+          Properties:
+            Path: /enquiries
+            Method: PUT
+            ApiId: !Ref PixevaApiGateway
+        EnquiriesDelete:
+          Type: HttpApi
+          Properties:
+            Path: /enquiries
+            Method: DELETE
             ApiId: !Ref PixevaApiGateway
 
   # 2. Contracts Microservice
@@ -73,6 +137,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.contracts_service.handler
+      Policies:
+        - !Ref RateLimitAccessPolicy
       Events:
         ContractsApi:
           Type: HttpApi
@@ -86,6 +152,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.bookings_service.handler
+      Policies:
+        - !Ref RateLimitAccessPolicy
       Events:
         BookingsApi:
           Type: HttpApi
@@ -99,6 +167,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.pdf_generator.handler
+      Policies:
+        - !Ref RateLimitAccessPolicy
       Events:
         PdfApi:
           Type: HttpApi
@@ -112,6 +182,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.batch_email.handler
+      Policies:
+        - !Ref RateLimitAccessPolicy
       Events:
         BatchEmailApi:
           Type: HttpApi
@@ -126,6 +198,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handlers.studio_data_service.handler
+      Policies:
+        - !Ref RateLimitAccessPolicy
       Events:
         StudioDataApi:
           Type: HttpApi
@@ -162,3 +236,6 @@ Outputs:
   PixevaApiGatewayUrl:
     Description: Live SAM Amazon API Gateway HTTP Base URL
     Value: !Sub "https://${PixevaApiGateway}.execute-api.${AWS::Region}.amazonaws.com"
+  RateLimitTableName:
+    Description: DynamoDB table holding rate-limit counters
+    Value: !Ref RateLimitTable

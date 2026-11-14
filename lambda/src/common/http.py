@@ -20,14 +20,24 @@ CORS_HEADERS = {
 PROTECTED_FIELDS = ("id", "account_id", "created_at")
 
 
+# Request bodies in this API are small JSON documents; anything larger is abuse or a bug.
+MAX_BODY_BYTES = 256 * 1024
+
+
 class BadRequest(Exception):
     """Raised for malformed client input (becomes a 400 response)."""
 
+    status = 400
 
-def respond(status: int, body: Any = None) -> dict:
+
+class PayloadTooLarge(BadRequest):
+    status = 413
+
+
+def respond(status: int, body: Any = None, headers: dict | None = None) -> dict:
     return {
         "statusCode": status,
-        "headers": CORS_HEADERS,
+        "headers": {**CORS_HEADERS, **(headers or {})},
         "body": "" if body is None else json.dumps(body, default=str),
     }
 
@@ -66,6 +76,8 @@ def parse_json_body(event: dict) -> dict:
         return {}
     if isinstance(raw, dict):
         return raw
+    if isinstance(raw, str) and len(raw) > MAX_BODY_BYTES:
+        raise PayloadTooLarge("Request body is too large")
     if event.get("isBase64Encoded"):
         try:
             raw = base64.b64decode(raw).decode("utf-8")

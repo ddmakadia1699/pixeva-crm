@@ -10,25 +10,35 @@
 ```
                       ┌───────────────────────────┐
                       │    Client Browser / UI    │
-                      └─────────────┬─────────────┘
-                                    │
-                                    ▼
-                 ┌─────────────────────────────────────┐
-                 │    Vercel (Next.js App Router)     │
-                 │  - Edge Next.js Rendering          │
-                 │  - Server Actions & SSR Engine     │
-                 └──────────┬───────────────┬──────────┘
-                            │               │
-      Supabase JS & Cookie  │               │ AWS SDK @aws-sdk/client-lambda
-           Queries & Auth   │               │ Serverless Triggers
-                            ▼               ▼
-             ┌────────────────────┐   ┌─────────────────────────┐
-             │   Supabase Cloud   │   │   AWS Lambda Workers    │
-             │ - PostgreSQL DB    │   │ - PDF Invoice Generator │
-             │ - Supabase Auth    │   │ - Batch Campaign Mailer │
-             │ - Row Level Sec.   │   │ - Data Import / Sync    │
-             └────────────────────┘   └─────────────────────────┘
+                      └──────┬─────────────┬──────┘
+          static + SSR pages │             │ API calls with the user's login token
+        (no backend secrets) │             │ (Authorization: Bearer <Supabase JWT>)
+                             ▼             ▼
+        ┌───────────────────────┐   ┌──────────────────────────────────────────┐
+        │ Vercel (Next.js)      │   │ AWS API Gateway (HTTP API)               │
+        │ - UI + login (Auth)   │   │ - CORS allow-list, route throttling      │
+        │ - NO AWS credentials  │   └───────────────────┬──────────────────────┘
+        └──────────┬────────────┘                       ▼
+                   │ login            ┌──────────────────────────────────────────┐
+                   ▼                  │ AWS Lambda (Python 3.14)                 │
+        ┌───────────────────────┐     │ 1. verify JWT (Supabase public JWKS)     │
+        │ Supabase              │◀────│ 2. per-user / per-IP rate limit          │
+        │ - Auth, PostgreSQL    │     │    (DynamoDB counters, TTL)              │
+        │ - data scoped by      │     │ 3. query with account_id = token `sub`   │
+        │   account_id          │     └──────────────────────────────────────────┘
+        └───────────────────────┘
 ```
+
+### Security & abuse protection
+
+| Layer | Control |
+|---|---|
+| Browser / Vercel | Holds only public values. No AWS keys and no Supabase secret key; there is no route that can invoke AWS. |
+| API Gateway | CORS allow-list (`AllowedOrigins`), default throttle, tighter caps on `POST /pdf-generator`, `POST /batch-email` and the public `POST /enquiries`. |
+| Lambda: identity | Every route verifies the Supabase JWT. The tenant is the token's `sub`, never a client-supplied id. The only anonymous path is creating an enquiry through the public form. |
+| Lambda: fairness | Per-identity budgets (`lambda/src/common/ratelimit.py`): reads 240/min and writes 60/min per user, workers 10/min and 100/h per user, public form 5/min and 30/h per IP plus 60/h per studio. Over budget returns `429` with `Retry-After`. |
+| Lambda: input | Request bodies are capped at 256 KB; public-form fields are length-limited; clients cannot change `account_id` on update. |
+| Secrets | The Supabase secret key lives only in the Lambda stack (a `NoEcho` SAM parameter). Lambdas get least-privilege IAM (`dynamodb:UpdateItem` on one table). |
 
 ---
 
@@ -45,15 +55,11 @@ Copy `.env.example` to `.env.local`:
 cp .env.example .env.local
 ```
 
-Fill in your API keys (optional for local demo mode):
+Fill in the public values (the frontend needs no AWS credentials):
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-supabase-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=AKIA...
-AWS_SECRET_ACCESS_KEY=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
+NEXT_PUBLIC_AWS_API_GATEWAY_URL=https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com
 ```
 
 ### 3. Run Development Server
@@ -104,8 +110,11 @@ lambda/.venv/Scripts/python -m unittest discover -s lambda/tests -v
 ```bash
 sam build
 sam deploy --stack-name pixeva-crm --resolve-s3 --region us-east-1 --capabilities CAPABILITY_IAM \
-  --parameter-overrides SupabaseServiceRoleKey=<your-supabase-secret-key>
+  --parameter-overrides SupabaseServiceRoleKey=<your-supabase-secret-key> \
+  "AllowedOrigins=https://pixeva-crm.vercel.app,http://localhost:3000"
 ```
+`AllowedOrigins` restricts which websites' browsers may call the API (CORS). The stack also creates a
+DynamoDB table for rate-limit counters (pay-per-request, items expire automatically).
 Native dependencies are built for Linux automatically, or add `--use-container` if you have Docker.
 
 ---

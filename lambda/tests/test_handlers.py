@@ -19,6 +19,10 @@ from cryptography.hazmat.primitives.asymmetric import ec
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
+from unittest import mock  # noqa: E402
+
+from common import ratelimit  # noqa: E402
+
 KID = "test-key"
 GOOD_KEY = ec.generate_private_key(ec.SECP256R1())
 OTHER_KEY = ec.generate_private_key(ec.SECP256R1())
@@ -90,6 +94,71 @@ class AuthAndHandlerTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.server.shutdown()
         cls.server.server_close()
+
+    def setUp(self):
+        ratelimit.set_backend(ratelimit.MemoryBackend())  # fresh counters for every test
+
+    # --- rate limiting through the real handlers ------------------------------
+    def test_authenticated_reads_are_rate_limited_per_user(self):
+        tight = {"read": (ratelimit.Rule("1m", 3, 60),), "write": ratelimit.POLICIES["write"]}
+        with mock.patch.dict(ratelimit.POLICIES, tight):
+            ev = self.event("GET", "/bookings", token=self.tokens["valid"])
+            for _ in range(3):
+                self.assertStatus(self.bookings, ev, 200)
+            res = self.bookings(ev)
+            self.assertEqual(res["statusCode"], 429)
+            body = json.loads(res["body"])
+            self.assertEqual(res["headers"]["Retry-After"], str(body["retryAfterSeconds"]))
+            self.assertGreaterEqual(body["retryAfterSeconds"], 1)
+            # a different user is unaffected by user-A's exhausted budget
+            other = jwt.encode({"sub": "user-B", "iss": f"{self.base}/auth/v1", "aud": "authenticated",
+                                "exp": int(time.time()) + 3600}, GOOD_KEY, algorithm="ES256", headers={"kid": KID})
+            self.assertStatus(self.bookings, self.event("GET", "/bookings", token=other), 200, "user-B")
+
+    def test_workers_have_a_tighter_budget(self):
+        ev = self.event("POST", "/pdf-generator", token=self.tokens["valid"], body={})
+        for _ in range(10):
+            self.assertStatus(self.pdf, ev, 200)
+        self.assertStatus(self.pdf, ev, 429)
+        # PDF + email share one per-user "worker" budget, so email is limited too...
+        self.assertStatus(self.mail, self.event("POST", "/batch-email", token=self.tokens["valid"], body={}), 429)
+        # ...while ordinary reads for the same user still work
+        self.assertStatus(self.bookings, self.event("GET", "/bookings", token=self.tokens["valid"]), 200)
+
+    def test_public_form_is_limited_per_ip_and_cannot_be_ip_spoofed(self):
+        def public(ip, forwarded=None):
+            ev = self.event("POST", "/enquiries", body={"name": "A", "account_id": "studio-1"},
+                            headers={"x-forwarded-for": forwarded} if forwarded else None)
+            ev["requestContext"]["http"]["sourceIp"] = ip
+            return ev
+        for _ in range(5):
+            self.assertStatus(self.enquiries, public("203.0.113.7"), 200)
+        self.assertStatus(self.enquiries, public("203.0.113.7"), 429)
+        # X-Forwarded-For is attacker-controlled and must not change the bucket
+        self.assertStatus(self.enquiries, public("203.0.113.7", forwarded="198.51.100.1"), 429)
+        # a different client IP has its own budget
+        self.assertStatus(self.enquiries, public("203.0.113.8"), 200)
+
+    def test_public_form_is_limited_per_studio(self):
+        tight = {"public_ip": (ratelimit.Rule("1m", 1000, 60),), "public_studio": (ratelimit.Rule("1h", 3, 3600),)}
+        with mock.patch.dict(ratelimit.POLICIES, tight):
+            for i in range(3):
+                ev = self.event("POST", "/enquiries", body={"name": "A", "account_id": "studio-9"})
+                ev["requestContext"]["http"]["sourceIp"] = f"198.51.100.{i}"
+                self.assertStatus(self.enquiries, ev, 200)
+            ev = self.event("POST", "/enquiries", body={"name": "A", "account_id": "studio-9"})
+            ev["requestContext"]["http"]["sourceIp"] = "198.51.100.99"
+            self.assertStatus(self.enquiries, ev, 429)
+
+    def test_oversized_body_is_rejected(self):
+        ev = self.event("POST", "/enquiries", token=self.tokens["valid"])
+        ev["body"] = json.dumps({"name": "x" * 300_000})
+        self.assertStatus(self.enquiries, ev, 413)
+
+    def test_unauthenticated_requests_do_not_consume_anyones_budget(self):
+        for _ in range(300):
+            self.assertStatus(self.enquiries, self.event("GET", "/enquiries"), 401)
+        self.assertStatus(self.enquiries, self.event("GET", "/enquiries", token=self.tokens["valid"]), 200)
 
     # --- helpers -------------------------------------------------------------
     @staticmethod
@@ -207,6 +276,78 @@ class AuthAndHandlerTests(unittest.TestCase):
             self.assertIn(key, body["data"])
 
 
+class RateLimiterUnitTests(unittest.TestCase):
+    def setUp(self):
+        self.backend = ratelimit.MemoryBackend()
+        ratelimit.set_backend(self.backend)
+
+    def test_fixed_window_resets_at_the_next_window(self):
+        t = 1_700_000_040  # exact minute boundary
+        for _ in range(60):
+            self.assertTrue(ratelimit.check("write", "u1", now=t).allowed)
+        denied = ratelimit.check("write", "u1", now=t + 10)
+        self.assertFalse(denied.allowed)
+        self.assertEqual(denied.retry_after, 50)
+        self.assertEqual(denied.rule, "write:1m")
+        self.assertTrue(ratelimit.check("write", "u1", now=t + 60).allowed)
+
+    def test_identities_and_policies_are_isolated(self):
+        t = 1_700_000_040
+        for _ in range(61):
+            ratelimit.check("write", "u1", now=t)
+        self.assertFalse(ratelimit.check("write", "u1", now=t).allowed)
+        self.assertTrue(ratelimit.check("write", "u2", now=t).allowed)
+        self.assertTrue(ratelimit.check("read", "u1", now=t).allowed)
+
+    def test_hourly_rule_applies_after_minute_rule_passes(self):
+        t = 1_699_999_200  # exact hour boundary; 7s spacing keeps every minute under its own limit
+        results = [ratelimit.check("worker", "u1", now=t + i * 7).allowed for i in range(101)]
+        self.assertTrue(all(results[:100]))
+        self.assertFalse(results[100])  # 101st call within the hour
+
+    def test_store_outage_fails_open(self):
+        class Broken:
+            def hit(self, key, expires_at):
+                raise RuntimeError("dynamodb unavailable")
+        ratelimit.set_backend(Broken())
+        self.assertTrue(ratelimit.check("write", "u1").allowed)
+        self.assertIsNone(ratelimit.guard("write", "u1"))
+
+    def test_raw_identities_are_never_stored(self):
+        keys = []
+
+        class Recorder:
+            def hit(self, key, expires_at):
+                keys.append(key)
+                return 1
+        ratelimit.set_backend(Recorder())
+        ratelimit.check("public_ip", "203.0.113.7")
+        self.assertTrue(keys)
+        self.assertFalse(any("203.0.113.7" in k for k in keys))
+
+    def test_client_ip_comes_from_api_gateway_not_headers(self):
+        ev = {"headers": {"x-forwarded-for": "6.6.6.6"}, "requestContext": {"http": {"sourceIp": "1.2.3.4"}}}
+        self.assertEqual(ratelimit.client_ip(ev), "1.2.3.4")
+        self.assertEqual(ratelimit.client_ip({}), "unknown")
+
+    def test_dynamodb_backend_uses_an_atomic_counter_with_ttl(self):
+        calls = []
+
+        class FakeDynamo:
+            def update_item(self, **kwargs):
+                calls.append(kwargs)
+                return {"Attributes": {"hits": {"N": "7"}}}
+
+        backend = ratelimit.DynamoBackend("rl-table", client=FakeDynamo())
+        self.assertEqual(backend.hit("k1", 1234), 7)
+        sent = calls[0]
+        self.assertEqual(sent["TableName"], "rl-table")
+        self.assertEqual(sent["Key"], {"pk": {"S": "k1"}})
+        self.assertIn("ADD hits :one", sent["UpdateExpression"])
+        self.assertEqual(sent["ExpressionAttributeValues"][":exp"], {"N": "1234"})
+        self.assertEqual(sent["ReturnValues"], "UPDATED_NEW")
+
+
 class DbClientTests(unittest.TestCase):
     def test_query_building(self):
         from common.db import Supabase
@@ -284,6 +425,7 @@ class LiveDatabasePathTests(unittest.TestCase):
         cls.server.server_close()
 
     def setUp(self):
+        ratelimit.set_backend(ratelimit.MemoryBackend())
         _FakeSupabase.requests = []
         _FakeSupabase.script = []
         os.environ["SUPABASE_SERVICE_ROLE_KEY"] = "sb_secret_opaque_test_key"

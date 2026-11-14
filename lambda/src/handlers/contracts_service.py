@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from common import auth, http
+from common import auth, http, ratelimit
 from common.db import DbError, db_table
 
 SERVICE = "contracts-service"
@@ -31,7 +31,7 @@ def handler(event, context=None):
     try:
         payload = http.parse_json_body(event)
     except http.BadRequest as exc:
-        return http.respond(400, {"success": False, "error": str(exc)})
+        return http.respond(exc.status, {"success": False, "error": str(exc)})
 
     action = METHOD_ACTIONS.get(method)
     if action is None:
@@ -46,6 +46,10 @@ def handler(event, context=None):
     if not result["ok"]:
         return auth.auth_failure(result)
     account_id = result["user_id"]
+
+    limited = ratelimit.guard("read" if action == "GET" else "write", account_id)
+    if limited:
+        return limited
 
     try:
         if action == "GET":

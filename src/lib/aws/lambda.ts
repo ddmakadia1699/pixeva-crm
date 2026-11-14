@@ -1,3 +1,5 @@
+import { apiClient } from '@/lib/api/apiClient';
+
 export interface LambdaInvokeResult {
   success: boolean;
   functionName: string;
@@ -7,53 +9,48 @@ export interface LambdaInvokeResult {
   simulated: boolean;
 }
 
-export const isAWSConfigured = Boolean(
-  process.env.AWS_ACCESS_KEY_ID && 
-  process.env.AWS_SECRET_ACCESS_KEY && 
-  !process.env.AWS_ACCESS_KEY_ID.includes('EXAMPLE')
-);
+/**
+ * Background workers the browser may trigger. This is an explicit allow-list: a worker is
+ * reachable only if it is listed here AND exists as an authenticated, rate-limited route on
+ * the API. The browser never names an AWS function and never holds AWS credentials.
+ */
+const WORKER_ROUTES: Record<string, string> = {
+  'pdf-generator-service': '/pdf-generator',
+  'batch-email-service': '/batch-email',
+};
+
+/** True when the app knows where the AWS API Gateway is (the public URL, not a secret). */
+export const isAWSConfigured = Boolean(process.env.NEXT_PUBLIC_AWS_API_GATEWAY_URL);
 
 /**
- * Helper utility to invoke an AWS Lambda function from the browser or server
- * via the Next.js /api/lambda backend route.
+ * Run a background worker through the authenticated API Gateway using the user's login token.
+ * Replaces the old open /api/lambda proxy that let any caller invoke arbitrary Lambda functions.
  */
 export async function invokeLambdaFunction(
   functionName: string,
   payloadData: Record<string, any>
 ): Promise<LambdaInvokeResult> {
   const startTime = Date.now();
+  const route = WORKER_ROUTES[functionName];
 
-  try {
-    const res = await fetch('/api/lambda', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ functionName, payloadData }),
-    });
-
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      return {
-        success: false,
-        functionName,
-        statusCode: res.status,
-        payload: errJson.payload || { error: 'Server error' },
-        executionTimeMs: Date.now() - startTime,
-        simulated: true,
-      };
-    }
-
-    const data: LambdaInvokeResult = await res.json();
-    return data;
-  } catch (error: any) {
+  if (!route) {
     return {
       success: false,
       functionName,
-      statusCode: 500,
-      payload: { error: error.message || 'Network invocation failed' },
-      executionTimeMs: Date.now() - startTime,
-      simulated: true,
+      statusCode: 404,
+      payload: { error: `Worker '${functionName}' is not available.` },
+      executionTimeMs: 0,
+      simulated: false,
     };
   }
+
+  const res = await apiClient.workers.run(route, payloadData || {});
+  return {
+    success: res.success,
+    functionName,
+    statusCode: res.status || 500,
+    payload: res.success ? res.data : { error: res.error || 'Worker request failed' },
+    executionTimeMs: Date.now() - startTime,
+    simulated: false,
+  };
 }
