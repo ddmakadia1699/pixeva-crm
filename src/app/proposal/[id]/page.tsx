@@ -38,11 +38,19 @@ import {
   FileText,
   BadgePercent,
   Sliders,
-  DollarSign
+  DollarSign,
+  Save,
+  Eye,
+  Settings,
+  HelpCircle,
+  Phone,
+  Mail,
+  AlertCircle
 } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 import { openProposalPdfWindow, openReceiptPdfWindow } from '@/lib/pdf/generateProposalPdf';
 import { Enquiry } from '@/lib/supabase/types';
+import { apiClient } from '@/lib/api/apiClient';
 
 export interface ProposalDeliverable {
   id: string;
@@ -62,7 +70,7 @@ export interface ProposalAddOn {
   inrPrice: number;
   category: string;
   badge: string;
-  icon: React.ElementType;
+  icon?: any;
 }
 
 const DEFAULT_PROPOSAL_DELIVERABLES: ProposalDeliverable[] = [
@@ -96,7 +104,7 @@ const DEFAULT_PROPOSAL_DELIVERABLES: ProposalDeliverable[] = [
   }
 ];
 
-const AVAILABLE_ADDONS: ProposalAddOn[] = [
+const DEFAULT_ADDONS: ProposalAddOn[] = [
   {
     id: 'addon-drone',
     title: '4K FPV Aerial Drone Cinematography',
@@ -105,7 +113,6 @@ const AVAILABLE_ADDONS: ProposalAddOn[] = [
     inrPrice: 35000,
     category: 'Aerial Drone',
     badge: 'Licensed Pilot',
-    icon: Film,
   },
   {
     id: 'addon-second-shooter',
@@ -115,7 +122,6 @@ const AVAILABLE_ADDONS: ProposalAddOn[] = [
     inrPrice: 40000,
     category: 'Photography',
     badge: 'Double Coverage',
-    icon: Camera,
   },
   {
     id: 'addon-parent-albums',
@@ -125,7 +131,6 @@ const AVAILABLE_ADDONS: ProposalAddOn[] = [
     inrPrice: 30000,
     category: 'Heirloom Print',
     badge: 'Handcrafted',
-    icon: Layers,
   },
   {
     id: 'addon-express-teaser',
@@ -135,7 +140,6 @@ const AVAILABLE_ADDONS: ProposalAddOn[] = [
     inrPrice: 20000,
     category: 'Cinematography',
     badge: 'Express 48h Turnaround',
-    icon: Zap,
   },
   {
     id: 'addon-prewed-film',
@@ -145,7 +149,6 @@ const AVAILABLE_ADDONS: ProposalAddOn[] = [
     inrPrice: 50000,
     category: 'Photography',
     badge: 'Editorial Portrait',
-    icon: Sparkles,
   },
   {
     id: 'addon-raw-ssd',
@@ -155,7 +158,6 @@ const AVAILABLE_ADDONS: ProposalAddOn[] = [
     inrPrice: 15000,
     category: 'Archival Vault',
     badge: 'Master Archival',
-    icon: ShieldCheck,
   },
 ];
 
@@ -165,6 +167,19 @@ export default function ClientProposalPage() {
   const params = useParams();
   const proposalId = (params?.id as string) || 'prop-default';
 
+  // Studio Edit Mode Toggle State
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [saveSuccessToast, setSaveSuccessToast] = useState(false);
+
+  // Studio Info (Editable)
+  const [studioName, setStudioName] = useState('Pixeva');
+  const [studioTagline, setStudioTagline] = useState('Cinematic Media & Photography');
+  const [studioHeadline, setStudioHeadline] = useState('Bespoke Coverage Proposal');
+  const [studioDescription, setStudioDescription] = useState(
+    'Customize your production tier, select optional high-impact add-ons, review your live investment total, and lock your date with a secure 20% advance retainer.'
+  );
+
+  // Proposal Enquiry Core Data (Editable)
   const [enquiry, setEnquiry] = useState<Enquiry>({
     id: proposalId,
     name: 'Rahul & Priya',
@@ -173,28 +188,31 @@ export default function ClientProposalPage() {
     event_name: 'Wedding & Reception',
     venue: 'Grand Palace Hotel',
     received_on: new Date().toISOString().slice(0, 10),
-    source: 'Instagram',
+    source: 'Website',
     estimated_budget: 250000,
     status: 'proposal',
     created_at: new Date().toISOString(),
   });
 
-  // Base Budget & Tier selection
+  // Base Anchor Budget & Tier selection
   const [baseAnchorBudget, setBaseAnchorBudget] = useState<number>(250000);
   const [selectedTier, setSelectedTier] = useState<PackageTier>('master');
 
-  // Interactive Add-ons state
-  const [selectedAddOnIds, setSelectedAddOnIds] = useState<Set<string>>(new Set(['addon-drone']));
-
-  // Deliverables
+  // Custom Deliverables (Editable List)
   const [deliverables, setDeliverables] = useState<ProposalDeliverable[]>(DEFAULT_PROPOSAL_DELIVERABLES);
-  const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
-  const [modalBudget, setModalBudget] = useState<number>(250000);
-  const [modalDeliverables, setModalDeliverables] = useState<ProposalDeliverable[]>(DEFAULT_PROPOSAL_DELIVERABLES);
+
+  // Interactive Add-ons (Editable List)
+  const [availableAddons, setAvailableAddons] = useState<ProposalAddOn[]>(DEFAULT_ADDONS);
+  const [selectedAddOnIds, setSelectedAddOnIds] = useState<Set<string>>(new Set(['addon-drone']));
 
   // Contract Terms Accordion
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isTermsExpanded, setIsTermsExpanded] = useState(false);
+  const [contractTerms, setContractTerms] = useState({
+    turnaround: 'Express teasers dispatched within 48–72 hours. Full edited high-res photo gallery delivered within 25 days. Master cinematic film and albums delivered within 45 days.',
+    rescheduling: 'In the event of unforeseen weather or venue shifts, your 20% retainer is 100% transferable to any available date within 12 months with 30-day prior written notice.',
+    rights: 'You receive unlimited perpetual personal printing, sharing, and digital distribution rights. Pixeva Studios securely archives your master footage in cloud cold-storage for 5 years.',
+  });
 
   // Signature States
   const [signatureMode, setSignatureMode] = useState<'draw' | 'type'>('draw');
@@ -208,7 +226,6 @@ export default function ClientProposalPage() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'upi' | 'bank'>('card');
   const [copiedLink, setCopiedLink] = useState(false);
-  const [copiedBankInfo, setCopiedBankInfo] = useState(false);
   const [receiptRef, setReceiptRef] = useState('');
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -226,13 +243,13 @@ export default function ClientProposalPage() {
   // Compute Total Add-Ons Price
   const addOnsTotal = useMemo(() => {
     let sum = 0;
-    AVAILABLE_ADDONS.forEach((addon) => {
+    availableAddons.forEach((addon) => {
       if (selectedAddOnIds.has(addon.id)) {
         sum += isUsdScale ? addon.usdPrice : addon.inrPrice;
       }
     });
     return sum;
-  }, [selectedAddOnIds, isUsdScale]);
+  }, [availableAddons, selectedAddOnIds, isUsdScale]);
 
   // Grand Total & Payment Split (20% Advance, 60% Event Day, 20% Final)
   const grandTotal = baseTierPrice + addOnsTotal;
@@ -240,69 +257,145 @@ export default function ClientProposalPage() {
   const eventDay = Math.round(grandTotal * 0.6);
   const finalBal = Math.round(grandTotal * 0.2);
 
-  // Load matching project or enquiry from localStorage & mark mounted
+  // =========================================================================
+  // Hydration: 1. Custom Storage -> 2. Local Projects/Leads -> 3. Cloud Sync
+  // =========================================================================
   useEffect(() => {
     setIsMounted(true);
-    let matchedBudget = 250000;
+
+    // Check if ?edit=true was passed in URL query
+    if (typeof window !== 'undefined' && window.location.search.includes('edit=true')) {
+      setIsEditMode(true);
+    }
+
+    let foundMatch = false;
 
     try {
-      // Record proposal viewed event in storage for analytics
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`pixeva_proposal_viewed_${proposalId}`, new Date().toISOString());
+      // 1. Check custom saved proposal draft first
+      const customKey = `pixeva_proposal_custom_${proposalId}`;
+      const savedCustom = localStorage.getItem(customKey);
+      if (savedCustom) {
+        const parsed = JSON.parse(savedCustom);
+        if (parsed.enquiry) setEnquiry(parsed.enquiry);
+        if (parsed.baseAnchorBudget) setBaseAnchorBudget(parsed.baseAnchorBudget);
+        if (parsed.deliverables && Array.isArray(parsed.deliverables)) setDeliverables(parsed.deliverables);
+        if (parsed.availableAddons && Array.isArray(parsed.availableAddons)) setAvailableAddons(parsed.availableAddons);
+        if (parsed.selectedTier) setSelectedTier(parsed.selectedTier);
+        if (parsed.selectedAddOnIds) setSelectedAddOnIds(new Set(parsed.selectedAddOnIds));
+        if (parsed.studioName) setStudioName(parsed.studioName);
+        if (parsed.studioTagline) setStudioTagline(parsed.studioTagline);
+        if (parsed.studioHeadline) setStudioHeadline(parsed.studioHeadline);
+        if (parsed.studioDescription) setStudioDescription(parsed.studioDescription);
+        if (parsed.typedSignature) setTypedSignature(parsed.typedSignature);
+        foundMatch = true;
       }
 
-      // 1. Check pixeva_projects first
-      const savedProjects = localStorage.getItem('pixeva_projects');
-      if (savedProjects) {
-        const projList = JSON.parse(savedProjects);
-        const projMatch = projList.find(
-          (p: any) => p.id === proposalId || (p.name && p.name.toLowerCase().includes(proposalId.toLowerCase()))
-        );
-        if (projMatch) {
-          matchedBudget = Number(projMatch.total_amount) || 250000;
-          setEnquiry({
-            id: projMatch.id,
-            name: projMatch.client || projMatch.name || 'Rahul & Priya',
-            contact: projMatch.client_phone || '+91 98765 43210',
-            email: '',
-            event_name: projMatch.name || 'Wedding & Reception',
-            venue: projMatch.venue || 'Grand Palace Hotel',
-            received_on: projMatch.first_event || new Date().toISOString().slice(0, 10),
-            source: 'Website',
-            estimated_budget: matchedBudget,
-            status: 'proposal',
-            created_at: projMatch.created_at || new Date().toISOString(),
-          });
-          setTypedSignature(projMatch.client || 'Rahul & Priya');
-          setBaseAnchorBudget(matchedBudget);
+      // 2. Check local projects
+      if (!foundMatch) {
+        const savedProjects = localStorage.getItem('pixeva_projects');
+        if (savedProjects) {
+          const projList = JSON.parse(savedProjects);
+          const projMatch = projList.find(
+            (p: any) => p.id === proposalId || (p.name && p.name.toLowerCase().includes(proposalId.toLowerCase()))
+          );
+          if (projMatch) {
+            const matchedBudget = Number(projMatch.total_amount) || 250000;
+            setEnquiry({
+              id: projMatch.id,
+              name: projMatch.client || projMatch.name || 'Client',
+              contact: projMatch.client_phone || '+91 98765 43210',
+              email: '',
+              event_name: projMatch.name || 'Wedding & Reception',
+              venue: projMatch.venue || 'Grand Palace Hotel',
+              received_on: projMatch.first_event || new Date().toISOString().slice(0, 10),
+              source: 'Website',
+              estimated_budget: matchedBudget,
+              status: 'proposal',
+              created_at: projMatch.created_at || new Date().toISOString(),
+            });
+            setTypedSignature(projMatch.client || 'Client');
+            setBaseAnchorBudget(matchedBudget);
+            foundMatch = true;
+          }
         }
       }
 
-      // 2. Check pixeva_enquiries if no project match
-      const saved = localStorage.getItem('pixeva_enquiries');
-      if (saved) {
-        const list: Enquiry[] = JSON.parse(saved);
-        const match = list.find((e) => e.id === proposalId || (e.name && e.name.toLowerCase().includes(proposalId.toLowerCase())));
-        if (match) {
-          matchedBudget = match.estimated_budget || (match.budget ? parseFloat(match.budget.replace(/[^0-9.]/g, '')) : 250000) || 250000;
-          setEnquiry(match);
-          setTypedSignature(match.name);
-          setBaseAnchorBudget(matchedBudget);
-        }
-      }
-
-      // 3. Load custom deliverables if previously saved
-      const savedDelivs = localStorage.getItem(`pixeva_proposal_deliv_${proposalId}`);
-      if (savedDelivs) {
-        const parsed = JSON.parse(savedDelivs);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setDeliverables(parsed);
-          setModalDeliverables(parsed);
+      // 3. Check local enquiries
+      if (!foundMatch) {
+        const saved = localStorage.getItem('pixeva_enquiries');
+        if (saved) {
+          const list: Enquiry[] = JSON.parse(saved);
+          const match = list.find((e) => e.id === proposalId || (e.name && e.name.toLowerCase().includes(proposalId.toLowerCase())));
+          if (match) {
+            const matchedBudget = match.estimated_budget || (match.budget ? parseFloat(match.budget.replace(/[^0-9.]/g, '')) : 250000) || 250000;
+            setEnquiry(match);
+            setTypedSignature(match.name);
+            setBaseAnchorBudget(matchedBudget);
+            foundMatch = true;
+          }
         }
       }
     } catch (e) {
-      console.error('Error loading proposal context:', e);
+      console.warn('Local proposal hydration warning:', e);
     }
+
+    // 4. Asynchronously fetch from Cloud API Gateway (Supabase) if not found or to sync
+    async function fetchCloudRecord() {
+      try {
+        const [cloudLeads, cloudProjects] = await Promise.all([
+          apiClient.enquiries.list().catch(() => []),
+          apiClient.projects.list().catch(() => [])
+        ]);
+
+        if (Array.isArray(cloudLeads) && cloudLeads.length > 0) {
+          const matchedLead = cloudLeads.find((l: any) => l.id === proposalId);
+          if (matchedLead) {
+            const clientName = `${matchedLead.first_name || ''} ${matchedLead.last_name || ''}`.trim() || matchedLead.name || 'Valued Client';
+            const val = Number(matchedLead.estimated_value) || 250000;
+            const mappedDate = matchedLead.notes?.match(/\d{4}-\d{2}-\d{2}/)?.[0] || new Date().toISOString().slice(0, 10);
+            const mappedVenue = matchedLead.notes?.match(/at\s+([^\n.]+)/i)?.[1] || 'Grand Palace Hotel';
+            
+            setEnquiry((prev) => ({
+              ...prev,
+              id: matchedLead.id,
+              name: clientName,
+              email: matchedLead.email || prev.email,
+              phone: matchedLead.phone || prev.phone,
+              contact: matchedLead.phone || prev.contact,
+              event_name: matchedLead.company || 'Wedding & Reception',
+              venue: mappedVenue,
+              received_on: mappedDate,
+              estimated_budget: val,
+            }));
+            setTypedSignature(clientName);
+            setBaseAnchorBudget(val);
+            return;
+          }
+        }
+
+        if (Array.isArray(cloudProjects) && cloudProjects.length > 0) {
+          const matchedProj = cloudProjects.find((p: any) => p.id === proposalId);
+          if (matchedProj) {
+            const val = Number(matchedProj.total_amount) || 250000;
+            setEnquiry((prev) => ({
+              ...prev,
+              id: matchedProj.id,
+              name: matchedProj.client || prev.name,
+              event_name: matchedProj.name || prev.event_name,
+              venue: matchedProj.venue || prev.venue,
+              received_on: matchedProj.first_event || prev.received_on,
+              estimated_budget: val,
+            }));
+            setTypedSignature(matchedProj.client || 'Client');
+            setBaseAnchorBudget(val);
+          }
+        }
+      } catch (err) {
+        console.warn('Cloud proposal sync notice:', err);
+      }
+    }
+
+    fetchCloudRecord();
   }, [proposalId]);
 
   // Setup HiDPI Canvas
@@ -397,13 +490,13 @@ export default function ClientProposalPage() {
 
   const handleCopyLink = () => {
     if (typeof window !== 'undefined') {
-      navigator.clipboard.writeText(window.location.href);
+      const cleanUrl = window.location.origin + window.location.pathname;
+      navigator.clipboard.writeText(cleanUrl);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
     }
   };
 
-  // Add-on Toggle Handler
   const handleToggleAddOn = (addonId: string) => {
     setSelectedAddOnIds((prev) => {
       const next = new Set(prev);
@@ -421,7 +514,7 @@ export default function ClientProposalPage() {
   // Compiled deliverables combining base deliverables + selected add-ons
   const compiledDeliverables = useMemo(() => {
     const list = [...deliverables];
-    AVAILABLE_ADDONS.forEach((addon) => {
+    availableAddons.forEach((addon) => {
       if (selectedAddOnIds.has(addon.id)) {
         list.push({
           id: addon.id,
@@ -433,20 +526,137 @@ export default function ClientProposalPage() {
       }
     });
     return list;
-  }, [deliverables, selectedAddOnIds]);
+  }, [deliverables, availableAddons, selectedAddOnIds]);
 
-  // Execute Proposal Acceptance & CRM Auto-Project Creation
+  // =========================================================================
+  // Master Save Handler: Saves all edits to LocalStorage and Cloud
+  // =========================================================================
+  const handleSaveAllChanges = async () => {
+    const customPayload = {
+      enquiry,
+      baseAnchorBudget,
+      deliverables,
+      availableAddons,
+      selectedTier,
+      selectedAddOnIds: Array.from(selectedAddOnIds),
+      studioName,
+      studioTagline,
+      studioHeadline,
+      studioDescription,
+      typedSignature,
+      lastSaved: new Date().toISOString(),
+    };
+
+    try {
+      if (typeof window !== 'undefined') {
+        // 1. Save proposal custom record
+        localStorage.setItem(`pixeva_proposal_custom_${proposalId}`, JSON.stringify(customPayload));
+
+        // 2. Update enquiry in pixeva_enquiries
+        const rawEnquiries = localStorage.getItem('pixeva_enquiries');
+        if (rawEnquiries) {
+          const enqList: Enquiry[] = JSON.parse(rawEnquiries);
+          const updated = enqList.map((e) =>
+            e.id === proposalId || e.name.toLowerCase().includes(proposalId.toLowerCase())
+              ? {
+                  ...e,
+                  name: enquiry.name,
+                  event_name: enquiry.event_name,
+                  venue: enquiry.venue,
+                  event_date: enquiry.received_on,
+                  received_on: enquiry.received_on,
+                  estimated_budget: grandTotal,
+                }
+              : e
+          );
+          localStorage.setItem('pixeva_enquiries', JSON.stringify(updated));
+        }
+
+        // 3. Update project in pixeva_projects
+        const rawProjects = localStorage.getItem('pixeva_projects');
+        if (rawProjects) {
+          const projList = JSON.parse(rawProjects);
+          const updated = projList.map((p: any) =>
+            p.id === proposalId || (p.name === enquiry.event_name && p.client === enquiry.name)
+              ? {
+                  ...p,
+                  name: enquiry.event_name,
+                  client: enquiry.name,
+                  venue: enquiry.venue,
+                  first_event: enquiry.received_on,
+                  total_amount: grandTotal,
+                }
+              : p
+          );
+          localStorage.setItem('pixeva_projects', JSON.stringify(updated));
+        }
+      }
+
+      // 4. Fire cloud sync in background
+      try {
+        await apiClient.enquiries.update(proposalId, enquiry.status);
+      } catch {}
+
+      setSaveSuccessToast(true);
+      setTimeout(() => setSaveSuccessToast(false), 3000);
+    } catch (err) {
+      console.error('Failed to save proposal changes:', err);
+      alert('Error saving proposal changes.');
+    }
+  };
+
+  // Add-on item management (in Edit Mode)
+  const handleAddNewAddOn = () => {
+    const newId = `addon-custom-${Date.now()}`;
+    const newAddon: ProposalAddOn = {
+      id: newId,
+      title: 'Custom Production Upgrade',
+      subtitle: 'Describe the custom service, gear, or deliverable included.',
+      usdPrice: 300,
+      inrPrice: 20000,
+      category: 'Production',
+      badge: 'Custom Upgrade',
+    };
+    setAvailableAddons([...availableAddons, newAddon]);
+    setSelectedAddOnIds((prev) => new Set([...Array.from(prev), newId]));
+  };
+
+  const handleDeleteAddOn = (addonId: string) => {
+    setAvailableAddons(availableAddons.filter((a) => a.id !== addonId));
+    setSelectedAddOnIds((prev) => {
+      const next = new Set(prev);
+      next.delete(addonId);
+      return next;
+    });
+  };
+
+  // Deliverable item management (in Edit Mode)
+  const handleAddNewDeliverable = () => {
+    const newDeliverable: ProposalDeliverable = {
+      id: `deliv-${Date.now()}`,
+      category: 'Photography',
+      badge: 'Master Deliverable',
+      title: 'New Service Item',
+      description: 'Specifications of coverage, camera gear, and delivery format.',
+    };
+    setDeliverables([...deliverables, newDeliverable]);
+  };
+
+  const handleDeleteDeliverable = (delivId: string) => {
+    setDeliverables(deliverables.filter((d) => d.id !== delivId));
+  };
+
+  // Confirm booking & payment
   const handleConfirmAcceptanceAndPay = () => {
     const newRef = `REC-2026-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     setReceiptRef(newRef);
     setPaymentSuccess(true);
 
     const clientSigner = signatureMode === 'type' ? typedSignature : enquiry.name;
-    const selectedAddonTitles = AVAILABLE_ADDONS.filter((a) => selectedAddOnIds.has(a.id)).map((a) => a.title);
+    const selectedAddonTitles = availableAddons.filter((a) => selectedAddOnIds.has(a.id)).map((a) => a.title);
 
     try {
       if (typeof window !== 'undefined') {
-        // 1. Update Enquiry Status in pixeva_enquiries to 'booked'
         const saved = localStorage.getItem('pixeva_enquiries');
         if (saved) {
           const list: Enquiry[] = JSON.parse(saved);
@@ -463,7 +673,6 @@ export default function ClientProposalPage() {
           localStorage.setItem('pixeva_enquiries', JSON.stringify(updated));
         }
 
-        // 2. Automatically Create / Sync Shoot Project in pixeva_projects
         const rawProjects = localStorage.getItem('pixeva_projects');
         let projects = rawProjects ? JSON.parse(rawProjects) : [];
         const enqEventName = enquiry.event_name || `${enquiry.name}'s Shoot`;
@@ -519,26 +728,6 @@ export default function ClientProposalPage() {
     }
   };
 
-  const handleSaveCustomProposal = (e: React.FormEvent) => {
-    e.preventDefault();
-    setDeliverables(modalDeliverables);
-    setBaseAnchorBudget(modalBudget);
-
-    setEnquiry((prev) => ({
-      ...prev,
-      estimated_budget: modalBudget,
-    }));
-
-    try {
-      localStorage.setItem(`pixeva_proposal_deliv_${proposalId}`, JSON.stringify(modalDeliverables));
-      localStorage.setItem(`pixeva_proposal_budget_${proposalId}`, String(modalBudget));
-    } catch (err) {
-      console.error('Error saving proposal customization:', err);
-    }
-
-    setIsCustomizeModalOpen(false);
-  };
-
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#07090e] text-slate-900 dark:text-slate-100 selection:bg-sky-500 selection:text-white font-sans antialiased overflow-x-hidden transition-colors duration-300">
       
@@ -551,54 +740,148 @@ export default function ClientProposalPage() {
 
       {/* Floating 3D Nav Header */}
       <header className="sticky top-4 z-40 max-w-5xl mx-auto px-4 sm:px-6">
-        <div className="rounded-2xl bg-white/80 dark:bg-[#0d1424]/80 backdrop-blur-xl border border-white/60 dark:border-white/10 px-5 py-3.5 flex items-center justify-between shadow-[0_15px_30px_-10px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]">
+        <div className="rounded-2xl bg-white/85 dark:bg-[#0d1424]/85 backdrop-blur-xl border border-white/60 dark:border-white/10 px-4 sm:px-5 py-3 flex items-center justify-between shadow-[0_15px_30px_-10px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)]">
+          
+          {/* Brand */}
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/30 transform hover:scale-105 transition-transform">
               <Camera className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-black text-lg tracking-tight text-slate-900 dark:text-white">Pixeva</span>
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    value={studioName}
+                    onChange={(e) => setStudioName(e.target.value)}
+                    className="font-black text-base sm:text-lg tracking-tight bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-0.5 max-w-[120px]"
+                  />
+                ) : (
+                  <span className="font-black text-lg tracking-tight text-slate-900 dark:text-white">{studioName}</span>
+                )}
                 <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-gradient-to-r from-sky-500 to-blue-600 text-white uppercase tracking-wider shadow-xs">
                   STUDIO
                 </span>
               </div>
-              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Cinematic Media & Photography</p>
+              {isEditMode ? (
+                <input
+                  type="text"
+                  value={studioTagline}
+                  onChange={(e) => setStudioTagline(e.target.value)}
+                  className="text-[11px] font-medium bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md px-1.5 py-0.2 mt-0.5 text-slate-500 dark:text-slate-400"
+                />
+              ) : (
+                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{studioTagline}</p>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center space-x-2.5">
+          {/* Navigation Action Buttons */}
+          <div className="flex items-center space-x-2">
+            
+            {/* Studio Edit Mode Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsEditMode(!isEditMode)}
+              className={`px-3 sm:px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer ${
+                isEditMode
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/30 ring-2 ring-amber-400/40'
+                  : 'bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200'
+              }`}
+              title="Toggle Edit Mode to customize text, rates, deliverables and client info"
+            >
+              {isEditMode ? <Eye className="w-3.5 h-3.5" /> : <Edit className="w-3.5 h-3.5 text-amber-500" />}
+              <span>{isEditMode ? 'Preview Mode' : 'Edit Proposal'}</span>
+            </button>
+
+            {/* Share / Copy Link */}
             <button
               onClick={handleCopyLink}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center space-x-1.5 transition-all shadow-xs cursor-pointer"
             >
               {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5 text-sky-500" />}
               <span className="hidden sm:inline">{copiedLink ? 'Copied' : 'Share'}</span>
             </button>
 
+            {/* Download PDF */}
             <button
               onClick={() => openProposalPdfWindow({ ...enquiry, estimated_budget: grandTotal }, compiledDeliverables)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-md shadow-sky-500/25 transition-all transform active:scale-95 cursor-pointer"
+              className="px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-md shadow-sky-500/25 transition-all transform active:scale-95 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Download PDF</span>
+              <span className="hidden sm:inline">Download PDF</span>
             </button>
+
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-16 space-y-8">
+      <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-20 space-y-6 sm:space-y-8">
+
+        {/* Studio Edit Mode Announcement Banner (Visible when isEditMode is true) */}
+        {isEditMode && (
+          <div className="rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-2 border-amber-500/40 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg animate-fadeIn">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-500/30">
+                <Edit className="w-5 h-5" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Studio Proposal Editor Active
+                  </h3>
+                  <span className="px-2 py-0.2 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 uppercase">
+                    Live Editing
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-300">
+                  Click any dashed field below to edit client names, event details, package investment, services, or add-ons.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 shrink-0 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={handleSaveAllChanges}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center space-x-1.5 shadow-md shadow-emerald-500/25 transition-all cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>{saveSuccessToast ? 'Saved!' : 'Save All Changes'}</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Success Save Toast */}
+        {saveSuccessToast && (
+          <div className="fixed bottom-6 right-6 z-50 rounded-2xl bg-emerald-600 text-white px-5 py-3.5 shadow-2xl flex items-center space-x-2.5 animate-slideUp font-bold text-xs">
+            <CheckCircle2 className="w-5 h-5 text-white animate-bounce" />
+            <span>Proposal saved successfully! Live link updated.</span>
+          </div>
+        )}
 
         {/* 3D Elevated Hero Banner */}
         <div className="relative rounded-3xl bg-white/90 dark:bg-[#0e1628]/90 backdrop-blur-xl border border-white/80 dark:border-white/10 p-6 sm:p-10 shadow-[0_20px_50px_-15px_rgba(14,165,233,0.15)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] space-y-6 overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-sky-400/60 to-transparent" />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 text-xs font-extrabold uppercase tracking-wider shadow-xs">
-              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-              <span>Interactive Coverage Proposal & Customizer</span>
-            </span>
+            <div className="flex items-center space-x-2">
+              <span className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 text-xs font-extrabold uppercase tracking-wider shadow-xs">
+                <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                {isEditMode ? (
+                  <input
+                    type="text"
+                    value={studioHeadline}
+                    onChange={(e) => setStudioHeadline(e.target.value)}
+                    className="bg-transparent border-b border-sky-400 focus:outline-hidden font-extrabold"
+                  />
+                ) : (
+                  <span>{studioHeadline}</span>
+                )}
+              </span>
+            </div>
 
             <div className="flex items-center space-x-2 text-xs text-slate-500 dark:text-slate-400">
               <Clock className="w-3.5 h-3.5 text-sky-500" />
@@ -606,33 +889,104 @@ export default function ClientProposalPage() {
             </div>
           </div>
 
-          <div className="space-y-2.5 max-w-2xl">
-            <h1 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-              Prepared for <span className="bg-gradient-to-r from-sky-500 via-blue-600 to-purple-600 bg-clip-text text-transparent">{enquiry.name}</span>
-            </h1>
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-              Customize your production tier, select optional high-impact add-ons, review your live investment total, and lock your date with a secure 20% advance retainer.
-            </p>
+          <div className="space-y-3 max-w-2xl">
+            <div className="space-y-1">
+              <span className="text-xs uppercase font-extrabold tracking-wider text-slate-400">Proposal Prepared For:</span>
+              {isEditMode ? (
+                <div>
+                  <input
+                    type="text"
+                    value={enquiry.name}
+                    onChange={(e) => setEnquiry({ ...enquiry, name: e.target.value })}
+                    className="w-full text-2xl sm:text-4xl font-black bg-amber-50/70 dark:bg-amber-950/30 border-2 border-dashed border-amber-400 dark:border-amber-500 rounded-2xl px-3 py-1.5 text-slate-900 dark:text-white focus:outline-hidden"
+                    placeholder="Client or Couple Name (e.g. Sophia Miller)"
+                  />
+                </div>
+              ) : (
+                <h1 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                  <span className="bg-gradient-to-r from-sky-500 via-blue-600 to-purple-600 bg-clip-text text-transparent">{enquiry.name}</span>
+                </h1>
+              )}
+            </div>
+
+            {isEditMode ? (
+              <textarea
+                rows={2}
+                value={studioDescription}
+                onChange={(e) => setStudioDescription(e.target.value)}
+                className="w-full text-xs sm:text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 text-slate-700 dark:text-slate-300"
+              />
+            ) : (
+              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+                {studioDescription}
+              </p>
+            )}
           </div>
 
-          {/* Meta Pills */}
+          {/* Meta Details Pills (Editable in Edit Mode) */}
           <div className="pt-2 flex flex-wrap gap-3 text-xs">
-            <div className="px-4 py-2.5 rounded-2xl bg-slate-100/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center space-x-2.5 text-slate-800 dark:text-slate-200 font-semibold shadow-xs">
+            
+            {/* Event Date */}
+            <div className="px-4 py-2.5 rounded-2xl bg-slate-100/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center space-x-2 text-slate-800 dark:text-slate-200 font-semibold shadow-xs">
               <Calendar className="w-4 h-4 text-sky-500" />
-              <span>{enquiry.received_on || 'Upcoming Shoot'}</span>
+              {isEditMode ? (
+                <input
+                  type="date"
+                  value={enquiry.received_on || ''}
+                  onChange={(e) => setEnquiry({ ...enquiry, received_on: e.target.value, event_date: e.target.value })}
+                  className="bg-transparent border-b border-sky-400 focus:outline-hidden text-xs font-semibold"
+                />
+              ) : (
+                <span>{enquiry.received_on || 'Upcoming Date'}</span>
+              )}
             </div>
 
-            <div className="px-4 py-2.5 rounded-2xl bg-slate-100/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center space-x-2.5 text-slate-800 dark:text-slate-200 font-semibold shadow-xs">
+            {/* Event Name */}
+            <div className="px-4 py-2.5 rounded-2xl bg-slate-100/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center space-x-2 text-slate-800 dark:text-slate-200 font-semibold shadow-xs">
               <Sparkles className="w-4 h-4 text-purple-500" />
-              <span>{enquiry.event_name || 'Wedding & Reception'}</span>
+              {isEditMode ? (
+                <input
+                  type="text"
+                  value={enquiry.event_name || ''}
+                  onChange={(e) => setEnquiry({ ...enquiry, event_name: e.target.value })}
+                  placeholder="Event Title"
+                  className="bg-transparent border-b border-purple-400 focus:outline-hidden text-xs font-semibold"
+                />
+              ) : (
+                <span>{enquiry.event_name || 'Wedding & Reception'}</span>
+              )}
             </div>
 
-            {enquiry.venue && (
-              <div className="px-4 py-2.5 rounded-2xl bg-slate-100/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center space-x-2.5 text-slate-800 dark:text-slate-200 font-semibold shadow-xs">
-                <MapPin className="w-4 h-4 text-emerald-500" />
-                <span>{enquiry.venue}</span>
+            {/* Event Venue */}
+            <div className="px-4 py-2.5 rounded-2xl bg-slate-100/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center space-x-2 text-slate-800 dark:text-slate-200 font-semibold shadow-xs">
+              <MapPin className="w-4 h-4 text-emerald-500" />
+              {isEditMode ? (
+                <input
+                  type="text"
+                  value={enquiry.venue || ''}
+                  onChange={(e) => setEnquiry({ ...enquiry, venue: e.target.value })}
+                  placeholder="Venue Location"
+                  className="bg-transparent border-b border-emerald-400 focus:outline-hidden text-xs font-semibold"
+                />
+              ) : (
+                <span>{enquiry.venue || 'Venue TBA'}</span>
+              )}
+            </div>
+
+            {/* Contact Phone (in Edit Mode) */}
+            {isEditMode && (
+              <div className="px-4 py-2.5 rounded-2xl bg-slate-100/90 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center space-x-2 text-slate-800 dark:text-slate-200 font-semibold shadow-xs">
+                <Phone className="w-4 h-4 text-blue-500" />
+                <input
+                  type="text"
+                  value={enquiry.contact || enquiry.phone || ''}
+                  onChange={(e) => setEnquiry({ ...enquiry, contact: e.target.value, phone: e.target.value })}
+                  placeholder="Phone Number"
+                  className="bg-transparent border-b border-blue-400 focus:outline-hidden text-xs font-semibold"
+                />
               </div>
             )}
+
           </div>
         </div>
 
@@ -640,14 +994,28 @@ export default function ClientProposalPage() {
         {/* 1. INTERACTIVE PACKAGE TIER SELECTOR */}
         {/* ========================================================================= */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center space-x-2">
               <Award className="w-5 h-5 text-sky-500" />
               <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
                 Step 1: Choose Your Production Tier
               </h2>
             </div>
-            <span className="text-xs text-slate-400">Tap tier to toggle package</span>
+
+            {/* Base Budget Editor (Editable in Edit Mode) */}
+            {isEditMode ? (
+              <div className="flex items-center space-x-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 px-3 py-1.5 rounded-xl">
+                <span className="text-xs font-bold text-amber-900 dark:text-amber-200">Anchor Budget:</span>
+                <input
+                  type="number"
+                  value={baseAnchorBudget}
+                  onChange={(e) => setBaseAnchorBudget(Number(e.target.value) || 0)}
+                  className="w-28 text-xs font-black font-mono bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1"
+                />
+              </div>
+            ) : (
+              <span className="text-xs text-slate-400">Tap tier to toggle package</span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -790,7 +1158,125 @@ export default function ClientProposalPage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 2. INTERACTIVE PRODUCTION UPGRADES & ADD-ONS */}
+        {/* 2. INCLUDED SERVICES & MASTER DELIVERABLES (Editable) */}
+        {/* ========================================================================= */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Layers className="w-5 h-5 text-sky-500" />
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
+                Included Master Deliverables ({deliverables.length})
+              </h2>
+            </div>
+
+            {isEditMode && (
+              <button
+                type="button"
+                onClick={handleAddNewDeliverable}
+                className="px-3.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-500/15 text-sky-600 dark:text-sky-300 font-bold text-xs flex items-center space-x-1 cursor-pointer transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Deliverable</span>
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {deliverables.map((deliv, index) => {
+              return (
+                <div
+                  key={deliv.id || index}
+                  className={`p-6 rounded-3xl bg-white/90 dark:bg-[#0e1628]/90 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.06)] dark:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.4)] transition-all space-y-3 relative ${
+                    isEditMode ? 'ring-1 ring-amber-400/50' : 'hover:-translate-y-1.5'
+                  }`}
+                >
+                  {isEditMode ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <input
+                          type="text"
+                          value={deliv.category}
+                          onChange={(e) => {
+                            const next = [...deliverables];
+                            next[index].category = e.target.value;
+                            setDeliverables(next);
+                          }}
+                          placeholder="Category (e.g. Photography)"
+                          className="text-xs font-black uppercase text-sky-600 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 w-32"
+                        />
+                        <div className="flex items-center space-x-1.5">
+                          <input
+                            type="text"
+                            value={deliv.badge}
+                            onChange={(e) => {
+                              const next = [...deliverables];
+                              next[index].badge = e.target.value;
+                              setDeliverables(next);
+                            }}
+                            placeholder="Badge (e.g. 4K UHD)"
+                            className="text-[10px] font-bold text-purple-600 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-0.5 w-24 text-right"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteDeliverable(deliv.id)}
+                            className="p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer"
+                            title="Delete this deliverable"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <input
+                        type="text"
+                        value={deliv.title}
+                        onChange={(e) => {
+                          const next = [...deliverables];
+                          next[index].title = e.target.value;
+                          setDeliverables(next);
+                        }}
+                        placeholder="Service Title"
+                        className="w-full font-bold text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5"
+                      />
+
+                      <textarea
+                        rows={2}
+                        value={deliv.description}
+                        onChange={(e) => {
+                          const next = [...deliverables];
+                          next[index].description = e.target.value;
+                          setDeliverables(next);
+                        }}
+                        placeholder="Deliverable description..."
+                        className="w-full text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2"
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                          {deliv.category}
+                        </span>
+                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20">
+                          {deliv.badge}
+                        </span>
+                      </div>
+                      <h4 className="font-extrabold text-slate-900 dark:text-white text-base">
+                        {deliv.title}
+                      </h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                        {deliv.description}
+                      </p>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* 3. INTERACTIVE PRODUCTION UPGRADES & ADD-ONS (Editable) */}
         {/* ========================================================================= */}
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
@@ -800,58 +1286,135 @@ export default function ClientProposalPage() {
                 Step 2: Customize With Production Add-Ons
               </h2>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Select optional upgrades to enhance your event coverage. Live totals adjust automatically.
-            </p>
+            
+            <div className="flex items-center space-x-2">
+              {isEditMode && (
+                <button
+                  type="button"
+                  onClick={handleAddNewAddOn}
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 font-bold text-xs flex items-center space-x-1 cursor-pointer transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add New Upgrade</span>
+                </button>
+              )}
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Select optional upgrades. Live totals adjust automatically.
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            {AVAILABLE_ADDONS.map((addon) => {
+            {availableAddons.map((addon) => {
               const isSelected = selectedAddOnIds.has(addon.id);
               const price = isUsdScale ? addon.usdPrice : addon.inrPrice;
-              const Icon = addon.icon;
 
               return (
                 <div
                   key={addon.id}
-                  onClick={() => handleToggleAddOn(addon.id)}
-                  className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex items-start space-x-3.5 ${
-                    isSelected
-                      ? 'bg-blue-50/70 border-blue-500 dark:bg-blue-950/40 dark:border-blue-500 shadow-sm'
-                      : 'bg-white/80 dark:bg-[#0e1628]/80 border-slate-200/80 dark:border-white/10 hover:border-slate-300'
+                  onClick={() => !isEditMode && handleToggleAddOn(addon.id)}
+                  className={`p-4 sm:p-5 rounded-2xl border transition-all flex items-start space-x-3.5 ${
+                    isEditMode
+                      ? 'bg-white dark:bg-[#0e1628] border-amber-300 dark:border-amber-700/60'
+                      : isSelected
+                      ? 'bg-blue-50/70 border-blue-500 dark:bg-blue-950/40 dark:border-blue-500 shadow-sm cursor-pointer'
+                      : 'bg-white/80 dark:bg-[#0e1628]/80 border-slate-200/80 dark:border-white/10 hover:border-slate-300 cursor-pointer'
                   }`}
                 >
-                  {/* Checkbox box */}
-                  <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-all ${
-                    isSelected
-                      ? 'bg-blue-600 text-white'
-                      : 'border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800'
-                  }`}>
-                    {isSelected && <Check className="w-3.5 h-3.5" />}
-                  </div>
+                  {/* Checkbox box (in Client View) */}
+                  {!isEditMode && (
+                    <div className={`w-5 h-5 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                      isSelected
+                        ? 'bg-blue-600 text-white'
+                        : 'border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800'
+                    }`}>
+                      {isSelected && <Check className="w-3.5 h-3.5" />}
+                    </div>
+                  )}
 
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center space-x-2">
-                        <Icon className={`w-4 h-4 ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}`} />
-                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                          {addon.title}
-                        </h4>
+                  <div className="flex-1 space-y-2">
+                    {isEditMode ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <input
+                            type="text"
+                            value={addon.title}
+                            onChange={(e) => {
+                              const next = [...availableAddons];
+                              const idx = next.findIndex((a) => a.id === addon.id);
+                              if (idx >= 0) {
+                                next[idx].title = e.target.value;
+                                setAvailableAddons(next);
+                              }
+                            }}
+                            className="font-bold text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 flex-1"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAddOn(addon.id)}
+                            className="p-1 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer shrink-0"
+                            title="Delete upgrade"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <input
+                          type="text"
+                          value={addon.subtitle}
+                          onChange={(e) => {
+                            const next = [...availableAddons];
+                            const idx = next.findIndex((a) => a.id === addon.id);
+                            if (idx >= 0) {
+                              next[idx].subtitle = e.target.value;
+                              setAvailableAddons(next);
+                            }
+                          }}
+                          className="w-full text-[11px] bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-slate-600 dark:text-slate-400"
+                        />
+
+                        <div className="flex items-center space-x-2">
+                          <span className="text-[11px] font-semibold text-slate-500">Rate:</span>
+                          <input
+                            type="number"
+                            value={isUsdScale ? addon.usdPrice : addon.inrPrice}
+                            onChange={(e) => {
+                              const next = [...availableAddons];
+                              const idx = next.findIndex((a) => a.id === addon.id);
+                              if (idx >= 0) {
+                                const num = Number(e.target.value) || 0;
+                                if (isUsdScale) next[idx].usdPrice = num;
+                                else next[idx].inrPrice = num;
+                                setAvailableAddons(next);
+                              }
+                            }}
+                            className="text-xs font-mono font-bold bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 w-28"
+                          />
+                          <span className="text-[10px] text-slate-400 font-bold">{currency.code}</span>
+                        </div>
                       </div>
-                      <span className="text-xs font-black font-mono text-blue-600 dark:text-blue-400 shrink-0">
-                        +{formatCurrency(price)}
-                      </span>
-                    </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                            {addon.title}
+                          </h4>
+                          <span className="text-xs font-black font-mono text-blue-600 dark:text-blue-400 shrink-0">
+                            +{formatCurrency(price)}
+                          </span>
+                        </div>
 
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                      {addon.subtitle}
-                    </p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                          {addon.subtitle}
+                        </p>
 
-                    <div className="pt-1">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300">
-                        {addon.badge}
-                      </span>
-                    </div>
+                        <div className="pt-1">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300">
+                            {addon.badge}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               );
@@ -860,7 +1423,7 @@ export default function ClientProposalPage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 3. DYNAMIC INVESTMENT SUMMARY & PAYMENT ROADMAP */}
+        {/* 4. DYNAMIC INVESTMENT SUMMARY & PAYMENT ROADMAP */}
         {/* ========================================================================= */}
         <div className="p-6 sm:p-10 rounded-3xl bg-white/90 dark:bg-[#0e1628]/90 backdrop-blur-xl border border-sky-400/30 dark:border-sky-500/30 shadow-[0_20px_50px_-15px_rgba(14,165,233,0.18)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-5">
@@ -921,7 +1484,7 @@ export default function ClientProposalPage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 4. CONTRACT TERMS ACCORDION */}
+        {/* 5. CONTRACT TERMS ACCORDION */}
         {/* ========================================================================= */}
         <div className="rounded-3xl bg-white/90 dark:bg-[#0e1628]/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 p-5 sm:p-7 space-y-4 shadow-sm">
           <button
@@ -945,9 +1508,43 @@ export default function ClientProposalPage() {
 
           {isTermsExpanded && (
             <div className="pt-3 border-t border-slate-100 dark:border-white/10 space-y-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed animate-fadeIn">
-              <p><strong>1. Turnaround Timeline:</strong> Express teasers are dispatched within 48–72 hours. Full edited high-res photo gallery delivered within 25 days. Master cinematic film and albums delivered within 45 days.</p>
-              <p><strong>2. Courtesy Rescheduling:</strong> In the event of unforeseen weather or venue shifts, your 20% retainer is 100% transferable to any available date within 12 months with 30-day prior written notice.</p>
-              <p><strong>3. Usage Rights & Archival:</strong> You receive unlimited perpetual personal printing, sharing, and digital distribution rights. Pixeva Studios securely archives your master footage in cloud cold-storage for 5 years.</p>
+              {isEditMode ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="font-bold block mb-1">1. Turnaround SLA:</label>
+                    <textarea
+                      rows={2}
+                      value={contractTerms.turnaround}
+                      onChange={(e) => setContractTerms({ ...contractTerms, turnaround: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border rounded-lg p-2 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold block mb-1">2. Rescheduling Policy:</label>
+                    <textarea
+                      rows={2}
+                      value={contractTerms.rescheduling}
+                      onChange={(e) => setContractTerms({ ...contractTerms, rescheduling: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border rounded-lg p-2 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold block mb-1">3. Usage Rights:</label>
+                    <textarea
+                      rows={2}
+                      value={contractTerms.rights}
+                      onChange={(e) => setContractTerms({ ...contractTerms, rights: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-900 border rounded-lg p-2 text-xs"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p><strong>1. Turnaround Timeline:</strong> {contractTerms.turnaround}</p>
+                  <p><strong>2. Courtesy Rescheduling:</strong> {contractTerms.rescheduling}</p>
+                  <p><strong>3. Usage Rights & Archival:</strong> {contractTerms.rights}</p>
+                </>
+              )}
             </div>
           )}
 
@@ -966,7 +1563,7 @@ export default function ClientProposalPage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 5. 3D DIGITAL E-SIGNATURE */}
+        {/* 6. DIGITAL E-SIGNATURE */}
         {/* ========================================================================= */}
         <div className="p-6 sm:p-10 rounded-3xl bg-white/90 dark:bg-[#0e1628]/90 backdrop-blur-xl border border-white/80 dark:border-white/10 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.08)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1281,180 +1878,6 @@ export default function ClientProposalPage() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* CUSTOMIZE SERVICES MODAL */}
-      {isCustomizeModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="w-full max-w-2xl bg-white dark:bg-[#0e1628] rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-white/10 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-white/10 shrink-0">
-              <div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                  Customize Base Deliverables & Services
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Edit service titles, categories, and descriptions for this client.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsCustomizeModalOpen(false)}
-                className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveCustomProposal} className="flex-1 overflow-y-auto py-5 space-y-6 custom-scrollbar text-xs">
-              <div className="p-4 rounded-2xl bg-sky-50/70 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 space-y-2">
-                <label className="font-bold text-slate-900 dark:text-white block">
-                  Anchor Package Rate ({currency.symbol.trim()})
-                </label>
-                <input
-                  type="number"
-                  value={modalBudget}
-                  onChange={(e) => setModalBudget(Number(e.target.value) || 0)}
-                  className="w-full bg-white dark:bg-[#111827] border border-sky-300 dark:border-sky-500/30 rounded-xl px-3.5 py-2.5 text-sm font-bold text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-sky-500"
-                  placeholder="250000"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-extrabold text-sm text-slate-900 dark:text-white">
-                    Deliverable Items ({modalDeliverables.length})
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setModalDeliverables([
-                        ...modalDeliverables,
-                        {
-                          id: `deliv-${Date.now()}`,
-                          category: 'Photography',
-                          badge: 'Included',
-                          title: 'Custom Photography / Video Deliverable',
-                          description: 'Full-day coverage and deliverables specifications.',
-                        },
-                      ]);
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-500/15 text-sky-600 dark:text-sky-300 font-bold text-xs flex items-center space-x-1 cursor-pointer transition-colors"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Service</span>
-                  </button>
-                </div>
-
-                <div className="space-y-3.5">
-                  {modalDeliverables.map((deliv, idx) => (
-                    <div
-                      key={deliv.id || idx}
-                      className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 space-y-3 relative group"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-[11px] text-slate-400">
-                          Service #{idx + 1}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setModalDeliverables(modalDeliverables.filter((_, i) => i !== idx));
-                          }}
-                          className="p-1 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer"
-                          title="Remove deliverable"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                            Category
-                          </label>
-                          <input
-                            type="text"
-                            value={deliv.category}
-                            onChange={(e) => {
-                              const next = [...modalDeliverables];
-                              next[idx].category = e.target.value;
-                              setModalDeliverables(next);
-                            }}
-                            className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                            Badge
-                          </label>
-                          <input
-                            type="text"
-                            value={deliv.badge}
-                            onChange={(e) => {
-                              const next = [...modalDeliverables];
-                              next[idx].badge = e.target.value;
-                              setModalDeliverables(next);
-                            }}
-                            className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                          Service Title
-                        </label>
-                        <input
-                          type="text"
-                          value={deliv.title}
-                          onChange={(e) => {
-                            const next = [...modalDeliverables];
-                            next[idx].title = e.target.value;
-                            setModalDeliverables(next);
-                          }}
-                          className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white font-semibold"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                          Description
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={deliv.description}
-                          onChange={(e) => {
-                            const next = [...modalDeliverables];
-                            next[idx].description = e.target.value;
-                            setModalDeliverables(next);
-                          }}
-                          className="w-full bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-end space-x-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsCustomizeModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 shadow-md shadow-sky-500/25 cursor-pointer"
-                >
-                  Save Proposal Changes
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
