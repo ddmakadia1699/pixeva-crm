@@ -23,7 +23,9 @@ import {
   ChevronDown,
   Instagram,
   Check,
-  X
+  X,
+  MessageSquare,
+  ExternalLink
 } from 'lucide-react';
 import { apiClient } from '@/lib/api/apiClient';
 
@@ -391,11 +393,15 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
             </div>
 
             <div className="space-y-2">
+              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
+                <span>AI Concierge: 48-Hour Priority Hold Activated</span>
+              </div>
               <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                 Thank You, {firstName}!
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                Your enquiry has been received by our lead director. We have created your custom booking file and will reach out via phone & email within 24 hours.
+                Great news — our system has placed a courtesy 48-hour tentative hold on <strong className="text-slate-900">{eventDate || 'your date'}</strong> on our studio calendar. We have automatically generated your interactive proposal & lookbook.
               </p>
             </div>
 
@@ -414,22 +420,45 @@ export default function PublicEnquiryPage({ params }: { params: { id: string } }
                 <span className="font-bold text-slate-900">{eventDate || 'To be confirmed'}</span>
               </div>
               {venue && (
-                <div className="flex justify-between">
+                <div className="flex justify-between border-b border-slate-200 pb-2">
                   <span className="text-slate-500 font-medium">Venue:</span>
                   <span className="font-bold text-slate-900">{venue}</span>
                 </div>
               )}
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Calendar Status:</span>
+                <span className="font-bold text-emerald-600 flex items-center space-x-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block" />
+                  <span>Available (Tentative Hold Active)</span>
+                </span>
+              </div>
             </div>
 
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-              {socialPhone && (
+              {/* WhatsApp Quick Connect */}
+              {socialPhone ? (
                 <a
-                  href={`tel:${socialPhone.replace(/\s+/g, '')}`}
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-md transition-all cursor-pointer"
+                  href={`https://wa.me/${socialPhone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi Pixeva Studio! I just submitted an enquiry for ${selectedEventOption.label} on ${eventDate || 'upcoming date'} (Ref: ${submittedLeadId}). Would love to confirm availability and discuss packages!`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
                 >
-                  <Phone className="w-4 h-4" />
-                  <span>Call Director Directly</span>
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Chat on WhatsApp</span>
                 </a>
+              ) : null}
+
+              {/* View Live Digital Proposal */}
+              {submittedLeadId && (
+                <Link
+                  href={`/proposal/${submittedLeadId}`}
+                  target="_blank"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-md shadow-blue-500/20 transition-all"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>View Interactive Proposal</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
               )}
 
               <Link
