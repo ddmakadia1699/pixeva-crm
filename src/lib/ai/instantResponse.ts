@@ -308,3 +308,4 @@ export function buildWhatsAppClickUrl(phone: string, message: string): string {
 
   return `https://wa.me/${clean}?text=${encodeURIComponent(message)}`;
 }
+
