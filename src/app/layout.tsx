@@ -7,6 +7,7 @@ import { SidebarProvider } from "@/context/SidebarContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import AuthGuard from "@/components/auth/AuthGuard";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "Pixeva CRM | Tri-Cloud Enterprise CRM",
@@ -53,6 +54,7 @@ export default function RootLayout({
           </CurrencyProvider>
         </ThemeProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
