@@ -6,6 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import AuthGuard from "@/components/auth/AuthGuard";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Pixeva CRM | Tri-Cloud Enterprise CRM",
@@ -51,6 +52,7 @@ export default function RootLayout({
             </AuthProvider>
           </CurrencyProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
